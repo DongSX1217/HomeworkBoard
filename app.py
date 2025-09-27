@@ -66,7 +66,7 @@ submissions = load_submissions()
 def homepage():
     return render_template('home.html')
 
-class homework:
+class Homework:
     '''
     def __init__(self, subject, content, labels, deadline):
         self.subject = subject
@@ -75,6 +75,22 @@ class homework:
         self.deadline = deadline
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         '''
+    @app.route('/homework')
+    def view_homework():
+        # 每次访问时都重新加载数据，确保获取最新数据
+        submissions = load_submissions()
+        labels = load_labels()
+        
+        # 按学科分组作业
+        grouped_submissions = {}
+        for submission in submissions:
+            subject = submission['subject']
+            if subject not in grouped_submissions:
+                grouped_submissions[subject] = []
+            grouped_submissions[subject].append(submission)
+        
+        return render_template('homework.html', submissions=grouped_submissions)
+
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
@@ -212,7 +228,7 @@ class Label:
         labels = load_labels()
         return render_template('label_edit.html', labels=labels)
 
-homework=homework()
+homework = Homework()
 label = Label()
 if __name__ == '__main__':
     app.run(debug=True,port=2025)
