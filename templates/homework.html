@@ -24,7 +24,10 @@
                         {% for submission in subject_submissions %}
                         <li class="homework-item" data-deadline="{{ submission.deadline }}">
                             <div class="content-wrapper">
-                                <span class="content">{{ submission.content }}</span>
+                                <span class="content">{{ submission.content | replace('\r\n', '
+') | replace('\n', '
+') | replace('\r', '
+') }}</span>
                                 <span class="labels">
                                     {% for label in submission.labels %}
                                     <span class="label-tag">{{ label }}</span>
@@ -323,6 +326,9 @@
 
                 const contentSpan = document.createElement('span');
                 contentSpan.className = 'content';
+                // 将 \r\n 转换为实际换行符
+                contentSpan.textContent = submission.content.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\r/g, '\n');
+                contentWrapper.appendChild(contentSpan);
                 contentSpan.textContent = submission.content;
                 contentWrapper.appendChild(contentSpan);
 
