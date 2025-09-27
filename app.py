@@ -163,7 +163,7 @@ class Homework:
         
         # 每次访问GET请求时都重新加载标签
         labels = load_labels()
-        return render_template('input.html', now=datetime.now(), labels=labels)
+        return render_template('homework_publish.html', now=datetime.now(), labels=labels)
 
 @app.route('/submissions')
 def view_submissions():
