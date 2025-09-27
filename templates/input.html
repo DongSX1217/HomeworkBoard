@@ -137,7 +137,7 @@
                             <div class="mb-3">
                                 <label class="form-label">标签</label>
                                 <div class="checkbox-group">
-                                    {% for label in ['无需上交', '课堂前检查', '课后作业', '小组任务', '个人项目', '考试复习', '预习内容', '拓展阅读'] %}
+                                    {% for label in ['课堂前由课代表/小组长检查', '课堂前由授课教师检查', '小组任务', '自行核对答案', '复习作业', '预习作业', '拓展任务', '选做', '教师布置'] %}
                                     <div class="checkbox-item">
                                         <input type="checkbox" class="form-check-input" name="labels" id="label{{ loop.index }}" value="{{ label }}">
                                         <label class="form-check-label" for="label{{ loop.index }}">{{ label }}</label>
