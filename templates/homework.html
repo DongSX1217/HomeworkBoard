@@ -82,17 +82,17 @@
         let refreshInterval;
         let intervalId;
         let isFullscreen = false;
-
+        let globalLabels = []; // 全局标签缓存
+    
         // 页面加载完成后初始化
         window.onload = function() {
             loadSettings();
             startAutoRefresh();
             applyHideExpired();
         };
-
+    
         // 加载设置（从cookie）
         function loadSettings() {
-            // 刷新间隔
             const savedInterval = getCookie("refreshInterval");
             if (savedInterval) {
                 refreshInterval = parseInt(savedInterval);
@@ -100,62 +100,46 @@
             } else {
                 refreshInterval = 60;
             }
-
-            // 字体大小
             const savedFontSize = getCookie("fontSize");
             if (savedFontSize) {
                 document.body.style.fontSize = savedFontSize + 'px';
                 document.getElementById("fontSize").value = savedFontSize;
             }
-
-            // 是否隐藏过期作业
             const hideExpired = getCookie("hideExpired");
             if (hideExpired === "true") {
                 document.getElementById("hideExpired").checked = true;
                 applyHideExpired();
             }
         }
-
+    
         // 保存设置（到cookie）
         function saveSettings() {
-            // 保存刷新间隔
             const newInterval = document.getElementById("refreshInterval").value;
             if (newInterval >= 10 && newInterval <= 3600) {
                 refreshInterval = parseInt(newInterval);
                 setCookie("refreshInterval", refreshInterval, 30);
-                
-                // 重新启动自动刷新
-                if (intervalId) {
-                    clearInterval(intervalId);
-                }
+                if (intervalId) clearInterval(intervalId);
                 startAutoRefresh();
             } else {
                 alert('刷新间隔必须在10-3600秒之间');
                 return;
             }
-
-            // 保存字体大小
             const fontSize = document.getElementById("fontSize").value;
             document.body.style.fontSize = fontSize + 'px';
             setCookie("fontSize", fontSize, 30);
-
-            // 保存是否隐藏过期作业
             const hideExpired = document.getElementById("hideExpired").checked;
             setCookie("hideExpired", hideExpired, 30);
             applyHideExpired();
-
             closeSettings();
             alert('设置已保存');
         }
-
-        // 设置cookie
+    
         function setCookie(name, value, days) {
             const expires = new Date();
             expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
             document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
         }
-
-        // 获取cookie
+    
         function getCookie(name) {
             const nameEQ = name + "=";
             const ca = document.cookie.split(';');
@@ -166,28 +150,26 @@
             }
             return null;
         }
-
+    
         // 开始自动刷新
         function startAutoRefresh() {
-            // 立即获取一次数据
-            fetchHomeworkData();
-            intervalId = setInterval(function() {
-                fetchHomeworkData();
-            }, refreshInterval * 1000);
+            fetchHomeworkAndLabels();
+            intervalId = setInterval(fetchHomeworkAndLabels, refreshInterval * 1000);
         }
-
-        // 获取作业数据并更新页面
-        function fetchHomeworkData() {
+    
+        // 获取作业和标签数据
+        function fetchHomeworkAndLabels() {
             fetch('/api/homework')
                 .then(response => response.json())
                 .then(data => {
-                    updateHomeworkContainer(data.submissions);
+                    globalLabels = data.labels || [];
+                    updateHomeworkContainer(data.submissions, globalLabels);
                 })
                 .catch(error => {
                     console.error('获取作业数据失败:', error);
                 });
         }
-
+    
         // 动态分栏参数
         function getColumnCount() {
             if (window.innerWidth <= 600) return 1;
@@ -195,28 +177,11 @@
             if (window.innerWidth <= 1200) return 3;
             return 4;
         }
-
+    
         // 更新作业容器（动态分栏，学科可拆分）
-        function updateHomeworkContainer(submissions) {
-            // 先获取标签数据
-            fetch('/api/homework')
-                .then(response => response.json())
-                .then(data => {
-                    renderHomeworkContainer(submissions, data.labels);
-                })
-                .catch(error => {
-                    console.error('获取标签数据失败:', error);
-                    // 如果获取标签失败，仍然显示作业
-                    renderHomeworkContainer(submissions, []);
-                });
-        }
-        
-        // 实际渲染作业容器的函数
-        function renderHomeworkContainer(submissions, labels) {
+        function updateHomeworkContainer(submissions, labels) {
             const container = document.getElementById('homeworkContainer');
             container.innerHTML = '';
-
-            // 没有作业
             if (!submissions || Object.keys(submissions).length === 0) {
                 const noSubmissionsDiv = document.createElement('div');
                 noSubmissionsDiv.className = 'no-submissions';
@@ -224,8 +189,6 @@
                 container.appendChild(noSubmissionsDiv);
                 return;
             }
-
-            // 计算列数
             const colCount = getColumnCount();
             const columns = [];
             for (let i = 0; i < colCount; i++) {
@@ -233,200 +196,136 @@
                 col.className = 'column';
                 columns.push(col);
             }
-
-            // 获取可用高度（视窗高度减去顶部和底部留白）
-            const availableHeight = window.innerHeight * 0.85; // 保留15%作为边距
-            
-            // 学科列表顺序
+            const availableHeight = window.innerHeight * 0.85;
             const subjectOrder = Object.keys(submissions);
-            
-            // 为每个学科计算作业项数量并按发布时间排序（新->旧）
             const sortedSubjects = {};
             subjectOrder.forEach(subject => {
                 sortedSubjects[subject] = submissions[subject].slice().sort((a, b) => 
                     b.timestamp.localeCompare(a.timestamp));
             });
-
-            // 按列填充内容
             let colIdx = 0;
             let currentColHeight = 0;
             const maxColHeight = availableHeight;
-            
-            // 存储每个学科的显示状态
             const subjectStates = {};
             subjectOrder.forEach(subject => {
-                subjectStates[subject] = {
-                    started: false,  // 是否已经开始显示
-                    completed: false // 是否已经完成显示
-                };
+                subjectStates[subject] = { started: false, completed: false };
             });
-            
-            // 按顺序处理每个学科
-        subjectOrder.forEach(subject => {
-            const sortedList = sortedSubjects[subject];
-            let itemIdx = 0;
-            
-            while (itemIdx < sortedList.length && !subjectStates[subject].completed) {
-                // 检查是否需要为当前学科创建标题
-                const needsHeader = !subjectStates[subject].started;
-                
-                // 估算添加这个作业项后的高度
-                const itemHeight = 90; // 作业项基础高度
-                const contentHeight = Math.ceil(sortedList[itemIdx].content.length / 30) * 20; // 根据内容长度估算
-                const totalItemHeight = itemHeight + contentHeight;
-                
-                // 如果加上标题，再加标题高度
-                const headerHeight = needsHeader ? 50 : 0;
-                
-                // 如果当前列放不下这个作业项，切换到下一列
-                if (currentColHeight + headerHeight + totalItemHeight > maxColHeight && colIdx < colCount - 1) {
-                    colIdx++;
-                    currentColHeight = 0;
-                }
-                
-                // 修复点：无论当前列是否为空，都需要为新学科创建标题
-                if (needsHeader) {
-                    // 确保有足够的空间显示标题
-                    if (currentColHeight + 50 > maxColHeight && colIdx < colCount - 1) {
+            subjectOrder.forEach(subject => {
+                const sortedList = sortedSubjects[subject];
+                let itemIdx = 0;
+                while (itemIdx < sortedList.length && !subjectStates[subject].completed) {
+                    const needsHeader = !subjectStates[subject].started;
+                    const itemHeight = 90;
+                    const contentHeight = Math.ceil(sortedList[itemIdx].content.length / 30) * 20;
+                    const totalItemHeight = itemHeight + contentHeight;
+                    const headerHeight = needsHeader ? 50 : 0;
+                    if (currentColHeight + headerHeight + totalItemHeight > maxColHeight && colIdx < colCount - 1) {
                         colIdx++;
                         currentColHeight = 0;
                     }
-                    
-                    const subjectSection = document.createElement('div');
-                    subjectSection.className = 'subject-section';
-                    const subjectTitle = document.createElement('div');
-                    subjectTitle.className = 'subject-title';
-                    subjectTitle.textContent = subject;
-                    subjectSection.appendChild(subjectTitle);
-                    
-                    const homeworkList = document.createElement('ul');
-                    homeworkList.className = 'homework-list';
-                    subjectSection.appendChild(homeworkList);
-                    columns[colIdx].appendChild(subjectSection);
-                    
-                    // 更新学科状态
-                    subjectStates[subject].started = true;
-                    currentColHeight += 50; // 更新当前列高度
-                }
-                
-                // 找到当前列的最后一个subject-section
-                let subjectSection = columns[colIdx].lastElementChild;
-                let homeworkList = null;
-                
-                // 修复点：确保获取当前学科的作业列表
-                if (subjectSection && subjectSection.querySelector('.subject-title').textContent === subject) {
-                    homeworkList = subjectSection.querySelector('.homework-list');
-                } else {
-                    // 创建新的学科section（当跨列时）
-                    subjectSection = document.createElement('div');
-                    subjectSection.className = 'subject-section';
-                    const subjectTitle = document.createElement('div');
-                    subjectTitle.className = 'subject-title';
-                    subjectTitle.textContent = subject;
-                    subjectSection.appendChild(subjectTitle);
-                    
-                    homeworkList = document.createElement('ul');
-                    homeworkList.className = 'homework-list';
-                    subjectSection.appendChild(homeworkList);
-                    columns[colIdx].appendChild(subjectSection);
-                }
-
-                // 添加作业项
-                const submission = sortedList[itemIdx];
-                const homeworkItem = document.createElement('li');
-                homeworkItem.className = 'homework-item';
-                homeworkItem.setAttribute('data-deadline', submission.deadline);
-
-                const contentWrapper = document.createElement('div');
-                contentWrapper.className = 'content-wrapper';
-
-                const contentSpan = document.createElement('span');
-                contentSpan.className = 'content';
-                // 将 \r\n 转换为实际换行符
-                contentSpan.textContent = submission.content.replace(/\\r\\n/g, '\n').replace(/\\n/g, '\n').replace(/\\r/g, '\n');
-                contentWrapper.appendChild(contentSpan);
-                contentSpan.textContent = submission.content;
-                contentWrapper.appendChild(contentSpan);
-
-                const labelsSpan = document.createElement('span');
-                labelsSpan.className = 'labels';
-                submission.labels.forEach(labelName => {
-                    const labelTag = document.createElement('span');
-                    labelTag.className = 'label-tag';
-                    labelTag.textContent = labelName;
-                    
-                    // 查找标签颜色
-                    const labelObj = labels.find(l => l.name === labelName);
-                    if (labelObj) {
-                        labelTag.style.backgroundColor = labelObj.color;
+                    if (needsHeader) {
+                        if (currentColHeight + 50 > maxColHeight && colIdx < colCount - 1) {
+                            colIdx++;
+                            currentColHeight = 0;
+                        }
+                        const subjectSection = document.createElement('div');
+                        subjectSection.className = 'subject-section';
+                        const subjectTitle = document.createElement('div');
+                        subjectTitle.className = 'subject-title';
+                        subjectTitle.textContent = subject;
+                        subjectSection.appendChild(subjectTitle);
+                        const homeworkList = document.createElement('ul');
+                        homeworkList.className = 'homework-list';
+                        subjectSection.appendChild(homeworkList);
+                        columns[colIdx].appendChild(subjectSection);
+                        subjectStates[subject].started = true;
+                        currentColHeight += 50;
                     }
-                    
-                    labelsSpan.appendChild(labelTag);
-                });
-                contentWrapper.appendChild(labelsSpan);
-                homeworkItem.appendChild(contentWrapper);
-
-                const datesContainer = document.createElement('div');
-                datesContainer.className = 'dates-container';
-
-                const deadlineDiv = document.createElement('div');
-                deadlineDiv.className = 'deadline';
-                deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
-                datesContainer.appendChild(deadlineDiv);
-
-                const timestampDiv = document.createElement('div');
-                timestampDiv.className = 'timestamp';
-                timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
-                datesContainer.appendChild(timestampDiv);
-
-                homeworkItem.appendChild(datesContainer);
-                homeworkList.appendChild(homeworkItem);
-                
-                // 更新当前列高度
-                currentColHeight += totalItemHeight;
-                itemIdx++;
-                
-                // 如果已经处理完所有作业项，标记学科为已完成
-                if (itemIdx >= sortedList.length) {
-                    subjectStates[subject].completed = true;
+                    let subjectSection = columns[colIdx].lastElementChild;
+                    let homeworkList = null;
+                    if (subjectSection && subjectSection.querySelector('.subject-title').textContent === subject) {
+                        homeworkList = subjectSection.querySelector('.homework-list');
+                    } else {
+                        subjectSection = document.createElement('div');
+                        subjectSection.className = 'subject-section';
+                        const subjectTitle = document.createElement('div');
+                        subjectTitle.className = 'subject-title';
+                        subjectTitle.textContent = subject;
+                        subjectSection.appendChild(subjectTitle);
+                        homeworkList = document.createElement('ul');
+                        homeworkList.className = 'homework-list';
+                        subjectSection.appendChild(homeworkList);
+                        columns[colIdx].appendChild(subjectSection);
+                    }
+                    const submission = sortedList[itemIdx];
+                    const homeworkItem = document.createElement('li');
+                    homeworkItem.className = 'homework-item';
+                    homeworkItem.setAttribute('data-deadline', submission.deadline);
+    
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'content-wrapper';
+    
+                    const contentSpan = document.createElement('span');
+                    contentSpan.className = 'content';
+                    contentSpan.textContent = submission.content;
+                    contentWrapper.appendChild(contentSpan);
+    
+                    const labelsSpan = document.createElement('span');
+                    labelsSpan.className = 'labels';
+                    submission.labels.forEach(labelName => {
+                        const labelTag = document.createElement('span');
+                        labelTag.className = 'label-tag';
+                        labelTag.textContent = labelName;
+                        const labelObj = labels.find(l => l.name === labelName);
+                        if (labelObj) {
+                            labelTag.style.backgroundColor = labelObj.color;
+                        }
+                        labelsSpan.appendChild(labelTag);
+                    });
+                    contentWrapper.appendChild(labelsSpan);
+                    homeworkItem.appendChild(contentWrapper);
+    
+                    const datesContainer = document.createElement('div');
+                    datesContainer.className = 'dates-container';
+    
+                    const deadlineDiv = document.createElement('div');
+                    deadlineDiv.className = 'deadline';
+                    deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
+                    datesContainer.appendChild(deadlineDiv);
+    
+                    const timestampDiv = document.createElement('div');
+                    timestampDiv.className = 'timestamp';
+                    timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
+                    datesContainer.appendChild(timestampDiv);
+    
+                    homeworkItem.appendChild(datesContainer);
+                    homeworkList.appendChild(homeworkItem);
+    
+                    currentColHeight += totalItemHeight;
+                    itemIdx++;
+                    if (itemIdx >= sortedList.length) {
+                        subjectStates[subject].completed = true;
+                    }
                 }
-            }
-        });
-
-            // 添加到页面
+            });
             columns.forEach(col => container.appendChild(col));
-
-            // 应用隐藏过期作业设置
             applyHideExpired();
         }
-
-        // 获取作业数据并更新页面
-        function fetchHomeworkData() {
-            fetch('/api/homework')
-                .then(response => response.json())
-                .then(data => {
-                    updateHomeworkContainer(data.submissions);
-                })
-                .catch(error => {
-                    console.error('获取作业数据失败:', error);
-                });
-        }
-
+    
         // 打开设置弹窗
         function openSettings() {
             document.getElementById("settingsModal").style.display = "block";
         }
-
+    
         // 关闭设置弹窗
         function closeSettings() {
             document.getElementById("settingsModal").style.display = "none";
         }
-
+    
         // 切换全屏模式
         function toggleFullscreen() {
             const container = document.querySelector('.container');
             isFullscreen = !isFullscreen;
-            
             if (isFullscreen) {
                 container.classList.add('fullscreen');
                 document.querySelector('.top-buttons button:nth-child(2)').textContent = '退出全屏';
@@ -435,32 +334,27 @@
                 document.querySelector('.top-buttons button:nth-child(2)').textContent = '全屏';
             }
         }
-
+    
         // 应用隐藏过期作业功能
         function applyHideExpired() {
             const hideExpired = document.getElementById("hideExpired").checked;
             const homeworkItems = document.querySelectorAll(".homework-item");
-            
             if (!hideExpired) {
-                // 显示所有作业
                 homeworkItems.forEach(item => {
                     item.style.display = "block";
                 });
                 return;
             }
-            
-            // 隐藏过期作业
             const now = new Date();
             homeworkItems.forEach(item => {
                 const deadlineStr = item.getAttribute("data-deadline");
                 const deadline = new Date(deadlineStr);
-                
                 if (deadline < now) {
                     item.style.display = "none";
                 }
             });
         }
-
+    
         // 点击模态框外部关闭
         window.onclick = function(event) {
             const modal = document.getElementById("settingsModal");
