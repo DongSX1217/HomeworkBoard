@@ -550,4 +550,4 @@ class Label:
 homework = Homework()
 label = Label()
 if __name__ == '__main__':
-    app.run(debug=True,port=2025)
+    app.run(host='0.0.0.0',debug=True,port=2025)
