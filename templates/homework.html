@@ -215,91 +215,154 @@
                 columns.push(col);
             }
 
-            // 预估每列最大作业数（可根据实际需求调整）
-            let totalItems = 0;
+            // 获取可用高度（视窗高度减去顶部和底部留白）
+            const availableHeight = window.innerHeight * 0.85; // 保留15%作为边距
+            
+            // 学科列表顺序
             const subjectOrder = Object.keys(submissions);
+            
+            // 为每个学科计算作业项数量并按发布时间排序（新->旧）
+            const sortedSubjects = {};
             subjectOrder.forEach(subject => {
-                totalItems += submissions[subject].length;
+                sortedSubjects[subject] = submissions[subject].slice().sort((a, b) => 
+                    b.timestamp.localeCompare(a.timestamp));
             });
-            const maxPerCol = Math.ceil(totalItems / colCount);
 
+            // 按列填充内容
             let colIdx = 0;
-            let colItemCount = 0;
-
+            let currentColHeight = 0;
+            const maxColHeight = availableHeight;
+            
+            // 存储每个学科的显示状态
+            const subjectStates = {};
             subjectOrder.forEach(subject => {
-                // 按发布时间排序（假设timestamp为ISO字符串）
-                const sortedList = submissions[subject].slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-                let subjectTitleShown = false;
-                for (let i = 0; i < sortedList.length; i++) {
-                    // 新建学科标题（仅在新列或首次出现时显示）
-                    if (!subjectTitleShown) {
-                        const subjectSection = document.createElement('div');
-                        subjectSection.className = 'subject-section';
-                        const subjectTitle = document.createElement('div');
-                        subjectTitle.className = 'subject-title';
-                        subjectTitle.textContent = subject;
-                        subjectSection.appendChild(subjectTitle);
-
-                        const homeworkList = document.createElement('ul');
-                        homeworkList.className = 'homework-list';
-                        subjectSection.appendChild(homeworkList);
-                        columns[colIdx].appendChild(subjectSection);
-                        subjectTitleShown = true;
-                    }
-                    // 找到当前列最后一个subject-section
-                    let subjectSection = columns[colIdx].lastElementChild;
-                    let homeworkList = subjectSection.querySelector('.homework-list');
-
-                    // 添加作业项
-                    const submission = sortedList[i];
-                    const homeworkItem = document.createElement('li');
-                    homeworkItem.className = 'homework-item';
-                    homeworkItem.setAttribute('data-deadline', submission.deadline);
-
-                    const contentWrapper = document.createElement('div');
-                    contentWrapper.className = 'content-wrapper';
-
-                    const contentSpan = document.createElement('span');
-                    contentSpan.className = 'content';
-                    contentSpan.textContent = submission.content;
-                    contentWrapper.appendChild(contentSpan);
-
-                    const labelsSpan = document.createElement('span');
-                    labelsSpan.className = 'labels';
-                    submission.labels.forEach(label => {
-                        const labelTag = document.createElement('span');
-                        labelTag.className = 'label-tag';
-                        labelTag.textContent = label;
-                        labelsSpan.appendChild(labelTag);
-                    });
-                    contentWrapper.appendChild(labelsSpan);
-                    homeworkItem.appendChild(contentWrapper);
-
-                    const datesContainer = document.createElement('div');
-                    datesContainer.className = 'dates-container';
-
-                    const deadlineDiv = document.createElement('div');
-                    deadlineDiv.className = 'deadline';
-                    deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
-                    datesContainer.appendChild(deadlineDiv);
-
-                    const timestampDiv = document.createElement('div');
-                    timestampDiv.className = 'timestamp';
-                    timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
-                    datesContainer.appendChild(timestampDiv);
-
-                    homeworkItem.appendChild(datesContainer);
-                    homeworkList.appendChild(homeworkItem);
-
-                    colItemCount++;
-                    // 判断是否需要换列
-                    if (colItemCount >= maxPerCol && colIdx < colCount - 1) {
-                        colIdx++;
-                        colItemCount = 0;
-                        subjectTitleShown = false; // 下一列同学科不显示标题
-                    }
-                }
+                subjectStates[subject] = {
+                    started: false,  // 是否已经开始显示
+                    completed: false // 是否已经完成显示
+                };
             });
+            
+            // 按顺序处理每个学科
+        subjectOrder.forEach(subject => {
+            const sortedList = sortedSubjects[subject];
+            let itemIdx = 0;
+            
+            while (itemIdx < sortedList.length && !subjectStates[subject].completed) {
+                // 检查是否需要为当前学科创建标题
+                const needsHeader = !subjectStates[subject].started;
+                
+                // 估算添加这个作业项后的高度
+                const itemHeight = 90; // 作业项基础高度
+                const contentHeight = Math.ceil(sortedList[itemIdx].content.length / 30) * 20; // 根据内容长度估算
+                const totalItemHeight = itemHeight + contentHeight;
+                
+                // 如果加上标题，再加标题高度
+                const headerHeight = needsHeader ? 50 : 0;
+                
+                // 如果当前列放不下这个作业项，切换到下一列
+                if (currentColHeight + headerHeight + totalItemHeight > maxColHeight && colIdx < colCount - 1) {
+                    colIdx++;
+                    currentColHeight = 0;
+                }
+                
+                // 修复点：无论当前列是否为空，都需要为新学科创建标题
+                if (needsHeader) {
+                    // 确保有足够的空间显示标题
+                    if (currentColHeight + 50 > maxColHeight && colIdx < colCount - 1) {
+                        colIdx++;
+                        currentColHeight = 0;
+                    }
+                    
+                    const subjectSection = document.createElement('div');
+                    subjectSection.className = 'subject-section';
+                    const subjectTitle = document.createElement('div');
+                    subjectTitle.className = 'subject-title';
+                    subjectTitle.textContent = subject;
+                    subjectSection.appendChild(subjectTitle);
+                    
+                    const homeworkList = document.createElement('ul');
+                    homeworkList.className = 'homework-list';
+                    subjectSection.appendChild(homeworkList);
+                    columns[colIdx].appendChild(subjectSection);
+                    
+                    // 更新学科状态
+                    subjectStates[subject].started = true;
+                    currentColHeight += 50; // 更新当前列高度
+                }
+                
+                // 找到当前列的最后一个subject-section
+                let subjectSection = columns[colIdx].lastElementChild;
+                let homeworkList = null;
+                
+                // 修复点：确保获取当前学科的作业列表
+                if (subjectSection && subjectSection.querySelector('.subject-title').textContent === subject) {
+                    homeworkList = subjectSection.querySelector('.homework-list');
+                } else {
+                    // 创建新的学科section（当跨列时）
+                    subjectSection = document.createElement('div');
+                    subjectSection.className = 'subject-section';
+                    const subjectTitle = document.createElement('div');
+                    subjectTitle.className = 'subject-title';
+                    subjectTitle.textContent = subject;
+                    subjectSection.appendChild(subjectTitle);
+                    
+                    homeworkList = document.createElement('ul');
+                    homeworkList.className = 'homework-list';
+                    subjectSection.appendChild(homeworkList);
+                    columns[colIdx].appendChild(subjectSection);
+                }
+
+                // 添加作业项
+                const submission = sortedList[itemIdx];
+                const homeworkItem = document.createElement('li');
+                homeworkItem.className = 'homework-item';
+                homeworkItem.setAttribute('data-deadline', submission.deadline);
+
+                const contentWrapper = document.createElement('div');
+                contentWrapper.className = 'content-wrapper';
+
+                const contentSpan = document.createElement('span');
+                contentSpan.className = 'content';
+                contentSpan.textContent = submission.content;
+                contentWrapper.appendChild(contentSpan);
+
+                const labelsSpan = document.createElement('span');
+                labelsSpan.className = 'labels';
+                submission.labels.forEach(label => {
+                    const labelTag = document.createElement('span');
+                    labelTag.className = 'label-tag';
+                    labelTag.textContent = label;
+                    labelsSpan.appendChild(labelTag);
+                });
+                contentWrapper.appendChild(labelsSpan);
+                homeworkItem.appendChild(contentWrapper);
+
+                const datesContainer = document.createElement('div');
+                datesContainer.className = 'dates-container';
+
+                const deadlineDiv = document.createElement('div');
+                deadlineDiv.className = 'deadline';
+                deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
+                datesContainer.appendChild(deadlineDiv);
+
+                const timestampDiv = document.createElement('div');
+                timestampDiv.className = 'timestamp';
+                timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
+                datesContainer.appendChild(timestampDiv);
+
+                homeworkItem.appendChild(datesContainer);
+                homeworkList.appendChild(homeworkItem);
+                
+                // 更新当前列高度
+                currentColHeight += totalItemHeight;
+                itemIdx++;
+                
+                // 如果已经处理完所有作业项，标记学科为已完成
+                if (itemIdx >= sortedList.length) {
+                    subjectStates[subject].completed = true;
+                }
+            }
+        });
 
             // 添加到页面
             columns.forEach(col => container.appendChild(col));
@@ -307,6 +370,7 @@
             // 应用隐藏过期作业设置
             applyHideExpired();
         }
+
         // 打开设置弹窗
         function openSettings() {
             document.getElementById("settingsModal").style.display = "block";
