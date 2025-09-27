@@ -36,47 +36,56 @@ submissions = load_submissions()
 def homepage():
     return render_template('home.html')
 
-@app.route('/input', methods=['GET', 'POST'])
-def inputpage():
-    if request.method == 'POST':
-        # 获取表单数据
-        subject = request.form.get('subject')
-        content = request.form.get('content')
-        labels = request.form.getlist('labels')  # 获取多选值
-        deadline = request.form.get('deadline')
-        
-        # 基本验证
-        errors = []
-        if not subject:
-            errors.append("请选择学科")
-        if not content or len(content.strip()) < 5:
-            errors.append("内容至少需要5个字符")
-        if not deadline:
-            errors.append("请选择截止日期")
-        
-        if errors:
-            for error in errors:
-                flash(error, 'error')
-        else:
-            # 加载最新的数据
-            global submissions
-            submissions = load_submissions()
+class homework:
+    '''
+    def __init__(self, subject, content, labels, deadline):
+        self.subject = subject
+        self.content = content
+        self.labels = labels
+        self.deadline = deadline
+        self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        '''
+    @app.route('/homework/publish', methods=['GET', 'POST'])
+    def homework_publish():
+        if request.method == 'POST':
+            # 获取表单数据
+            subject = request.form.get('subject')
+            content = request.form.get('content')
+            labels = request.form.getlist('labels')  # 获取多选值
+            deadline = request.form.get('deadline')
             
-            # 保存提交的数据
-            submission = {
-                'id': len(submissions) + 1,
-                'subject': subject,
-                'content': content,
-                'labels': labels,
-                'deadline': deadline,
-                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            }
-            submissions.append(submission)
-            save_submissions(submissions)
-            flash('表单提交成功！', 'success')
-            return redirect(url_for('view_submissions'))
-    
-    return render_template('input.html', now=datetime.now())
+            # 基本验证
+            errors = []
+            if not subject:
+                errors.append("请选择学科")
+            if not content or len(content.strip()) < 5:
+                errors.append("内容至少需要5个字符")
+            if not deadline:
+                errors.append("请选择截止日期")
+            
+            if errors:
+                for error in errors:
+                    flash(error, 'error')
+            else:
+                # 加载最新的数据
+                global submissions
+                submissions = load_submissions()
+                
+                # 保存提交的数据
+                submission = {
+                    'id': len(submissions) + 1,
+                    'subject': subject,
+                    'content': content,
+                    'labels': labels,
+                    'deadline': deadline,
+                    'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+                submissions.append(submission)
+                save_submissions(submissions)
+                flash('表单提交成功！', 'success')
+                return redirect(url_for('view_submissions'))
+        
+        return render_template('input.html', now=datetime.now())
 
 @app.route('/submissions')
 def view_submissions():
@@ -84,5 +93,6 @@ def view_submissions():
     submissions = load_submissions()
     return render_template('submissions.html', submissions=submissions)
 
+homework=homework()
 if __name__ == '__main__':
     app.run(debug=True,port=2025)
