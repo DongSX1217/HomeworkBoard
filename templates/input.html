@@ -70,14 +70,14 @@
                             <div class="mb-3">
                                 <label class="form-label">标签</label>
                                 <div class="checkbox-group">
-                                    {% for label in ['课堂前由课代表/小组长检查', '课堂前由授课教师检查', '小组任务', '自行核对答案', '复习作业', '预习作业', '拓展任务', '选做', '教师布置'] %}
+                                    {% for label in labels %}
                                     <div class="checkbox-item">
-                                        <input type="checkbox" class="form-check-input" name="labels" id="label{{ loop.index }}" value="{{ label }}">
-                                        <label class="form-check-label" for="label{{ loop.index }}">{{ label }}</label>
+                                        <input type="checkbox" class="form-check-input" name="label_ids" id="label{{ label.id }}" value="{{ label.id }}">
+                                        <label class="form-check-label" for="label{{ label.id }}">{{ label.name }}</label>
                                     </div>
                                     {% endfor %}
                                 </div>
-                                <div class="help-text">选择适用的标签有助于分类和管理。</div>
+                                <div class="help-text">选择适用的标签有助于分类和管理。<a href="/label/edit" target="_blank">管理标签</a></div>
                             </div>
                         </div>
                         

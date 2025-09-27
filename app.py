@@ -13,6 +13,7 @@ if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
 DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
+LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
 
 def load_submissions():
     """从JSON文件加载提交数据"""
@@ -28,6 +29,35 @@ def save_submissions(submissions):
     """将提交数据保存到JSON文件"""
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(submissions, f, ensure_ascii=False, indent=2)
+
+def load_labels():
+    """从JSON文件加载标签数据"""
+    if os.path.exists(LABELS_FILE):
+        with open(LABELS_FILE, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
+    # 默认标签
+    default_labels = [
+        {"id": 1, "name": "课堂前由课代表/小组长检查"},
+        {"id": 2, "name": "课堂前由授课教师检查"},
+        {"id": 3, "name": "小组任务"},
+        {"id": 4, "name": "自行核对答案"},
+        {"id": 5, "name": "复习作业"},
+        {"id": 6, "name": "预习作业"},
+        {"id": 7, "name": "拓展任务"},
+        {"id": 8, "name": "选做"},
+        {"id": 9, "name": "教师布置"},
+        {"id": 10, "name": "未知标签"}
+    ]
+    save_labels(default_labels)
+    return default_labels
+
+def save_labels(labels):
+    """将标签数据保存到JSON文件"""
+    with open(LABELS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(labels, f, ensure_ascii=False, indent=2)
 
 # 初始化数据
 submissions = load_submissions()
@@ -47,11 +77,14 @@ class homework:
         '''
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():
+        # 每次访问时都重新加载标签，确保获取最新数据
+        labels = load_labels()
+        
         if request.method == 'POST':
             # 获取表单数据
             subject = request.form.get('subject')
             content = request.form.get('content')
-            labels = request.form.getlist('labels')  # 获取多选值
+            label_ids = request.form.getlist('label_ids')  # 获取多选值
             deadline = request.form.get('deadline')
             
             # 基本验证
@@ -68,15 +101,27 @@ class homework:
                     flash(error, 'error')
             else:
                 # 加载最新的数据
-                global submissions
                 submissions = load_submissions()
+                
+                # 处理标签
+                selected_labels = []
+                for label_id in label_ids:
+                    label_obj = next((label for label in labels if label["id"] == int(label_id)), None)
+                    if label_obj:
+                        selected_labels.append(label_obj["name"])
+                
+                # 如果没有选择标签，则添加"未知标签"
+                if not selected_labels:
+                    unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
+                    if unknown_label:
+                        selected_labels.append(unknown_label["name"])
                 
                 # 保存提交的数据
                 submission = {
                     'id': len(submissions) + 1,
                     'subject': subject,
                     'content': content,
-                    'labels': labels,
+                    'labels': selected_labels,
                     'deadline': deadline,
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
@@ -85,14 +130,89 @@ class homework:
                 flash('表单提交成功！', 'success')
                 return redirect(url_for('view_submissions'))
         
-        return render_template('input.html', now=datetime.now())
+        # 每次访问GET请求时都重新加载标签
+        labels = load_labels()
+        return render_template('input.html', now=datetime.now(), labels=labels)
 
 @app.route('/submissions')
 def view_submissions():
     # 每次访问时都重新加载数据，确保获取最新数据
     submissions = load_submissions()
-    return render_template('submissions.html', submissions=submissions)
+    labels = load_labels()
+    return render_template('submissions.html', submissions=submissions, labels=labels)
+
+class Label:
+    @app.route('/label/edit', methods=['GET', 'POST'])
+    def edit_labels():
+        # 每次访问时都重新加载标签，确保获取最新数据
+        labels = load_labels()
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'add':
+                # 添加新标签
+                new_label_name = request.form.get('new_label_name')
+                if new_label_name:
+                    # 检查标签是否已存在
+                    if not any(label["name"] == new_label_name for label in labels):
+                        # 生成新的ID（避免与现有ID冲突）
+                        new_id = max([label["id"] for label in labels]) + 1 if labels else 1
+                        labels.append({"id": new_id, "name": new_label_name})
+                        save_labels(labels)
+                        flash('标签添加成功！', 'success')
+                    else:
+                        flash('标签已存在！', 'error')
+                else:
+                    flash('标签名称不能为空！', 'error')
+                    
+            elif action == 'update':
+                # 更新标签名称
+                label_id = int(request.form.get('label_id'))
+                new_name = request.form.get('new_name')
+                
+                # 查找"未知标签"，防止被修改
+                unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
+                
+                if label_id and new_name:
+                    # 确保不修改"未知标签"
+                    if unknown_label and unknown_label["id"] == label_id:
+                        flash('无法修改"未知标签"！', 'error')
+                    else:
+                        # 更新标签名称
+                        for label in labels:
+                            if label["id"] == label_id:
+                                label["name"] = new_name
+                                break
+                        save_labels(labels)
+                        flash('标签更新成功！', 'success')
+                else:
+                    flash('无效的标签ID或名称！', 'error')
+                    
+            elif action == 'delete':
+                # 删除标签
+                label_id = int(request.form.get('label_id'))
+                
+                # 查找"未知标签"，防止被删除
+                unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
+                
+                # 确保不删除"未知标签"
+                if unknown_label and unknown_label["id"] == label_id:
+                    flash('无法删除"未知标签"！', 'error')
+                else:
+                    # 删除标签
+                    labels = [label for label in labels if label["id"] != label_id]
+                    save_labels(labels)
+                    flash('标签删除成功！', 'success')
+            
+            # 重新加载标签
+            labels = load_labels()
+        
+        # 重新加载标签
+        labels = load_labels()
+        return render_template('label_edit.html', labels=labels)
 
 homework=homework()
+label = Label()
 if __name__ == '__main__':
     app.run(debug=True,port=2025)
