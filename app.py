@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, render_template, request, flash, redirect, url_for
+from flask import Flask, render_template, request, flash, redirect, url_for, session
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
 import http.client
 from datetime import datetime
@@ -131,6 +131,17 @@ class Homework:
         labels = load_labels()
         
         if request.method == 'POST':
+            # 检查是否是返回修改操作
+            return_to_edit = request.form.get('return_to_edit')
+            if return_to_edit:
+                # 将表单数据保存到session
+                session['publish_subject'] = request.form.get('subject')
+                session['publish_content'] = request.form.get('content')
+                session['publish_label_ids'] = [int(x) for x in request.form.getlist('label_ids')]
+                session['publish_deadline'] = request.form.get('deadline')
+                # 重定向到发布页面，不清除session数据
+                return redirect(url_for('homework_publish'))
+            
             # 检查是否是确认操作
             confirm = request.form.get('confirm')
             
@@ -153,9 +164,6 @@ class Homework:
                 for error in errors:
                     flash(error, 'error')
             else:
-                # 加载最新的数据
-                submissions = load_submissions()
-                
                 # 处理标签
                 selected_labels = []
                 for label_id in label_ids:
@@ -177,6 +185,11 @@ class Homework:
                         'labels': selected_labels,
                         'deadline': deadline
                     }
+                    # 将表单数据保存到session
+                    session['publish_subject'] = subject
+                    session['publish_content'] = content
+                    session['publish_label_ids'] = [int(x) for x in label_ids]
+                    session['publish_deadline'] = deadline
                     return render_template('homework_publish.html', 
                                          now=datetime.now(), 
                                          labels=labels,
@@ -198,6 +211,12 @@ class Homework:
                 submissions.append(submission)
                 save_submissions(submissions)
                 
+                # 清除session中的发布数据
+                session.pop('publish_subject', None)
+                session.pop('publish_content', None)
+                session.pop('publish_label_ids', None)
+                session.pop('publish_deadline', None)
+                
                 # 记录日志
                 log_operation("添加作业", {
                     "subject": subject,
@@ -208,6 +227,12 @@ class Homework:
                 
                 flash('作业布置成功！', 'success')
                 return redirect(url_for('view_submissions'))
+        else:
+            # GET请求时清除session中的发布数据
+            session.pop('publish_subject', None)
+            session.pop('publish_content', None)
+            session.pop('publish_label_ids', None)
+            session.pop('publish_deadline', None)
         
         # 每次访问GET请求时都重新加载标签
         labels = load_labels()
@@ -226,6 +251,17 @@ class Homework:
             return redirect(url_for('view_submissions'))
         
         if request.method == 'POST':
+            # 检查是否是返回修改操作
+            return_to_edit = request.form.get('return_to_edit')
+            if return_to_edit:
+                # 将表单数据保存到session
+                session['edit_subject_' + str(homework_id)] = request.form.get('subject')
+                session['edit_content_' + str(homework_id)] = request.form.get('content')
+                session['edit_label_ids_' + str(homework_id)] = [int(x) for x in request.form.getlist('label_ids')]
+                session['edit_deadline_' + str(homework_id)] = request.form.get('deadline')
+                # 重定向到编辑页面，不清除session数据
+                return redirect(url_for('edit_homework', homework_id=homework_id))
+            
             # 检查是否是确认操作
             confirm = request.form.get('confirm')
             
@@ -271,6 +307,11 @@ class Homework:
                         'deadline': deadline,
                         'timestamp': homework['timestamp']
                     }
+                    # 将表单数据保存到session
+                    session['edit_subject_' + str(homework_id)] = subject
+                    session['edit_content_' + str(homework_id)] = content
+                    session['edit_label_ids_' + str(homework_id)] = [int(x) for x in label_ids]
+                    session['edit_deadline_' + str(homework_id)] = deadline
                     return render_template('homework_edit.html', 
                                          homework=updated_homework, 
                                          labels=labels, 
@@ -289,6 +330,12 @@ class Homework:
                 # 保存更新后的数据
                 save_submissions(submissions)
                 
+                # 清除session中的编辑数据
+                session.pop('edit_subject_' + str(homework_id), None)
+                session.pop('edit_content_' + str(homework_id), None)
+                session.pop('edit_label_ids_' + str(homework_id), None)
+                session.pop('edit_deadline_' + str(homework_id), None)
+                
                 # 记录日志
                 log_operation("编辑作业", {
                     "id": homework_id,
@@ -300,8 +347,30 @@ class Homework:
                 
                 flash('作业更新成功！', 'success')
                 return redirect(url_for('view_submissions'))
-        
-        return render_template('homework_edit.html', homework=homework, labels=labels, now=datetime.now())
+        else:
+            # 准备编辑数据，优先使用session中的数据
+            subject = session.get('edit_subject_' + str(homework_id), homework['subject'])
+            content = session.get('edit_content_' + str(homework_id), homework['content'])
+            label_ids = session.get('edit_label_ids_' + str(homework_id), None)
+            deadline = session.get('edit_deadline_' + str(homework_id), homework['deadline'])
+
+            # 处理标签
+            if label_ids is not None:
+                selected_labels = [label['name'] for label in labels if label['id'] in label_ids]
+            else:
+                selected_labels = homework['labels']
+
+            # 构造临时作业对象
+            temp_homework = {
+                'id': homework_id,
+                'subject': subject,
+                'content': content,
+                'labels': selected_labels,
+                'deadline': deadline,
+                'timestamp': homework['timestamp']
+            }
+
+            return render_template('homework_edit.html', homework=temp_homework, labels=labels, now=datetime.now())
     
     @app.route('/homework/delete/<int:homework_id>', methods=['POST'])
     def delete_homework(homework_id):

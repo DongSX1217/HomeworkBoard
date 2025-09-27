@@ -91,7 +91,7 @@
                         <input type="hidden" name="confirm" value="1">
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{{ url_for('homework_publish') }}" class="btn btn-outline-secondary me-md-2"><i class="fas fa-edit me-1"></i>返回修改</a>
+                            <button type="submit" name="return_to_edit" value="1" class="btn btn-outline-secondary me-md-2"><i class="fas fa-edit me-1"></i>返回修改</button>
                             <button type="submit" class="btn btn-success"><i class="fas fa-check-circle me-1"></i>确认提交</button>
                         </div>
                     </form>
@@ -109,7 +109,7 @@
                                 <div>
                                     {% for subject in ['语文', '数学', '英语', '物理', '化学', '生物学', '历史', '地理', '思想政治', '其他'] %}
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="subject" id="subject{{ loop.index }}" value="{{ subject }}" {{ 'checked' if loop.first else '' }}>
+                                        <input class="form-check-input" type="radio" name="subject" id="subject{{ loop.index }}" value="{{ subject }}" {{ 'checked' if session.get('publish_subject') == subject or (loop.first and not session.get('publish_subject')) else '' }}>
                                         <label class="form-check-label" for="subject{{ loop.index }}">{{ subject }}</label>
                                     </div>
                                     {% endfor %}
@@ -124,7 +124,7 @@
                             
                             <div class="mb-3">
                                 <label for="content" class="form-label">内容 *</label>
-                                <textarea class="form-control" id="content" name="content" rows="5" placeholder="请输入详细内容..."></textarea>
+                                <textarea class="form-control" id="content" name="content" rows="5" placeholder="请输入详细内容...">{{ session.get('publish_content', '') }}</textarea>
                                 <div class="help-text">内容至少需要5个字符，请详细描述您要提交的内容。</div>
                             </div>
                         </div>
@@ -139,7 +139,7 @@
                                 <div class="checkbox-group">
                                     {% for label in labels %}
                                     <div class="checkbox-item">
-                                        <input type="checkbox" class="form-check-input" name="label_ids" id="label{{ label.id }}" value="{{ label.id }}">
+                                        <input type="checkbox" class="form-check-input" name="label_ids" id="label{{ label.id }}" value="{{ label.id }}" {{ 'checked' if label.id in session.get('publish_label_ids', []) else '' }}>
                                         <label class="form-check-label" for="label{{ label.id }}">{{ label.name }}</label>
                                     </div>
                                     {% endfor %}
@@ -155,7 +155,7 @@
                             
                             <div class="mb-3">
                                 <label for="deadline" class="form-label">截止日期 *</label>
-                                <input type="date" class="form-control" id="deadline" name="deadline" min="{{ now.strftime('%Y-%m-%d') }}">
+                                <input type="date" class="form-control" id="deadline" name="deadline" value="{{ session.get('publish_deadline', '') }}" min="{{ now.strftime('%Y-%m-%d') }}">
                                 <div class="help-text">请选择截止日期，不能选择过去的日期。</div>
                             </div>
                         </div>
