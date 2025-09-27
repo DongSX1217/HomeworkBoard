@@ -2,7 +2,7 @@ import flask
 from flask import Flask, render_template, request, flash, redirect, url_for, session
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
 import http.client
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__) # 创建 Flask 应用
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
@@ -157,8 +157,7 @@ class Homework:
                 errors.append("请选择学科")
             if not content or len(content.strip()) < 5:
                 errors.append("内容至少需要5个字符")
-            if not deadline:
-                errors.append("请选择截止日期")
+            # 移除了必须填写截止日期的要求
             
             if errors:
                 for error in errors:
@@ -183,7 +182,7 @@ class Homework:
                         'subject': subject,
                         'content': content,
                         'labels': selected_labels,
-                        'deadline': deadline
+                        'deadline': deadline if deadline else '无截止日期'
                     }
                     # 将表单数据保存到session
                     session['publish_subject'] = subject
@@ -192,6 +191,7 @@ class Homework:
                     session['publish_deadline'] = deadline
                     return render_template('homework_publish.html', 
                                          now=datetime.now(), 
+                                         tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
                                          labels=labels,
                                          confirm_data=confirm_data)
                 
@@ -205,7 +205,7 @@ class Homework:
                     'subject': subject,
                     'content': content,
                     'labels': selected_labels,
-                    'deadline': deadline,
+                    'deadline': deadline if deadline else '',
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
                 submissions.append(submission)
@@ -222,7 +222,7 @@ class Homework:
                     "subject": subject,
                     "content": content,
                     "labels": selected_labels,
-                    "deadline": deadline
+                    "deadline": deadline if deadline else '无截止日期'
                 }, request.remote_addr)
                 
                 flash('作业布置成功！', 'success')
@@ -236,7 +236,10 @@ class Homework:
         
         # 每次访问GET请求时都重新加载标签
         labels = load_labels()
-        return render_template('homework_publish.html', now=datetime.now(), labels=labels)
+        return render_template('homework_publish.html', 
+                             now=datetime.now(), 
+                             tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                             labels=labels)
 
     @app.route('/homework/edit/<int:homework_id>', methods=['GET', 'POST'])
     def edit_homework(homework_id):
@@ -277,9 +280,11 @@ class Homework:
                 errors.append("请选择学科")
             if not content or len(content.strip()) < 5:
                 errors.append("内容至少需要5个字符")
+            '''
             if not deadline:
                 errors.append("请选择截止日期")
-            
+            '''
+
             if errors:
                 for error in errors:
                     flash(error, 'error')
@@ -304,7 +309,7 @@ class Homework:
                         'subject': subject,
                         'content': content,
                         'labels': selected_labels,
-                        'deadline': deadline,
+                        'deadline': deadline if deadline else '',
                         'timestamp': homework['timestamp']
                     }
                     # 将表单数据保存到session
@@ -323,7 +328,7 @@ class Homework:
                 homework['subject'] = subject
                 homework['content'] = content
                 homework['labels'] = selected_labels
-                homework['deadline'] = deadline
+                homework['deadline'] = deadline if deadline else ''
                 # 更新时间戳为当前时间（编辑时间）
                 homework['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 
@@ -342,7 +347,7 @@ class Homework:
                     "subject": subject,
                     "content": content,
                     "labels": selected_labels,
-                    "deadline": deadline
+                    "deadline": deadline if deadline else '无截止日期'
                 }, request.remote_addr)
                 
                 flash('作业更新成功！', 'success')
@@ -366,7 +371,7 @@ class Homework:
                 'subject': subject,
                 'content': content,
                 'labels': selected_labels,
-                'deadline': deadline,
+                'deadline': deadline if deadline else '',
                 'timestamp': homework['timestamp']
             }
 

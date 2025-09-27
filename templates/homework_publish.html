@@ -72,12 +72,12 @@
                         </div>
                     </div>
                     
-                    <div class="card mb-3">
+                     <div class="card mb-3">
                         <div class="card-header">
                             <strong>截止日期</strong>
                         </div>
                         <div class="card-body">
-                            {{ confirm_data.deadline }}
+                            {{ confirm_data.deadline if confirm_data.deadline != '无截止日期' else '无截止日期' }}
                         </div>
                     </div>
                     
@@ -87,7 +87,7 @@
                         {% for label in confirm_data.labels %}
                         <input type="hidden" name="label_ids" value="{{ labels | selectattr('name', 'equalto', label) | map(attribute='id') | first }}">
                         {% endfor %}
-                        <input type="hidden" name="deadline" value="{{ confirm_data.deadline }}">
+                        <input type="hidden" name="deadline" value="{{ confirm_data.deadline if confirm_data.deadline != '无截止日期' else '' }}">
                         <input type="hidden" name="confirm" value="1">
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
@@ -150,13 +150,16 @@
                         
                         <!-- 截止日期部分 -->
                         <div class="form-section">
-                            <h3 class="section-title"><i class="fas fa-calendar-alt"></i>截止日期</h3>
+                             <h3 class="section-title"><i class="fas fa-calendar-alt"></i>截止日期</h3>
                             <p class="help-text">请设置任务的截止日期</p>
                             
                             <div class="mb-3">
-                                <label for="deadline" class="form-label">截止日期 *</label>
-                                <input type="date" class="form-control" id="deadline" name="deadline" value="{{ session.get('publish_deadline', '') }}" min="{{ now.strftime('%Y-%m-%d') }}">
-                                <div class="help-text">请选择截止日期，不能选择过去的日期。</div>
+                                <label for="deadline" class="form-label">截止日期</label>
+                                <div class="input-group">
+                                    <input type="date" class="form-control" id="deadline" name="deadline" value="{{ session.get('publish_deadline', '') if session.get('publish_deadline', '') else tomorrow }}" min="{{ now.strftime('%Y-%m-%d') }}">
+                                    <button class="btn btn-outline-secondary" type="button" id="clear-deadline">清空</button>
+                                </div>
+                                <div class="help-text">可以选择截止日期，也可以留空表示无截止日期。</div>
                             </div>
                         </div>
                         
