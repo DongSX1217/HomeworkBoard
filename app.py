@@ -158,7 +158,7 @@ class Homework:
                 }
                 submissions.append(submission)
                 save_submissions(submissions)
-                flash('表单提交成功！', 'success')
+                flash('作业布置成功！', 'success')
                 return redirect(url_for('view_submissions'))
         
         # 每次访问GET请求时都重新加载标签
@@ -215,7 +215,8 @@ class Homework:
                 homework['content'] = content
                 homework['labels'] = selected_labels
                 homework['deadline'] = deadline
-                # 注意：保留原始的timestamp
+                # 更新时间戳为当前时间（编辑时间）
+                homework['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 
                 # 保存更新后的数据
                 save_submissions(submissions)
