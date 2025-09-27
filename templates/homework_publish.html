@@ -183,6 +183,11 @@
         document.addEventListener('DOMContentLoaded', function() {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('deadline').min = today;
+            
+            // 添加清空截止日期功能
+            document.getElementById('clear-deadline').addEventListener('click', function() {
+                document.getElementById('deadline').value = '';
+            });
         });
     </script>
 </body>
