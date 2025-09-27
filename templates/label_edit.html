@@ -7,220 +7,163 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            background-color: #f8f9fa;
-            padding-top: 20px;
-        }
-        
-        .card {
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.05);
-        }
-        
-        .back-btn {
-            margin-bottom: 20px;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 5px;
-        }
-        
-        .action-buttons form {
-            margin: 0;
-        }
+        body { background-color: #f8f9fa; padding-top: 20px; }
+        .card { margin-bottom: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.05);}
+        .back-btn { margin-bottom: 20px; }
+        .action-buttons { display: flex; gap: 5px; }
+        .action-buttons form { margin: 0; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- 返回按钮 -->
-        <div class="back-btn">
-            <a href="/homework/publish" class="btn btn-outline-primary">
-                <i class="fas fa-arrow-left me-1"></i>返回表单
-            </a>
+<div class="container">
+
+    <!-- 返回按钮 -->
+    <div class="back-btn">
+        <a href="/homework/publish" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left me-1"></i>返回表单
+        </a>
+    </div>
+
+    <!-- 页面标题 -->
+    <h1 class="text-center mb-4">
+        <i class="fas fa-tags me-2"></i>标签管理
+    </h1>
+
+    <!-- 消息提示 -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        
-        <!-- 页面标题 -->
-        <h1 class="text-center mb-4">
-            <i class="fas fa-tags me-2"></i>标签管理
-        </h1>
-        
-        <!-- 消息提示 -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" 
-                         role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        
-        <div class="row">
-            <!-- 添加新标签 -->
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-plus-circle me-1"></i>添加新标签
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="/label/edit">
-                            <input type="hidden" name="action" value="add">
-                            <div class="row g-2">
-                                <div class="col-md-8">
-                                    <input type="text" 
-                                           class="form-control" 
-                                           name="new_label_name" 
-                                           placeholder="请输入新标签名称" 
-                                           required>
-                                </div>
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-plus me-1"></i>添加标签
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+        {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="row">
+        <!-- 添加新标签 -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-plus-circle me-1"></i>添加新标签</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="/label/edit" class="row g-2">
+                        <input type="hidden" name="action" value="add">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control" name="new_label_name" placeholder="请输入新标签名称" required>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-1"></i>添加标签
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-            
-            <!-- 标签列表 -->
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">
-                            <i class="fas fa-list me-1"></i>现有标签
-                        </h5>
+        </div>
+
+        <!-- 标签列表 -->
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-list me-1"></i>现有标签</h5>
+                </div>
+                <div class="card-body">
+                    {% if labels %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>标签名称</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for label in labels %}
+                                <tr>
+                                    <td>{{ label.id }}</td>
+                                    <td>
+                                        {% if label.name == "未知标签" %}
+                                            <span class="text-muted">{{ label.name }} (不可编辑)</span>
+                                        {% else %}
+                                            <span>{{ label.name }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if label.name == "未知标签" %}
+                                            <span class="text-muted">不可编辑</span>
+                                        {% else %}
+                                            <div class="action-buttons">
+                                                <button type="button" class="btn btn-sm btn-outline-primary edit-btn"
+                                                    data-id="{{ label.id }}" data-name="{{ label.name }}">
+                                                    <i class="fas fa-edit"></i> 编辑
+                                                </button>
+                                                <form method="POST" action="/label/edit"
+                                                    onsubmit="return confirm('确定要删除标签 &quot;{{ label.name }}&quot; 吗？')">
+                                                    <input type="hidden" name="action" value="delete">
+                                                    <input type="hidden" name="label_id" value="{{ label.id }}">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash"></i> 删除
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
-                    <div class="card-body">
-                        {% if labels %}
-                            <div class="table-responsive">
-                                <table class="table table-striped">
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>标签名称</th>
-                                            <th>操作</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for label in labels %}
-                                            <tr>
-                                                <td>{{ label.id }}</td>
-                                                <td>
-                                                    {% if label.name == "未知标签" %}
-                                                        <span class="text-muted">
-                                                            {{ label.name }} (不可编辑)
-                                                        </span>
-                                                    {% else %}
-                                                        <span>{{ label.name }}</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td>
-                                                    {% if label.name == "未知标签" %}
-                                                        <span class="text-muted">不可编辑</span>
-                                                    {% else %}
-                                                        <!-- 编辑按钮 -->
-                                                        <div class="action-buttons">
-                                                            <button type="button" 
-                                                                    class="btn btn-sm btn-outline-primary edit-btn" 
-                                                                    data-id="{{ label.id }}" 
-                                                                    data-name="{{ label.name }}">
-                                                                <i class="fas fa-edit"></i> 编辑
-                                                            </button>
-                                                            
-                                                            <!-- 删除按钮 -->
-                                                            <form method="POST" 
-                                                                  action="/label/edit" 
-                                                                  onsubmit="return confirm('确定要删除标签 \"{{ label.name }}\" 吗？')">
-                                                                <input type="hidden" 
-                                                                       name="action" 
-                                                                       value="delete">
-                                                                <input type="hidden" 
-                                                                       name="label_id" 
-                                                                       value="{{ label.id }}">
-                                                                <button type="submit" 
-                                                                        class="btn btn-sm btn-outline-danger">
-                                                                    <i class="fas fa-trash"></i> 删除
-                                                                </button>
-                                                            </form>
-                                                        </div>
-                                                    {% endif %}
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% else %}
-                            <div class="alert alert-info text-center">
-                                <i class="fas fa-info-circle me-2"></i>暂无标签
-                            </div>
-                        {% endif %}
+                    {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>暂无标签
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- 编辑模态框 -->
-    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
+<!-- 编辑模态框 -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="/label/edit">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalLabel">编辑标签</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form method="POST" action="/label/edit">
-                    <div class="modal-body">
-                        <input type="hidden" name="action" value="update">
-                        <input type="hidden" id="edit_label_id" name="label_id">
-                        <div class="mb-3">
-                            <label for="edit_label_name" class="form-label">标签名称</label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="edit_label_name" 
-                                   name="new_name" 
-                                   required>
-                        </div>
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" id="edit_label_id" name="label_id">
+                    <div class="mb-3">
+                        <label for="edit_label_name" class="form-label">标签名称</label>
+                        <input type="text" class="form-control" id="edit_label_name" name="new_name" required>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            取消
-                        </button>
-                        <button type="submit" class="btn btn-primary">
-                            保存更改
-                        </button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">保存更改</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <script>
-        // 编辑按钮点击事件
-        document.querySelectorAll('.edit-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const id = this.getAttribute('data-id');
-                const name = this.getAttribute('data-name');
-                
-                document.getElementById('edit_label_id').value = id;
-                document.getElementById('edit_label_name').value = name;
-                
-                // 显示模态框
-                var editModal = new bootstrap.Modal(document.getElementById('editModal'));
-                editModal.show();
-            });
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // 编辑按钮点击事件
+    document.querySelectorAll('.edit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            document.getElementById('edit_label_id').value = this.getAttribute('data-id');
+            document.getElementById('edit_label_name').value = this.getAttribute('data-name');
+            new bootstrap.Modal(document.getElementById('editModal')).show();
         });
-    </script>
+    });
+</script>
 </body>
 </html>
