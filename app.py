@@ -457,9 +457,8 @@ def view_submissions():
 
 class Label:
     def load_labels():
-        global default_labels
         """从JSON文件加载标签数据"""
-        global LABELS_FILE, save_labels
+        global default_labels, LABELS_FILE, save_labels
         if os.path.exists(LABELS_FILE):
             with open(LABELS_FILE, 'r', encoding='utf-8') as f:
                 try:
