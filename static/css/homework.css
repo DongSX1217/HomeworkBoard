@@ -79,8 +79,8 @@ h1 {
 }
 
 .homework-item {
-    padding: 10px;
-    border-bottom: 1px dashed #eee;
+    padding: 6px;
+    border-bottom: 0.5px dashed #eee;
 }
 
 .homework-item:last-child {
@@ -89,15 +89,15 @@ h1 {
 
 /* 作业内容 */
 .content {
-    margin: 8px 0;
+    margin: 4px 0;
     line-height: 1.5;
 }
 
 /* 截止日期 */
 .deadline {
-    color: #e74c3c;
+    color: #751ce0;
     font-weight: bold;
-    margin: 5px 0;
+    margin: 3px 0;
 }
 
 /* 标签样式 */
@@ -118,7 +118,7 @@ h1 {
 /* 时间戳 */
 .timestamp {
     color: #7f8c8d;
-    font-size: 0.85em;
+    font-size: 0.7em;
     margin-top: 5px;
 }
 

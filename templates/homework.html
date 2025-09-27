@@ -35,13 +35,8 @@
                     <ul class="homework-list">
                         {% for submission in subject_submissions %}
                         <li class="homework-item">
-                            <div class="content">{{ submission.content }}</div>
-                            <div class="deadline">截止日期：{{ submission.deadline }}</div>
-                            <div class="labels">
-                                {% for label in submission.labels %}
-                                <span class="label-tag">{{ label }}</span>
-                                {% endfor %}
-                            </div>
+                            <div class="content">{{ submission.content }}</div><div class="labels">{% for label in submission.labels %}<span class="label-tag">{{ label }}</span>{% endfor %}</div><div class="deadline">截止日期：{{ submission.deadline }}</div>
+                            
                             <div class="timestamp">发布时间：{{ submission.timestamp }}</div>
                         </li>
                         {% endfor %}
