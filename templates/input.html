@@ -107,7 +107,7 @@
                             <div class="mb-3">
                                 <label class="form-label">学科 *</label>
                                 <div>
-                                    {% for subject in ['数学', '语文', '英语', '物理', '化学', '生物', '历史', '地理', '政治', '其他'] %}
+                                    {% for subject in ['语文', '数学', '英语', '物理', '化学', '生物学', '历史', '地理', '思想政治', '其他'] %}
                                     <div class="form-check form-check-inline">
                                         <input class="form-check-input" type="radio" name="subject" id="subject{{ loop.index }}" value="{{ subject }}" {{ 'checked' if loop.first else '' }}>
                                         <label class="form-check-label" for="subject{{ loop.index }}">{{ subject }}</label>
