@@ -16,6 +16,59 @@ DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
 LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
 LOG_FILE = os.path.join(DATA_DIR, 'operation.log')
 
+default_labels = [
+  {
+    "id": 1,
+    "name": "课前由科代表或小组长检查",
+    "color": "#3498db"
+  },
+  {
+    "id": 2,
+    "name": "课前由授课教师检查",
+    "color": "#3498db"
+  },
+  {
+    "id": 3,
+    "name": "小组任务",
+    "color": "#3498db"
+  },
+  {
+    "id": 4,
+    "name": "自行核对答案",
+    "color": "#9a8e0e"
+  },
+  {
+    "id": 5,
+    "name": "复习作业",
+    "color": "#3498db"
+  },
+  {
+    "id": 6,
+    "name": "预习作业",
+    "color": "#3498db"
+  },
+  {
+    "id": 7,
+    "name": "拓展任务",
+    "color": "#9f6019"
+  },
+  {
+    "id": 8,
+    "name": "选做",
+    "color": "#2eba1c"
+  },
+  {
+    "id": 9,
+    "name": "教师布置",
+    "color": "#3498db"
+  },
+  {
+    "id": 0,
+    "name": "未知标签",
+    "color": "#808080"
+  }
+]
+
 def load_submissions():
     """从JSON文件加载提交数据"""
     if os.path.exists(DATA_FILE):
@@ -404,6 +457,7 @@ def view_submissions():
 
 class Label:
     def load_labels():
+        global default_labels
         """从JSON文件加载标签数据"""
         global LABELS_FILE, save_labels
         if os.path.exists(LABELS_FILE):
@@ -420,19 +474,6 @@ class Label:
                     return labels
                 except json.JSONDecodeError:
                     pass
-        # 默认标签
-        default_labels = [
-            {"id": 1, "name": "课堂前由课代表/小组长检查", "color": "#3498db"},
-            {"id": 2, "name": "课堂前由授课教师检查", "color": "#3498db"},
-            {"id": 3, "name": "小组任务", "color": "#3498db"},
-            {"id": 4, "name": "自行核对答案", "color": "#3498db"},
-            {"id": 5, "name": "复习作业", "color": "#3498db"},
-            {"id": 6, "name": "预习作业", "color": "#3498db"},
-            {"id": 7, "name": "拓展任务", "color": "#3498db"},
-            {"id": 8, "name": "选做", "color": "#3498db"},
-            {"id": 9, "name": "教师布置", "color": "#3498db"},
-            {"id": 10, "name": "未知标签", "color": "#808080"}
-        ]
         save_labels(default_labels)
         return default_labels
     @app.route('/label/edit', methods=['GET', 'POST'])
