@@ -7,8 +7,30 @@ from datetime import datetime
 app = Flask(__name__) # 创建 Flask 应用
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
 
-# 简单的数据存储（生产环境中应使用数据库）
-submissions = []
+# 确保data目录存在
+DATA_DIR = 'data'
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
+
+def load_submissions():
+    """从JSON文件加载提交数据"""
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
+    return []
+
+def save_submissions(submissions):
+    """将提交数据保存到JSON文件"""
+    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+        json.dump(submissions, f, ensure_ascii=False, indent=2)
+
+# 初始化数据
+submissions = load_submissions()
 
 @app.route('/')
 def homepage():
@@ -36,6 +58,10 @@ def inputpage():
             for error in errors:
                 flash(error, 'error')
         else:
+            # 加载最新的数据
+            global submissions
+            submissions = load_submissions()
+            
             # 保存提交的数据
             submission = {
                 'id': len(submissions) + 1,
@@ -46,6 +72,7 @@ def inputpage():
                 'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
             submissions.append(submission)
+            save_submissions(submissions)
             flash('表单提交成功！', 'success')
             return redirect(url_for('view_submissions'))
     
@@ -53,6 +80,8 @@ def inputpage():
 
 @app.route('/submissions')
 def view_submissions():
+    # 每次访问时都重新加载数据，确保获取最新数据
+    submissions = load_submissions()
     return render_template('submissions.html', submissions=submissions)
 
 if __name__ == '__main__':
