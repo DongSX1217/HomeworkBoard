@@ -47,9 +47,9 @@ def inputpage():
             }
             submissions.append(submission)
             flash('表单提交成功！', 'success')
-            return redirect(url_for('index'))
+            return redirect(url_for('view_submissions'))
     
-    return render_template('input.html')
+    return render_template('input.html', now=datetime.now())
 
 @app.route('/submissions')
 def view_submissions():
