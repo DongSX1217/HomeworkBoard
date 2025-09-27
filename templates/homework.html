@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作业公告板</title>
+    <link rel="stylesheet" href="/static/css/homework.css">
+</head>
+<body>
+    <div class="container">
+        <h1>XXXX学校高一X班作业公告板</h1>
+        
+        <div class="control-panel">
+            <div class="control-group">
+                <label for="refreshInterval">刷新间隔（秒）：</label>
+                <input type="number" id="refreshInterval" min="10" max="3600" value="60">
+                <button onclick="setRefresh()">设置</button>
+            </div>
+            <div class="control-group">
+                <label for="fontSize">字体大小：</label>
+                <select id="fontSize" onchange="changeFontSize()">
+                    <option value="14">小</option>
+                    <option value="16" selected>中</option>
+                    <option value="18">大</option>
+                    <option value="20">超大</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="columns" id="homeworkContainer">
+            {% if submissions %}
+                {% for subject, subject_submissions in submissions.items() %}
+                <div class="subject-section">
+                    <div class="subject-title">{{ subject }}</div>
+                    <ul class="homework-list">
+                        {% for submission in subject_submissions %}
+                        <li class="homework-item">
+                            <div class="content">{{ submission.content }}</div>
+                            <div class="deadline">截止日期：{{ submission.deadline }}</div>
+                            <div class="labels">
+                                {% for label in submission.labels %}
+                                <span class="label-tag">{{ label }}</span>
+                                {% endfor %}
+                            </div>
+                            <div class="timestamp">发布时间：{{ submission.timestamp }}</div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-submissions">暂无作业信息</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        let refreshInterval;
+        let intervalId;
+        
+        // 设置初始刷新间隔
+        window.onload = function() {
+            refreshInterval = document.getElementById('refreshInterval').value;
+            startAutoRefresh();
+        };
+        
+        // 设置刷新间隔
+        function setRefresh() {
+            const newInterval = document.getElementById('refreshInterval').value;
+            if (newInterval >= 10 && newInterval <= 3600) {
+                refreshInterval = newInterval;
+                if (intervalId) {
+                    clearInterval(intervalId);
+                }
+                startAutoRefresh();
+                alert(`刷新间隔已设置为 ${refreshInterval} 秒`);
+            } else {
+                alert('刷新间隔必须在10-3600秒之间');
+            }
+        }
+        
+        // 开始自动刷新
+        function startAutoRefresh() {
+            intervalId = setInterval(function() {
+                location.reload();
+            }, refreshInterval * 1000);
+        }
+        
+        // 更改字体大小
+        function changeFontSize() {
+            const fontSize = document.getElementById('fontSize').value;
+            document.body.style.fontSize = fontSize + 'px';
+        }
+    </script>
+</body>
+</html>

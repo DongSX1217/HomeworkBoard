@@ -1,0 +1,150 @@
+/* 基础样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Microsoft YaHei", Arial, sans-serif;
+    font-size: 16px;
+    background-color: #f5f5f5;
+    padding: 5px;
+}
+
+/* 主容器 */
+.container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 5px;
+}
+
+/* 标题样式 */
+h1 {
+    text-align: center;
+    font-size: 1.8em;
+    margin: 10px 0;
+    color: #333;
+    font-weight: bold;
+}
+
+/* 控制面板 */
+.control-panel {
+    background-color: #fff;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.control-group {
+    display: inline-block;
+    margin-right: 20px;
+}
+
+.control-group label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+/* 分栏布局 */
+.columns {
+    column-count: 4;
+    column-gap: 15px;
+    column-rule: 1px solid #ddd;
+}
+
+/* 学科区域 */
+.subject-section {
+    background-color: #fff;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    break-inside: avoid;
+    padding: 10px;
+}
+
+.subject-title {
+    font-size: 1.3em;
+    color: #fff;
+    background-color: #4CAF50;
+    padding: 8px 12px;
+    border-radius: 5px 5px 0 0;
+    margin: -10px -10px 10px -10px;
+}
+
+/* 作业列表 */
+.homework-list {
+    list-style-type: none;
+}
+
+.homework-item {
+    padding: 10px;
+    border-bottom: 1px dashed #eee;
+}
+
+.homework-item:last-child {
+    border-bottom: none;
+}
+
+/* 作业内容 */
+.content {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+/* 截止日期 */
+.deadline {
+    color: #e74c3c;
+    font-weight: bold;
+    margin: 5px 0;
+}
+
+/* 标签样式 */
+.labels {
+    margin: 8px 0;
+}
+
+.label-tag {
+    display: inline-block;
+    padding: 3px 8px;
+    margin: 3px;
+    border-radius: 3px;
+    font-size: 0.85em;
+    color: #fff;
+    background-color: #3498db;
+}
+
+/* 时间戳 */
+.timestamp {
+    color: #7f8c8d;
+    font-size: 0.85em;
+    margin-top: 5px;
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .columns {
+        column-count: 3;
+    }
+}
+
+@media (max-width: 900px) {
+    .columns {
+        column-count: 2;
+    }
+}
+
+@media (max-width: 600px) {
+    .columns {
+        column-count: 1;
+    }
+    
+    body {
+        font-size: 14px;
+    }
+    
+    h1 {
+        font-size: 1.5em;
+    }
+}
