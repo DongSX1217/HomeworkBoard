@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑作业</title>
+    <link rel="stylesheet" href="/static/css/homework_publish.css">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 图标 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <h1 class="text-center mb-4"><i class="fas fa-edit me-2"></i>编辑作业</h1>
+                
+                <!-- 消息提示 -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="form-container">
+                    <form method="POST" action="{{ url_for('edit_homework', homework_id=homework.id) }}">
+                        <!-- 学科选择部分 -->
+                        <div class="form-section">
+                            <h3 class="section-title"><i class="fas fa-book"></i>学科选择</h3>
+                            <p class="help-text">请选择相关的学科类别</p>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">学科 *</label>
+                                <div>
+                                    {% for subject in ['语文', '数学', '英语', '物理', '化学', '生物学', '历史', '地理', '思想政治', '其他'] %}
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="subject" id="subject{{ loop.index }}" value="{{ subject }}" {{ 'checked' if homework.subject == subject else '' }}>
+                                        <label class="form-check-label" for="subject{{ loop.index }}">{{ subject }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 内容输入部分 -->
+                        <div class="form-section">
+                            <h3 class="section-title"><i class="fas fa-file-alt"></i>内容详情</h3>
+                            <p class="help-text">请详细描述您要提交的内容</p>
+                            
+                            <div class="mb-3">
+                                <label for="content" class="form-label">内容 *</label>
+                                <textarea class="form-control" id="content" name="content" rows="5" placeholder="请输入详细内容...">{{ homework.content }}</textarea>
+                                <div class="help-text">内容至少需要5个字符，请详细描述您要提交的内容。</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 标签选择部分 -->
+                        <div class="form-section">
+                            <h3 class="section-title"><i class="fas fa-tags"></i>标签选择</h3>
+                            <p class="help-text">请选择适用的标签（可多选）</p>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">标签</label>
+                                <div class="checkbox-group">
+                                    {% for label in labels %}
+                                    <div class="checkbox-item">
+                                        <input type="checkbox" class="form-check-input" name="label_ids" id="label{{ label.id }}" value="{{ label.id }}" {% if label.name in homework.labels %}checked{% endif %}>
+                                        <label class="form-check-label" for="label{{ label.id }}">{{ label.name }}</label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="help-text">选择适用的标签有助于分类和管理。<a href="/label/edit" target="_blank">管理标签</a></div>
+                            </div>
+                        </div>
+                        
+                        <!-- 截止日期部分 -->
+                        <div class="form-section">
+                            <h3 class="section-title"><i class="fas fa-calendar-alt"></i>截止日期</h3>
+                            <p class="help-text">请设置任务的截止日期</p>
+                            
+                            <div class="mb-3">
+                                <label for="deadline" class="form-label">截止日期 *</label>
+                                <input type="date" class="form-control" id="deadline" name="deadline" value="{{ homework.deadline }}" min="{{ now.strftime('%Y-%m-%d') }}">
+                                <div class="help-text">请选择截止日期，不能选择过去的日期。</div>
+                            </div>
+                        </div>
+                        
+                        <!-- 提交按钮 -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('view_submissions') }}" class="btn btn-outline-secondary me-md-2"><i class="fas fa-list me-1"></i>查看提交记录</a>
+                            <button type="submit" class="btn btn-submit"><i class="fas fa-save me-1"></i>保存修改</button>
+                        </div>
+                    </form>
+                    
+                    <!-- 删除按钮 -->
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
+                        <form method="POST" action="{{ url_for('delete_homework', homework_id=homework.id) }}" onsubmit="return confirm('确定要删除这个作业吗？');">
+                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>删除作业</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // 设置最小日期为今天
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('deadline').min = today;
+        });
+    </script>
+</body>
+</html>

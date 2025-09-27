@@ -165,6 +165,88 @@ class Homework:
         labels = load_labels()
         return render_template('homework_publish.html', now=datetime.now(), labels=labels)
 
+    @app.route('/homework/edit/<int:homework_id>', methods=['GET', 'POST'])
+    def edit_homework(homework_id):
+        # 加载数据
+        submissions = load_submissions()
+        labels = load_labels()
+        
+        # 查找要编辑的作业
+        homework = next((s for s in submissions if s['id'] == homework_id), None)
+        if not homework:
+            flash('作业未找到！', 'error')
+            return redirect(url_for('view_submissions'))
+        
+        if request.method == 'POST':
+            # 获取表单数据
+            subject = request.form.get('subject')
+            content = request.form.get('content')
+            label_ids = request.form.getlist('label_ids')
+            deadline = request.form.get('deadline')
+            
+            # 基本验证
+            errors = []
+            if not subject:
+                errors.append("请选择学科")
+            if not content or len(content.strip()) < 5:
+                errors.append("内容至少需要5个字符")
+            if not deadline:
+                errors.append("请选择截止日期")
+            
+            if errors:
+                for error in errors:
+                    flash(error, 'error')
+            else:
+                # 处理标签
+                selected_labels = []
+                for label_id in label_ids:
+                    label_obj = next((label for label in labels if label["id"] == int(label_id)), None)
+                    if label_obj:
+                        selected_labels.append(label_obj["name"])
+                
+                # 如果没有选择标签，则添加"未知标签"
+                if not selected_labels:
+                    unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
+                    if unknown_label:
+                        selected_labels.append(unknown_label["name"])
+                
+                # 更新作业数据
+                homework['subject'] = subject
+                homework['content'] = content
+                homework['labels'] = selected_labels
+                homework['deadline'] = deadline
+                # 注意：保留原始的timestamp
+                
+                # 保存更新后的数据
+                save_submissions(submissions)
+                flash('作业更新成功！', 'success')
+                return redirect(url_for('view_submissions'))
+        
+        return render_template('homework_edit.html', homework=homework, labels=labels, now=datetime.now())
+    
+    @app.route('/homework/delete/<int:homework_id>', methods=['POST'])
+    def delete_homework(homework_id):
+        # 加载数据
+        submissions = load_submissions()
+        
+        # 查找要删除的作业
+        homework = next((s for s in submissions if s['id'] == homework_id), None)
+        if not homework:
+            flash('作业未找到！', 'error')
+            return redirect(url_for('view_submissions'))
+        
+        # 从列表中删除作业
+        submissions = [s for s in submissions if s['id'] != homework_id]
+        
+        # 重新编号ID以保持连续性
+        for i, submission in enumerate(submissions):
+            submission['id'] = i + 1
+        
+        # 保存更新后的数据
+        save_submissions(submissions)
+        flash('作业删除成功！', 'success')
+        return redirect(url_for('view_submissions'))
+
 @app.route('/submissions')
 def view_submissions():
     # 每次访问时都重新加载数据，确保获取最新数据
