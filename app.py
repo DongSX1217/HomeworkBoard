@@ -14,6 +14,7 @@ if not os.path.exists(DATA_DIR):
 
 DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
 LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
+LOG_FILE = os.path.join(DATA_DIR, 'operation.log')
 
 def load_submissions():
     """从JSON文件加载提交数据"""
@@ -58,6 +59,24 @@ def save_labels(labels):
     """将标签数据保存到JSON文件"""
     with open(LABELS_FILE, 'w', encoding='utf-8') as f:
         json.dump(labels, f, ensure_ascii=False, indent=2)
+
+def log_operation(operation, details, ip_address):
+    """记录操作日志到文件"""
+    log_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "operation": operation,
+        "details": details,
+        "ip_address": ip_address
+    }
+    
+    # 确保日志目录存在
+    log_dir = os.path.dirname(LOG_FILE)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # 追加写入日志
+    with open(LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
 
 # 初始化数据
 submissions = load_submissions()
@@ -112,6 +131,9 @@ class Homework:
         labels = load_labels()
         
         if request.method == 'POST':
+            # 检查是否是确认操作
+            confirm = request.form.get('confirm')
+            
             # 获取表单数据
             subject = request.form.get('subject')
             content = request.form.get('content')
@@ -147,6 +169,23 @@ class Homework:
                     if unknown_label:
                         selected_labels.append(unknown_label["name"])
                 
+                # 如果未确认，则显示确认页面
+                if not confirm:
+                    confirm_data = {
+                        'subject': subject,
+                        'content': content,
+                        'labels': selected_labels,
+                        'deadline': deadline
+                    }
+                    return render_template('homework_publish.html', 
+                                         now=datetime.now(), 
+                                         labels=labels,
+                                         confirm_data=confirm_data)
+                
+                # 确认后执行添加操作
+                # 加载最新的数据
+                submissions = load_submissions()
+                
                 # 保存提交的数据
                 submission = {
                     'id': len(submissions) + 1,
@@ -158,6 +197,15 @@ class Homework:
                 }
                 submissions.append(submission)
                 save_submissions(submissions)
+                
+                # 记录日志
+                log_operation("添加作业", {
+                    "subject": subject,
+                    "content": content,
+                    "labels": selected_labels,
+                    "deadline": deadline
+                }, request.remote_addr)
+                
                 flash('作业布置成功！', 'success')
                 return redirect(url_for('view_submissions'))
         
@@ -178,6 +226,9 @@ class Homework:
             return redirect(url_for('view_submissions'))
         
         if request.method == 'POST':
+            # 检查是否是确认操作
+            confirm = request.form.get('confirm')
+            
             # 获取表单数据
             subject = request.form.get('subject')
             content = request.form.get('content')
@@ -210,6 +261,23 @@ class Homework:
                     if unknown_label:
                         selected_labels.append(unknown_label["name"])
                 
+                # 如果未确认，则显示确认页面
+                if not confirm:
+                    updated_homework = {
+                        'id': homework_id,
+                        'subject': subject,
+                        'content': content,
+                        'labels': selected_labels,
+                        'deadline': deadline,
+                        'timestamp': homework['timestamp']
+                    }
+                    return render_template('homework_edit.html', 
+                                         homework=updated_homework, 
+                                         labels=labels, 
+                                         now=datetime.now(),
+                                         confirm=True)
+                
+                # 确认后执行更新操作
                 # 更新作业数据
                 homework['subject'] = subject
                 homework['content'] = content
@@ -220,6 +288,16 @@ class Homework:
                 
                 # 保存更新后的数据
                 save_submissions(submissions)
+                
+                # 记录日志
+                log_operation("编辑作业", {
+                    "id": homework_id,
+                    "subject": subject,
+                    "content": content,
+                    "labels": selected_labels,
+                    "deadline": deadline
+                }, request.remote_addr)
+                
                 flash('作业更新成功！', 'success')
                 return redirect(url_for('view_submissions'))
         
@@ -236,6 +314,14 @@ class Homework:
             flash('作业未找到！', 'error')
             return redirect(url_for('view_submissions'))
         
+        # 检查是否是确认操作
+        confirm = request.form.get('confirm')
+        
+        # 如果未确认，则显示确认页面
+        if not confirm:
+            return render_template('homework_edit.html', homework=homework, labels=load_labels(), now=datetime.now(), delete_confirm=True)
+        
+        # 确认后执行删除操作
         # 从列表中删除作业
         submissions = [s for s in submissions if s['id'] != homework_id]
         
@@ -245,6 +331,16 @@ class Homework:
         
         # 保存更新后的数据
         save_submissions(submissions)
+        
+        # 记录日志
+        log_operation("删除作业", {
+            "id": homework_id,
+            "subject": homework['subject'],
+            "content": homework['content'],
+            "labels": homework['labels'],
+            "deadline": homework['deadline']
+        }, request.remote_addr)
+        
         flash('作业删除成功！', 'success')
         return redirect(url_for('view_submissions'))
 

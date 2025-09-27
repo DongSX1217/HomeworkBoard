@@ -30,6 +30,133 @@
                     {% endif %}
                 {% endwith %}
                 
+                {% if confirm %}
+                <!-- 编辑确认页面 -->
+                <div class="form-container">
+                    <h2 class="text-center mb-4">确认修改信息</h2>
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">请确认以下修改信息</h4>
+                        <p>请仔细检查以下作业信息，确认无误后再提交。</p>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>学科</strong>
+                        </div>
+                        <div class="card-body">
+                            {{ homework.subject }}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>作业内容</strong>
+                        </div>
+                        <div class="card-body">
+                            {{ homework.content }}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>标签</strong>
+                        </div>
+                        <div class="card-body">
+                            {% if homework.labels %}
+                                {% for label in homework.labels %}
+                                    <span class="badge bg-primary me-1">{{ label }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">无标签</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>截止日期</strong>
+                        </div>
+                        <div class="card-body">
+                            {{ homework.deadline }}
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('edit_homework', homework_id=homework.id) }}">
+                        <input type="hidden" name="subject" value="{{ homework.subject }}">
+                        <input type="hidden" name="content" value="{{ homework.content }}">
+                        {% for label in homework.labels %}
+                        <input type="hidden" name="label_ids" value="{{ labels | selectattr('name', 'equalto', label) | map(attribute='id') | first }}">
+                        {% endfor %}
+                        <input type="hidden" name="deadline" value="{{ homework.deadline }}">
+                        <input type="hidden" name="confirm" value="1">
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('edit_homework', homework_id=homework.id) }}" class="btn btn-outline-secondary me-md-2"><i class="fas fa-edit me-1"></i>返回修改</a>
+                            <button type="submit" class="btn btn-success"><i class="fas fa-check-circle me-1"></i>确认修改</button>
+                        </div>
+                    </form>
+                </div>
+                {% elif delete_confirm %}
+                <!-- 删除确认页面 -->
+                <div class="form-container">
+                    <h2 class="text-center mb-4">确认删除作业</h2>
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">您确定要删除这个作业吗？</h4>
+                        <p>删除后将无法恢复，请谨慎操作。</p>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>学科</strong>
+                        </div>
+                        <div class="card-body">
+                            {{ homework.subject }}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>作业内容</strong>
+                        </div>
+                        <div class="card-body">
+                            {{ homework.content }}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>标签</strong>
+                        </div>
+                        <div class="card-body">
+                            {% if homework.labels %}
+                                {% for label in homework.labels %}
+                                    <span class="badge bg-primary me-1">{{ label }}</span>
+                                {% endfor %}
+                            {% else %}
+                                <span class="text-muted">无标签</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <strong>截止日期</strong>
+                        </div>
+                        <div class="card-body">
+                            {{ homework.deadline }}
+                        </div>
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('delete_homework', homework_id=homework.id) }}">
+                        <input type="hidden" name="confirm" value="1">
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('view_submissions') }}" class="btn btn-outline-secondary me-md-2"><i class="fas fa-times me-1"></i>取消</a>
+                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>确认删除</button>
+                        </div>
+                    </form>
+                </div>
+                {% else %}
                 <div class="form-container">
                     <form method="POST" action="{{ url_for('edit_homework', homework_id=homework.id) }}">
                         <!-- 学科选择部分 -->
@@ -102,11 +229,12 @@
                     
                     <!-- 删除按钮 -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-                        <form method="POST" action="{{ url_for('delete_homework', homework_id=homework.id) }}" onsubmit="return confirm('确定要删除这个作业吗？');">
+                        <form method="POST" action="{{ url_for('delete_homework', homework_id=homework.id) }}">
                             <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>删除作业</button>
                         </form>
                     </div>
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>
