@@ -29,8 +29,9 @@
 ') | replace('\r', '
 ') }}</span>
                                 <span class="labels">
-                                    {% for label in submission.labels %}
-                                    <span class="label-tag">{{ label }}</span>
+                                    {% for label_name in submission.labels %}
+                                        {% set label_obj = (labels | selectattr('name', 'equalto', label_name) | first) %}
+                                        <span class="label-tag" {% if label_obj %}style="background-color: {{ label_obj.color }}"{% endif %}>{{ label_name }}</span>
                                     {% endfor %}
                                 </span>
                             </div>
@@ -197,6 +198,21 @@
 
         // 更新作业容器（动态分栏，学科可拆分）
         function updateHomeworkContainer(submissions) {
+            // 先获取标签数据
+            fetch('/api/homework')
+                .then(response => response.json())
+                .then(data => {
+                    renderHomeworkContainer(submissions, data.labels);
+                })
+                .catch(error => {
+                    console.error('获取标签数据失败:', error);
+                    // 如果获取标签失败，仍然显示作业
+                    renderHomeworkContainer(submissions, []);
+                });
+        }
+        
+        // 实际渲染作业容器的函数
+        function renderHomeworkContainer(submissions, labels) {
             const container = document.getElementById('homeworkContainer');
             container.innerHTML = '';
 
@@ -334,10 +350,17 @@
 
                 const labelsSpan = document.createElement('span');
                 labelsSpan.className = 'labels';
-                submission.labels.forEach(label => {
+                submission.labels.forEach(labelName => {
                     const labelTag = document.createElement('span');
                     labelTag.className = 'label-tag';
-                    labelTag.textContent = label;
+                    labelTag.textContent = labelName;
+                    
+                    // 查找标签颜色
+                    const labelObj = labels.find(l => l.name === labelName);
+                    if (labelObj) {
+                        labelTag.style.backgroundColor = labelObj.color;
+                    }
+                    
                     labelsSpan.appendChild(labelTag);
                 });
                 contentWrapper.appendChild(labelsSpan);
@@ -375,6 +398,18 @@
 
             // 应用隐藏过期作业设置
             applyHideExpired();
+        }
+
+        // 获取作业数据并更新页面
+        function fetchHomeworkData() {
+            fetch('/api/homework')
+                .then(response => response.json())
+                .then(data => {
+                    updateHomeworkContainer(data.submissions);
+                })
+                .catch(error => {
+                    console.error('获取作业数据失败:', error);
+                });
         }
 
         // 打开设置弹窗

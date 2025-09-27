@@ -219,6 +219,17 @@ h1 {
     background-color: #3498db;
 }
 
+.label-preview {
+    display: inline-block;
+    padding: 3px 5px;
+    margin: 2px;
+    border-radius: 4.8px; /* 圆角 */
+    font-size: 0.9em;
+    color: #fff;
+    min-width: 60px;
+    text-align: center;
+}
+
 /* 截止日期和时间戳容器 */
 .dates-container {
     display: flex;

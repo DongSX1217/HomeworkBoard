@@ -31,30 +31,6 @@ def save_submissions(submissions):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(submissions, f, ensure_ascii=False, indent=2)
 
-def load_labels():
-    """从JSON文件加载标签数据"""
-    if os.path.exists(LABELS_FILE):
-        with open(LABELS_FILE, 'r', encoding='utf-8') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return []
-    # 默认标签
-    default_labels = [
-        {"id": 1, "name": "课堂前由课代表/小组长检查"},
-        {"id": 2, "name": "课堂前由授课教师检查"},
-        {"id": 3, "name": "小组任务"},
-        {"id": 4, "name": "自行核对答案"},
-        {"id": 5, "name": "复习作业"},
-        {"id": 6, "name": "预习作业"},
-        {"id": 7, "name": "拓展任务"},
-        {"id": 8, "name": "选做"},
-        {"id": 9, "name": "教师布置"},
-        {"id": 10, "name": "未知标签"}
-    ]
-    save_labels(default_labels)
-    return default_labels
-
 def save_labels(labels):
     """将标签数据保存到JSON文件"""
     with open(LABELS_FILE, 'w', encoding='utf-8') as f:
@@ -98,7 +74,7 @@ class Homework:
     def view_homework():
         # 每次访问时都重新加载数据，确保获取最新数据
         submissions = load_submissions()
-        labels = load_labels()
+        labels = Label.load_labels()
         
         # 按学科分组作业
         grouped_submissions = {}
@@ -108,12 +84,13 @@ class Homework:
                 grouped_submissions[subject] = []
             grouped_submissions[subject].append(submission)
         
-        return render_template('homework.html', submissions=grouped_submissions)
+        return render_template('homework.html', submissions=grouped_submissions, labels=labels)
     
     @app.route('/api/homework')
     def api_homework():
         # API端点，返回JSON格式的作业数据
         submissions = load_submissions()
+        labels = Label.load_labels()
         
         # 按学科分组作业
         grouped_submissions = {}
@@ -123,12 +100,12 @@ class Homework:
                 grouped_submissions[subject] = []
             grouped_submissions[subject].append(submission)
         
-        return {"submissions": grouped_submissions}
+        return {"submissions": grouped_submissions, "labels": labels}
 
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
-        labels = load_labels()
+        labels = Label.load_labels()
         
         if request.method == 'POST':
             # 检查是否是返回修改操作
@@ -235,7 +212,7 @@ class Homework:
             session.pop('publish_deadline', None)
         
         # 每次访问GET请求时都重新加载标签
-        labels = load_labels()
+        labels = Label.load_labels()
         return render_template('homework_publish.html', 
                              now=datetime.now(), 
                              tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
@@ -245,7 +222,7 @@ class Homework:
     def edit_homework(homework_id):
         # 加载数据
         submissions = load_submissions()
-        labels = load_labels()
+        labels = Label.load_labels()
         
         # 查找要编辑的作业
         homework = next((s for s in submissions if s['id'] == homework_id), None)
@@ -393,7 +370,7 @@ class Homework:
         
         # 如果未确认，则显示确认页面
         if not confirm:
-            return render_template('homework_edit.html', homework=homework, labels=load_labels(), now=datetime.now(), delete_confirm=True)
+            return render_template('homework_edit.html', homework=homework, labels=Label.load_labels(), now=datetime.now(), delete_confirm=True)
         
         # 确认后执行删除操作
         # 从列表中删除作业
@@ -422,14 +399,46 @@ class Homework:
 def view_submissions():
     # 每次访问时都重新加载数据，确保获取最新数据
     submissions = load_submissions()
-    labels = load_labels()
+    labels = Label.load_labels()
     return render_template('submissions.html', submissions=submissions, labels=labels)
 
 class Label:
+    def load_labels():
+        """从JSON文件加载标签数据"""
+        global LABELS_FILE, save_labels
+        if os.path.exists(LABELS_FILE):
+            with open(LABELS_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    labels = json.load(f)
+                    # 确保所有标签都有颜色属性
+                    for label in labels:
+                        if 'color' not in label:
+                            if label['name'] == '未知标签':
+                                label['color'] = '#808080'  # 灰色
+                            else:
+                                label['color'] = '#3498db'  # 默认蓝色
+                    return labels
+                except json.JSONDecodeError:
+                    pass
+        # 默认标签
+        default_labels = [
+            {"id": 1, "name": "课堂前由课代表/小组长检查", "color": "#3498db"},
+            {"id": 2, "name": "课堂前由授课教师检查", "color": "#3498db"},
+            {"id": 3, "name": "小组任务", "color": "#3498db"},
+            {"id": 4, "name": "自行核对答案", "color": "#3498db"},
+            {"id": 5, "name": "复习作业", "color": "#3498db"},
+            {"id": 6, "name": "预习作业", "color": "#3498db"},
+            {"id": 7, "name": "拓展任务", "color": "#3498db"},
+            {"id": 8, "name": "选做", "color": "#3498db"},
+            {"id": 9, "name": "教师布置", "color": "#3498db"},
+            {"id": 10, "name": "未知标签", "color": "#808080"}
+        ]
+        save_labels(default_labels)
+        return default_labels
     @app.route('/label/edit', methods=['GET', 'POST'])
     def edit_labels():
         # 每次访问时都重新加载标签，确保获取最新数据
-        labels = load_labels()
+        labels = Label.load_labels()
         
         if request.method == 'POST':
             action = request.form.get('action')
@@ -437,12 +446,13 @@ class Label:
             if action == 'add':
                 # 添加新标签
                 new_label_name = request.form.get('new_label_name')
+                new_label_color = request.form.get('new_label_color', '#3498db')  # 默认蓝色
                 if new_label_name:
                     # 检查标签是否已存在
                     if not any(label["name"] == new_label_name for label in labels):
                         # 生成新的ID（避免与现有ID冲突）
                         new_id = max([label["id"] for label in labels]) + 1 if labels else 1
-                        labels.append({"id": new_id, "name": new_label_name})
+                        labels.append({"id": new_id, "name": new_label_name, "color": new_label_color})
                         save_labels(labels)
                         flash('标签添加成功！', 'success')
                     else:
@@ -454,6 +464,7 @@ class Label:
                 # 更新标签名称
                 label_id = int(request.form.get('label_id'))
                 new_name = request.form.get('new_name')
+                new_color = request.form.get('new_color')
                 
                 # 查找"未知标签"，防止被修改
                 unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
@@ -467,12 +478,12 @@ class Label:
                         for label in labels:
                             if label["id"] == label_id:
                                 label["name"] = new_name
+                                label["color"] = new_color
                                 break
                         save_labels(labels)
                         flash('标签更新成功！', 'success')
                 else:
                     flash('无效的标签ID或名称！', 'error')
-                    
             elif action == 'delete':
                 # 删除标签
                 label_id = int(request.form.get('label_id'))
@@ -490,10 +501,10 @@ class Label:
                     flash('标签删除成功！', 'success')
             
             # 重新加载标签
-            labels = load_labels()
+            labels = Label.load_labels()
         
         # 重新加载标签
-        labels = load_labels()
+        labels = Label.load_labels()
         return render_template('label_edit.html', labels=labels)
 
 homework = Homework()
