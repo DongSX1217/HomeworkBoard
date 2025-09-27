@@ -90,6 +90,21 @@ class Homework:
             grouped_submissions[subject].append(submission)
         
         return render_template('homework.html', submissions=grouped_submissions)
+    
+    @app.route('/api/homework')
+    def api_homework():
+        # API端点，返回JSON格式的作业数据
+        submissions = load_submissions()
+        
+        # 按学科分组作业
+        grouped_submissions = {}
+        for submission in submissions:
+            subject = submission['subject']
+            if subject not in grouped_submissions:
+                grouped_submissions[subject] = []
+            grouped_submissions[subject].append(submission)
+        
+        return {"submissions": grouped_submissions}
 
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():

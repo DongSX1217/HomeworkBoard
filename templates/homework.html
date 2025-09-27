@@ -8,23 +8,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>XXXX学校高一X班作业公告板</h1>
-        
-        <div class="control-panel">
-            <div class="control-group">
-                <label for="refreshInterval">刷新间隔（秒）：</label>
-                <input type="number" id="refreshInterval" min="10" max="3600" value="60">
-                <button onclick="setRefresh()">设置</button>
-            </div>
-            <div class="control-group">
-                <label for="fontSize">字体大小：</label>
-                <select id="fontSize" onchange="changeFontSize()">
-                    <option value="14">小</option>
-                    <option value="16" selected>中</option>
-                    <option value="18">大</option>
-                    <option value="20">超大</option>
-                </select>
-            </div>
+        <button class="add-homework-button" onclick="location.href='/homework/publish'">添加作业</button>
+        <h1>人大附中三亚学校高一(4)班作业公告板</h1>
+        <div class="top-buttons">
+            <button onclick="openSettings()">设置</button>
+            <button onclick="toggleFullscreen()">全屏</button>
         </div>
         
         <div class="columns" id="homeworkContainer">
@@ -34,10 +22,19 @@
                     <div class="subject-title">{{ subject }}</div>
                     <ul class="homework-list">
                         {% for submission in subject_submissions %}
-                        <li class="homework-item">
-                            <div class="content">{{ submission.content }}</div><div class="labels">{% for label in submission.labels %}<span class="label-tag">{{ label }}</span>{% endfor %}</div><div class="deadline">截止日期：{{ submission.deadline }}</div>
-                            
-                            <div class="timestamp">发布时间：{{ submission.timestamp }}</div>
+                        <li class="homework-item" data-deadline="{{ submission.deadline }}">
+                            <div class="content-wrapper">
+                                <span class="content">{{ submission.content }}</span>
+                                <span class="labels">
+                                    {% for label in submission.labels %}
+                                    <span class="label-tag">{{ label }}</span>
+                                    {% endfor %}
+                                </span>
+                            </div>
+                            <div class="dates-container">
+                                <div class="deadline">截止日期: {{ submission.deadline[5:] }}</div>
+                                <div class="timestamp">发布时间: {{ submission.timestamp[5:-3] }}</div>
+                            </div>
                         </li>
                         {% endfor %}
                     </ul>
@@ -49,42 +46,322 @@
         </div>
     </div>
 
+    <!-- 设置弹窗 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeSettings()">&times;</span>
+            <h2>设置</h2>
+            <div class="setting-group">
+                <label for="refreshInterval">刷新间隔（秒）：</label>
+                <input type="number" id="refreshInterval" min="10" max="3600" value="60">
+            </div>
+            <div class="setting-group">
+                <label for="fontSize">字体大小：</label>
+                <select id="fontSize">
+                    <option value="15">小</option>
+                    <option value="20" selected>中</option>
+                    <option value="26">大</option>
+                    <option value="34">超大</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="hideExpired">
+                    <label for="hideExpired">不显示已截止的作业</label>
+                </div>
+            </div>
+            <button class="save-settings" onclick="saveSettings()">保存设置</button>
+        </div>
+    </div>
+
     <script>
         let refreshInterval;
         let intervalId;
-        
-        // 设置初始刷新间隔
+        let isFullscreen = false;
+
+        // 页面加载完成后初始化
         window.onload = function() {
-            refreshInterval = document.getElementById('refreshInterval').value;
+            loadSettings();
             startAutoRefresh();
+            applyHideExpired();
         };
-        
-        // 设置刷新间隔
-        function setRefresh() {
-            const newInterval = document.getElementById('refreshInterval').value;
+
+        // 加载设置（从cookie）
+        function loadSettings() {
+            // 刷新间隔
+            const savedInterval = getCookie("refreshInterval");
+            if (savedInterval) {
+                refreshInterval = parseInt(savedInterval);
+                document.getElementById("refreshInterval").value = refreshInterval;
+            } else {
+                refreshInterval = 60;
+            }
+
+            // 字体大小
+            const savedFontSize = getCookie("fontSize");
+            if (savedFontSize) {
+                document.body.style.fontSize = savedFontSize + 'px';
+                document.getElementById("fontSize").value = savedFontSize;
+            }
+
+            // 是否隐藏过期作业
+            const hideExpired = getCookie("hideExpired");
+            if (hideExpired === "true") {
+                document.getElementById("hideExpired").checked = true;
+                applyHideExpired();
+            }
+        }
+
+        // 保存设置（到cookie）
+        function saveSettings() {
+            // 保存刷新间隔
+            const newInterval = document.getElementById("refreshInterval").value;
             if (newInterval >= 10 && newInterval <= 3600) {
-                refreshInterval = newInterval;
+                refreshInterval = parseInt(newInterval);
+                setCookie("refreshInterval", refreshInterval, 30);
+                
+                // 重新启动自动刷新
                 if (intervalId) {
                     clearInterval(intervalId);
                 }
                 startAutoRefresh();
-                alert(`刷新间隔已设置为 ${refreshInterval} 秒`);
             } else {
                 alert('刷新间隔必须在10-3600秒之间');
+                return;
             }
+
+            // 保存字体大小
+            const fontSize = document.getElementById("fontSize").value;
+            document.body.style.fontSize = fontSize + 'px';
+            setCookie("fontSize", fontSize, 30);
+
+            // 保存是否隐藏过期作业
+            const hideExpired = document.getElementById("hideExpired").checked;
+            setCookie("hideExpired", hideExpired, 30);
+            applyHideExpired();
+
+            closeSettings();
+            alert('设置已保存');
         }
-        
+
+        // 设置cookie
+        function setCookie(name, value, days) {
+            const expires = new Date();
+            expires.setTime(expires.getTime() + (days * 24 * 60 * 60 * 1000));
+            document.cookie = name + '=' + value + ';expires=' + expires.toUTCString() + ';path=/';
+        }
+
+        // 获取cookie
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for(let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
         // 开始自动刷新
         function startAutoRefresh() {
+            // 立即获取一次数据
+            fetchHomeworkData();
             intervalId = setInterval(function() {
-                location.reload();
+                fetchHomeworkData();
             }, refreshInterval * 1000);
         }
-        
-        // 更改字体大小
-        function changeFontSize() {
-            const fontSize = document.getElementById('fontSize').value;
-            document.body.style.fontSize = fontSize + 'px';
+
+        // 获取作业数据并更新页面
+        function fetchHomeworkData() {
+            fetch('/api/homework')
+                .then(response => response.json())
+                .then(data => {
+                    updateHomeworkContainer(data.submissions);
+                })
+                .catch(error => {
+                    console.error('获取作业数据失败:', error);
+                });
+        }
+
+        // 动态分栏参数
+        function getColumnCount() {
+            if (window.innerWidth <= 600) return 1;
+            if (window.innerWidth <= 900) return 2;
+            if (window.innerWidth <= 1200) return 3;
+            return 4;
+        }
+
+        // 更新作业容器（动态分栏，学科可拆分）
+        function updateHomeworkContainer(submissions) {
+            const container = document.getElementById('homeworkContainer');
+            container.innerHTML = '';
+
+            // 没有作业
+            if (!submissions || Object.keys(submissions).length === 0) {
+                const noSubmissionsDiv = document.createElement('div');
+                noSubmissionsDiv.className = 'no-submissions';
+                noSubmissionsDiv.textContent = '暂无作业信息';
+                container.appendChild(noSubmissionsDiv);
+                return;
+            }
+
+            // 计算列数
+            const colCount = getColumnCount();
+            const columns = [];
+            for (let i = 0; i < colCount; i++) {
+                const col = document.createElement('div');
+                col.className = 'column';
+                columns.push(col);
+            }
+
+            // 预估每列最大作业数（可根据实际需求调整）
+            let totalItems = 0;
+            const subjectOrder = Object.keys(submissions);
+            subjectOrder.forEach(subject => {
+                totalItems += submissions[subject].length;
+            });
+            const maxPerCol = Math.ceil(totalItems / colCount);
+
+            let colIdx = 0;
+            let colItemCount = 0;
+
+            subjectOrder.forEach(subject => {
+                // 按发布时间排序（假设timestamp为ISO字符串）
+                const sortedList = submissions[subject].slice().sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+                let subjectTitleShown = false;
+                for (let i = 0; i < sortedList.length; i++) {
+                    // 新建学科标题（仅在新列或首次出现时显示）
+                    if (!subjectTitleShown) {
+                        const subjectSection = document.createElement('div');
+                        subjectSection.className = 'subject-section';
+                        const subjectTitle = document.createElement('div');
+                        subjectTitle.className = 'subject-title';
+                        subjectTitle.textContent = subject;
+                        subjectSection.appendChild(subjectTitle);
+
+                        const homeworkList = document.createElement('ul');
+                        homeworkList.className = 'homework-list';
+                        subjectSection.appendChild(homeworkList);
+                        columns[colIdx].appendChild(subjectSection);
+                        subjectTitleShown = true;
+                    }
+                    // 找到当前列最后一个subject-section
+                    let subjectSection = columns[colIdx].lastElementChild;
+                    let homeworkList = subjectSection.querySelector('.homework-list');
+
+                    // 添加作业项
+                    const submission = sortedList[i];
+                    const homeworkItem = document.createElement('li');
+                    homeworkItem.className = 'homework-item';
+                    homeworkItem.setAttribute('data-deadline', submission.deadline);
+
+                    const contentWrapper = document.createElement('div');
+                    contentWrapper.className = 'content-wrapper';
+
+                    const contentSpan = document.createElement('span');
+                    contentSpan.className = 'content';
+                    contentSpan.textContent = submission.content;
+                    contentWrapper.appendChild(contentSpan);
+
+                    const labelsSpan = document.createElement('span');
+                    labelsSpan.className = 'labels';
+                    submission.labels.forEach(label => {
+                        const labelTag = document.createElement('span');
+                        labelTag.className = 'label-tag';
+                        labelTag.textContent = label;
+                        labelsSpan.appendChild(labelTag);
+                    });
+                    contentWrapper.appendChild(labelsSpan);
+                    homeworkItem.appendChild(contentWrapper);
+
+                    const datesContainer = document.createElement('div');
+                    datesContainer.className = 'dates-container';
+
+                    const deadlineDiv = document.createElement('div');
+                    deadlineDiv.className = 'deadline';
+                    deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
+                    datesContainer.appendChild(deadlineDiv);
+
+                    const timestampDiv = document.createElement('div');
+                    timestampDiv.className = 'timestamp';
+                    timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
+                    datesContainer.appendChild(timestampDiv);
+
+                    homeworkItem.appendChild(datesContainer);
+                    homeworkList.appendChild(homeworkItem);
+
+                    colItemCount++;
+                    // 判断是否需要换列
+                    if (colItemCount >= maxPerCol && colIdx < colCount - 1) {
+                        colIdx++;
+                        colItemCount = 0;
+                        subjectTitleShown = false; // 下一列同学科不显示标题
+                    }
+                }
+            });
+
+            // 添加到页面
+            columns.forEach(col => container.appendChild(col));
+
+            // 应用隐藏过期作业设置
+            applyHideExpired();
+        }
+        // 打开设置弹窗
+        function openSettings() {
+            document.getElementById("settingsModal").style.display = "block";
+        }
+
+        // 关闭设置弹窗
+        function closeSettings() {
+            document.getElementById("settingsModal").style.display = "none";
+        }
+
+        // 切换全屏模式
+        function toggleFullscreen() {
+            const container = document.querySelector('.container');
+            isFullscreen = !isFullscreen;
+            
+            if (isFullscreen) {
+                container.classList.add('fullscreen');
+                document.querySelector('.top-buttons button:nth-child(2)').textContent = '退出全屏';
+            } else {
+                container.classList.remove('fullscreen');
+                document.querySelector('.top-buttons button:nth-child(2)').textContent = '全屏';
+            }
+        }
+
+        // 应用隐藏过期作业功能
+        function applyHideExpired() {
+            const hideExpired = document.getElementById("hideExpired").checked;
+            const homeworkItems = document.querySelectorAll(".homework-item");
+            
+            if (!hideExpired) {
+                // 显示所有作业
+                homeworkItems.forEach(item => {
+                    item.style.display = "block";
+                });
+                return;
+            }
+            
+            // 隐藏过期作业
+            const now = new Date();
+            homeworkItems.forEach(item => {
+                const deadlineStr = item.getAttribute("data-deadline");
+                const deadline = new Date(deadlineStr);
+                
+                if (deadline < now) {
+                    item.style.display = "none";
+                }
+            });
+        }
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById("settingsModal");
+            if (event.target == modal) {
+                closeSettings();
+            }
         }
     </script>
 </body>

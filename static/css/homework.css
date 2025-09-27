@@ -17,6 +17,7 @@ body {
     max-width: 100%;
     margin: 0 auto;
     padding: 5px;
+    position: relative;
 }
 
 /* 标题样式 */
@@ -28,30 +29,138 @@ h1 {
     font-weight: bold;
 }
 
-/* 控制面板 */
-.control-panel {
+/* 顶部按钮区域 */
+.top-buttons {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 100;
+}
+
+.top-buttons button {
+    margin-left: 10px;
+    padding: 5px 10px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.top-buttons button:hover {
+    background-color: #45a049;
+}
+
+/* 左上角添加作业按钮 */
+.add-homework-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    padding: 5px 10px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.add-homework-button:hover {
+    background-color: #0b7dda;
+}
+
+/* 设置弹窗样式 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
     background-color: #fff;
-    padding: 10px;
+    margin: 15% auto;
+    padding: 20px;
     border-radius: 5px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 300px;
 }
 
-.control-group {
-    display: inline-block;
-    margin-right: 20px;
-}
-
-.control-group label {
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
     font-weight: bold;
-    margin-right: 5px;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+.setting-group {
+    margin-bottom: 15px;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.setting-group input, .setting-group select {
+    width: 100%;
+    padding: 5px;
+}
+
+.setting-group .checkbox-group {
+    display: flex;
+    align-items: center;
+}
+
+.setting-group .checkbox-group input {
+    width: auto;
+    margin-right: 10px;
+}
+
+.save-settings {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.save-settings:hover {
+    background-color: #45a049;
+}
+
+/* 全屏样式 */
+.fullscreen .container {
+    padding: 0;
+}
+
+.fullscreen h1 {
+    margin-top: 0;
 }
 
 /* 分栏布局 */
 .columns {
-    column-count: 4;
-    column-gap: 15px;
-    column-rule: 1px solid #ddd;
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+.column {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 /* 学科区域 */
@@ -93,33 +202,46 @@ h1 {
     line-height: 1.5;
 }
 
-/* 截止日期 */
-.deadline {
-    color: #751ce0;
-    font-weight: bold;
-    margin: 3px 0;
-}
-
 /* 标签样式 */
 .labels {
-    margin: 8px 0;
+    display: inline-block;
+    margin: 0 0 0 8px;
 }
 
 .label-tag {
     display: inline-block;
-    padding: 3px 8px;
-    margin: 3px;
-    border-radius: 3px;
+    padding: 3px 5px;
+    margin: 6px;
+    border-radius: 6px; /* 圆角 */
     font-size: 0.85em;
     color: #fff;
     background-color: #3498db;
 }
 
+/* 截止日期和时间戳容器 */
+.dates-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-size: 0.8em;
+}
+
+/* 截止日期 */
+.deadline {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
 /* 时间戳 */
 .timestamp {
     color: #7f8c8d;
-    font-size: 0.7em;
-    margin-top: 5px;
+}
+
+/* 无作业信息 */
+.no-submissions {
+    text-align: center;
+    padding: 20px;
+    color: #7f8c8d;
 }
 
 /* 响应式设计 */
