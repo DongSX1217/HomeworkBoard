@@ -152,13 +152,13 @@ position: absolute;
     display: flex;
     gap: 15px;
     width: 100%;
+    align-items: flex-start;
 }
 .column {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 1;
+    min-width: 0; /* 防止 flex 项目溢出 */
     display: flex;
     flex-direction: column;
-    gap: 10px;
 }
 
 /* 学科区域 */
@@ -169,6 +169,8 @@ position: absolute;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     break-inside: avoid;
     padding: 10px;
+    /* max-height: 80vh; /* 限制最大高度 */
+    /* overflow-y: auto; /* 如果内容过多，在学科内部滚动 */
 }
 
 .subject-title {
@@ -199,6 +201,8 @@ position: absolute;
     margin: 4px 0;
     line-height: 1.5;
     white-space: pre-line;
+    word-wrap: break-word; /* 处理长单词 */
+    overflow-wrap: break-word; /* 处理长单词 */
 }
 
 /* 标签样式 */
@@ -257,26 +261,32 @@ position: absolute;
 /* 响应式设计 */
 @media (max-width: 1200px) {
     .columns {
-        column-count: 3;
+        flex-wrap: wrap;
+    }
+    .column {
+        flex: 1 1 calc(33.333% - 10px);
+        min-width: 300px;
     }
 }
 
 @media (max-width: 900px) {
-    .columns {
-        column-count: 2;
+    .column {
+        flex: 1 1 calc(50% - 10px);
+        min-width: 250px;
     }
 }
 
 @media (max-width: 600px) {
     .columns {
-        column-count: 1;
+        flex-direction: column;
     }
-    
-    body {
-        font-size: 14px;
+    .column {
+        flex: 1 1 100%;
+        min-width: auto;
     }
-    
-    h1 {
-        font-size: 1.5em;
-    }
+}
+
+/* 全屏模式下的优化 */
+.fullscreen .subject-section {
+    max-height: 85vh;
 }

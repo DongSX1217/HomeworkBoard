@@ -180,10 +180,11 @@
             return 4;
         }
     
-        // 更新作业容器（动态分栏，学科可拆分）
+        // 更新作业容器（智能分栏，更均匀地分配内容）
         function updateHomeworkContainer(submissions, labels) {
             const container = document.getElementById('homeworkContainer');
             container.innerHTML = '';
+            
             if (!submissions || Object.keys(submissions).length === 0) {
                 const noSubmissionsDiv = document.createElement('div');
                 noSubmissionsDiv.className = 'no-submissions';
@@ -191,6 +192,7 @@
                 container.appendChild(noSubmissionsDiv);
                 return;
             }
+
             const colCount = getColumnCount();
             const columns = [];
             for (let i = 0; i < colCount; i++) {
@@ -198,120 +200,155 @@
                 col.className = 'column';
                 columns.push(col);
             }
-            const availableHeight = window.innerHeight * 0.85;
+
+            // 收集所有作业项
+            const allHomeworkItems = [];
             const subjectOrder = Object.keys(submissions);
             const sortedSubjects = {};
             subjectOrder.forEach(subject => {
-                sortedSubjects[subject] = submissions[subject].slice().sort((a, b) => 
+                const sortedList = submissions[subject].slice().sort((a, b) => 
                     b.timestamp.localeCompare(a.timestamp));
-            });
-            let colIdx = 0;
-            let currentColHeight = 0;
-            const maxColHeight = availableHeight;
-            const subjectStates = {};
-            subjectOrder.forEach(subject => {
-                subjectStates[subject] = { started: false, completed: false };
-            });
-            subjectOrder.forEach(subject => {
-                const sortedList = sortedSubjects[subject];
-                let itemIdx = 0;
-                while (itemIdx < sortedList.length && !subjectStates[subject].completed) {
-                    const needsHeader = !subjectStates[subject].started;
-                    const itemHeight = 90;
-                    const contentHeight = Math.ceil(sortedList[itemIdx].content.length / 30) * 20;
-                    const totalItemHeight = itemHeight + contentHeight;
-                    const headerHeight = needsHeader ? 50 : 0;
-                    if (currentColHeight + headerHeight + totalItemHeight > maxColHeight && colIdx < colCount - 1) {
-                        colIdx++;
-                        currentColHeight = 0;
-                    }
-                    if (needsHeader) {
-                        if (currentColHeight + 50 > maxColHeight && colIdx < colCount - 1) {
-                            colIdx++;
-                            currentColHeight = 0;
-                        }
-                        const subjectSection = document.createElement('div');
-                        subjectSection.className = 'subject-section';
-                        const subjectTitle = document.createElement('div');
-                        subjectTitle.className = 'subject-title';
-                        subjectTitle.textContent = subject;
-                        subjectSection.appendChild(subjectTitle);
-                        const homeworkList = document.createElement('ul');
-                        homeworkList.className = 'homework-list';
-                        subjectSection.appendChild(homeworkList);
-                        columns[colIdx].appendChild(subjectSection);
-                        subjectStates[subject].started = true;
-                        currentColHeight += 50;
-                    }
-                    let subjectSection = columns[colIdx].lastElementChild;
-                    let homeworkList = null;
-                    if (subjectSection && subjectSection.querySelector('.subject-title').textContent === subject) {
-                        homeworkList = subjectSection.querySelector('.homework-list');
-                    } else {
-                        subjectSection = document.createElement('div');
-                        subjectSection.className = 'subject-section';
-                        const subjectTitle = document.createElement('div');
-                        subjectTitle.className = 'subject-title';
-                        subjectTitle.textContent = subject;
-                        subjectSection.appendChild(subjectTitle);
-                        homeworkList = document.createElement('ul');
-                        homeworkList.className = 'homework-list';
-                        subjectSection.appendChild(homeworkList);
-                        columns[colIdx].appendChild(subjectSection);
-                    }
-                    const submission = sortedList[itemIdx];
-                    const homeworkItem = document.createElement('li');
-                    homeworkItem.className = 'homework-item';
-                    homeworkItem.setAttribute('data-deadline', submission.deadline);
-    
-                    const contentWrapper = document.createElement('div');
-                    contentWrapper.className = 'content-wrapper';
-    
-                    const contentSpan = document.createElement('span');
-                    contentSpan.className = 'content';
-                    contentSpan.textContent = submission.content;
-                    contentWrapper.appendChild(contentSpan);
-    
-                    const labelsSpan = document.createElement('span');
-                    labelsSpan.className = 'labels';
-                    submission.labels.forEach(labelName => {
-                        const labelTag = document.createElement('span');
-                        labelTag.className = 'label-tag';
-                        labelTag.textContent = labelName;
-                        const labelObj = labels.find(l => l.name === labelName);
-                        if (labelObj) {
-                            labelTag.style.backgroundColor = labelObj.color;
-                        }
-                        labelsSpan.appendChild(labelTag);
+                
+                sortedList.forEach(submission => {
+                    allHomeworkItems.push({
+                        subject: subject,
+                        submission: submission,
+                        // 估算高度
+                        estimatedHeight: calculateItemHeight(submission)
                     });
-                    contentWrapper.appendChild(labelsSpan);
-                    homeworkItem.appendChild(contentWrapper);
-    
-                    const datesContainer = document.createElement('div');
-                    datesContainer.className = 'dates-container';
-    
-                    const deadlineDiv = document.createElement('div');
-                    deadlineDiv.className = 'deadline';
-                    deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
-                    datesContainer.appendChild(deadlineDiv);
-    
-                    const timestampDiv = document.createElement('div');
-                    timestampDiv.className = 'timestamp';
-                    timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
-                    datesContainer.appendChild(timestampDiv);
-    
-                    homeworkItem.appendChild(datesContainer);
-                    homeworkList.appendChild(homeworkItem);
-    
-                    currentColHeight += totalItemHeight;
-                    itemIdx++;
-                    if (itemIdx >= sortedList.length) {
-                        subjectStates[subject].completed = true;
-                    }
+                });
+            });
+
+            // 智能分配作业到各列
+            distributeItemsToColumns(allHomeworkItems, columns, colCount);
+            
+            columns.forEach(col => {
+                if (col.children.length > 0) {
+                    container.appendChild(col);
                 }
             });
-            columns.forEach(col => container.appendChild(col));
+            
             applyHideExpired();
+        }
+
+        // 计算作业项的大致高度
+        function calculateItemHeight(submission) {
+            const baseHeight = 90; // 基础高度
+            const contentHeight = Math.ceil(submission.content.length / 25) * 18; // 内容高度估算
+            const labelHeight = submission.labels.length > 0 ? 25 : 0; // 标签高度
+            return baseHeight + contentHeight + labelHeight;
+        }
+
+        // 智能分配作业项到各列
+        function distributeItemsToColumns(items, columns, colCount) {
+            // 按学科分组
+            const subjects = {};
+            items.forEach(item => {
+                if (!subjects[item.subject]) {
+                    subjects[item.subject] = [];
+                }
+                subjects[item.subject].push(item);
+            });
+
+            // 计算各列当前高度
+            const columnHeights = new Array(colCount).fill(0);
+            const columnSubjects = new Array(colCount).fill(0).map(() => ({}));
+
+            // 按学科总高度排序（从高到低）
+            const sortedSubjects = Object.keys(subjects).sort((a, b) => {
+                const heightA = subjects[a].reduce((sum, item) => sum + item.estimatedHeight, 0);
+                const heightB = subjects[b].reduce((sum, item) => sum + item.estimatedHeight, 0);
+                return heightB - heightA;
+            });
+
+            // 分配学科到各列
+            sortedSubjects.forEach(subject => {
+                // 找到当前高度最小的列
+                let targetCol = 0;
+                let minHeight = columnHeights[0];
+                
+                for (let i = 1; i < colCount; i++) {
+                    if (columnHeights[i] < minHeight) {
+                        minHeight = columnHeights[i];
+                        targetCol = i;
+                    }
+                }
+
+                // 将该学科的所有作业项添加到目标列
+                subjects[subject].forEach(item => {
+                    addHomeworkItemToColumn(item, columns[targetCol], columnSubjects[targetCol]);
+                    columnHeights[targetCol] += item.estimatedHeight;
+                });
+            });
+        }
+
+        // 添加作业项到指定列
+        function addHomeworkItemToColumn(item, column, columnSubjects) {
+            const subject = item.subject;
+            const submission = item.submission;
+            
+            // 检查该列是否已有该学科
+            if (!columnSubjects[subject]) {
+                // 创建新的学科部分
+                const subjectSection = document.createElement('div');
+                subjectSection.className = 'subject-section';
+                
+                const subjectTitle = document.createElement('div');
+                subjectTitle.className = 'subject-title';
+                subjectTitle.textContent = subject;
+                subjectSection.appendChild(subjectTitle);
+                
+                const homeworkList = document.createElement('ul');
+                homeworkList.className = 'homework-list';
+                subjectSection.appendChild(homeworkList);
+                
+                column.appendChild(subjectSection);
+                columnSubjects[subject] = homeworkList;
+            }
+            
+            // 创建作业项
+            const homeworkItem = document.createElement('li');
+            homeworkItem.className = 'homework-item';
+            homeworkItem.setAttribute('data-deadline', submission.deadline);
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'content-wrapper';
+
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'content';
+            contentSpan.textContent = submission.content;
+            contentWrapper.appendChild(contentSpan);
+
+            const labelsSpan = document.createElement('span');
+            labelsSpan.className = 'labels';
+            submission.labels.forEach(labelName => {
+                const labelTag = document.createElement('span');
+                labelTag.className = 'label-tag';
+                labelTag.textContent = labelName;
+                const labelObj = globalLabels.find(l => l.name === labelName);
+                if (labelObj) {
+                    labelTag.style.backgroundColor = labelObj.color;
+                }
+                labelsSpan.appendChild(labelTag);
+            });
+            contentWrapper.appendChild(labelsSpan);
+            homeworkItem.appendChild(contentWrapper);
+
+            const datesContainer = document.createElement('div');
+            datesContainer.className = 'dates-container';
+
+            const deadlineDiv = document.createElement('div');
+            deadlineDiv.className = 'deadline';
+            deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
+            datesContainer.appendChild(deadlineDiv);
+
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
+            datesContainer.appendChild(timestampDiv);
+
+            homeworkItem.appendChild(datesContainer);
+            columnSubjects[subject].appendChild(homeworkItem);
         }
     
         // 打开设置弹窗
