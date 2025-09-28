@@ -159,29 +159,30 @@
             intervalId = setInterval(fetchHomeworkAndLabels, refreshInterval * 1000);
         }
     
-        // 获取作业和标签数据
+         // 获取作业和标签数据
         function fetchHomeworkAndLabels() {
-            fetch('/api/homework')
-                .then(response => response.json())
-                .then(data => {
+            const subjectsPromise = fetch('/static/subjects.json')
+                .then(response => {
+                    if (response.ok) return response.json();
+                    throw new Error('Subjects file not found');
+                })
+                .catch(() => null);
+
+            const homeworkPromise = fetch('/api/homework')
+                .then(response => response.json());
+
+            Promise.all([subjectsPromise, homeworkPromise])
+                .then(([subjectsOrder, data]) => {
                     globalLabels = data.labels || [];
-                    updateHomeworkContainer(data.submissions, globalLabels);
+                    updateHomeworkContainer(data.submissions, globalLabels, subjectsOrder);
                 })
                 .catch(error => {
                     console.error('获取作业数据失败:', error);
                 });
         }
     
-        // 动态分栏参数
-        function getColumnCount() {
-            if (window.innerWidth <= 600) return 1;
-            if (window.innerWidth <= 900) return 2;
-            if (window.innerWidth <= 1200) return 3;
-            return 4;
-        }
-    
         // 更新作业容器（顺序填充各列，允许学科拆分）
-        function updateHomeworkContainer(submissions, labels) {
+        function updateHomeworkContainer(submissions, labels, subjectsOrder) {
             const container = document.getElementById('homeworkContainer');
             container.innerHTML = '';
             
@@ -204,7 +205,12 @@
 
             // 收集所有作业项（按学科和时间排序）
             const allHomeworkItems = [];
-            const subjectOrder = Object.keys(submissions);
+            let subjectOrder;
+            if (subjectsOrder && Array.isArray(subjectsOrder)) {
+                subjectOrder = subjectsOrder.filter(subject => submissions.hasOwnProperty(subject));
+            } else {
+                subjectOrder = Object.keys(submissions);
+            }
             
             subjectOrder.forEach(subject => {
                 // 按时间倒序排列（最新的在前）
@@ -225,7 +231,15 @@
             
             applyHideExpired();
         }
-
+    
+        // 动态分栏参数
+        function getColumnCount() {
+            if (window.innerWidth <= 600) return 1;
+            if (window.innerWidth <= 900) return 2;
+            if (window.innerWidth <= 1200) return 3;
+            return 4;
+        }
+    
         // 顺序填充各列（先填满第一列，再填第二列，依此类推）
         function fillColumnsSequentially(items, columns, colCount) {
             if (items.length === 0) return;
