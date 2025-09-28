@@ -226,24 +226,7 @@
                 // 找到选中的科目
                 const selectedSubject = subjectsData.find(subject => subject.name === selectedSubjectName);
                 
-                // 显示科目专用常用词
-                if (selectedSubject && selectedSubject.common_words && selectedSubject.common_words.length > 0) {
-                    const title = document.createElement('div');
-                    title.className = 'fw-bold mt-2 mb-1';
-                    title.textContent = selectedSubject.name + '常用词:';
-                    subjectCommonWordsContainer.appendChild(title);
-                    
-                    selectedSubject.common_words.forEach(word => {
-                        const badge = document.createElement('span');
-                        badge.className = 'badge bg-primary word-badge cursor-pointer';
-                        badge.textContent = word;
-                        badge.style.cursor = 'pointer';
-                        badge.addEventListener('click', () => insertWordToContent(word));
-                        subjectCommonWordsContainer.appendChild(badge);
-                    });
-                }
-                
-                // 显示通用常用词 (这里简单地显示所有词，实际应该有专门的通用词)
+                // 收集所有词并统计词频，出现多次的作为通用词
                 const allWords = [];
                 subjectsData.forEach(subject => {
                     if (subject.common_words) {
@@ -257,11 +240,12 @@
                     wordCount[word] = (wordCount[word] || 0) + 1;
                 });
                 
+                // 先显示通用常用词
                 const generalWords = Object.entries(wordCount)
                     .filter(([word, count]) => count > 1)
                     .map(([word, count]) => word);
                 
-                if (generalWords.length > 0) {
+                    if (generalWords.length > 0) {
                     const title = document.createElement('div');
                     title.className = 'fw-bold mt-2 mb-1';
                     title.textContent = '通用常用词:';
@@ -276,12 +260,38 @@
                         generalCommonWordsContainer.appendChild(badge);
                     });
                 }
+
+                // 显示科目专用常用词（排除通用词）
+                if (selectedSubject && selectedSubject.common_words && selectedSubject.common_words.length > 0) {
+                    const title = document.createElement('div');
+                    title.className = 'fw-bold mt-2 mb-1';
+                    title.textContent = selectedSubject.name + '常用词:';
+                    subjectCommonWordsContainer.appendChild(title);
+                    
+                    // 只显示该科目的专用词（不是通用词）
+                    const subjectSpecificWords = selectedSubject.common_words.filter(word => !generalWords.includes(word));
+                    if (subjectSpecificWords.length > 0) {
+                        subjectSpecificWords.forEach(word => {
+                            const badge = document.createElement('span');
+                            badge.className = 'badge bg-primary word-badge cursor-pointer';
+                            badge.textContent = word;
+                            badge.style.cursor = 'pointer';
+                            badge.addEventListener('click', () => insertWordToContent(word));
+                            subjectCommonWordsContainer.appendChild(badge);
+                        });
+                    } else {
+                        const noWords = document.createElement('span');
+                        noWords.className = 'text-muted';
+                        noWords.textContent = '暂无专用词';
+                        subjectCommonWordsContainer.appendChild(noWords);
+                    }
+                }
             }
-            
+
             // 插入词语到内容末尾
             function insertWordToContent(word) {
                 const content = contentTextarea.value;
-                const newContent = content + (content.endsWith('\n') || content === '' ? '' : ' ') + word;
+                const newContent = content + word; 
                 contentTextarea.value = newContent;
                 contentTextarea.focus();
             }
