@@ -7,6 +7,10 @@ from datetime import datetime, timedelta
 app = Flask(__name__) # 创建 Flask 应用
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
 
+@app.context_processor
+def inject_subject_class():
+    return dict(Subject=Subject)
+
 # 确保data目录存在
 DATA_DIR = 'data'
 if not os.path.exists(DATA_DIR):
@@ -642,18 +646,29 @@ class Subject:
                 # 添加常用词
                 subject_id = int(request.form.get('subject_id'))
                 new_word = request.form.get('new_word')
+                is_global = request.form.get('is_global') == 'true'
                 
                 if new_word:
-                    for subject in subjects:
-                        if subject['id'] == subject_id:
+                    # 如果是全局词，添加到所有科目
+                    if is_global:
+                        for subject in subjects:
                             if 'common_words' not in subject:
                                 subject['common_words'] = []
                             if new_word not in subject['common_words']:
                                 subject['common_words'].append(new_word)
-                            break
-                    
-                    Subject.save_subjects(subjects)
-                    flash(f'常用词"{new_word}"添加成功！', 'success')
+                        Subject.save_subjects(subjects)
+                        flash(f'通用常用词"{new_word}"添加成功！', 'success')
+                    else:
+                        # 否则添加到指定科目
+                        for subject in subjects:
+                            if subject['id'] == subject_id:
+                                if 'common_words' not in subject:
+                                    subject['common_words'] = []
+                                if new_word not in subject['common_words']:
+                                    subject['common_words'].append(new_word)
+                                break
+                        Subject.save_subjects(subjects)
+                        flash(f'常用词"{new_word}"添加成功！', 'success')
                 else:
                     flash('常用词不能为空！', 'error')
                     
@@ -661,19 +676,26 @@ class Subject:
                 # 删除常用词
                 subject_id = int(request.form.get('subject_id'))
                 word_to_remove = request.form.get('word')
+                is_global = request.form.get('is_global') == 'true'
                 
-                for subject in subjects:
-                    if subject['id'] == subject_id:
+                # 如果是全局词，从所有科目中删除
+                if is_global:
+                    for subject in subjects:
                         if 'common_words' in subject and word_to_remove in subject['common_words']:
                             subject['common_words'].remove(word_to_remove)
-                        break
-                
-                Subject.save_subjects(subjects)
-                flash(f'常用词"{word_to_remove}"删除成功！', 'success')
-            
+                    Subject.save_subjects(subjects)
+                    flash(f'通用常用词"{word_to_remove}"删除成功！', 'success')
+                else:
+                    # 否则只从指定科目中删除
+                    for subject in subjects:
+                        if subject['id'] == subject_id:
+                            if 'common_words' in subject and word_to_remove in subject['common_words']:
+                                subject['common_words'].remove(word_to_remove)
+                            break
+                    Subject.save_subjects(subjects)
+                    flash(f'常用词"{word_to_remove}"删除成功！', 'success')
             # 重新加载数据
             subjects = Subject.load_subjects()
-        
         return render_template('subjects.html', subjects=subjects)
 
 
