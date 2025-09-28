@@ -159,18 +159,21 @@
             intervalId = setInterval(fetchHomeworkAndLabels, refreshInterval * 1000);
         }
     
-         // 获取作业和标签数据
+        // 获取作业和标签数据
         function fetchHomeworkAndLabels() {
-            const subjectsPromise = fetch('/static/subjects.json')
+            // 获取学科排序配置
+            const subjectsPromise = fetch('/api/subjects')
                 .then(response => {
                     if (response.ok) return response.json();
                     throw new Error('Subjects file not found');
                 })
                 .catch(() => null);
 
+            // 获取作业数据
             const homeworkPromise = fetch('/api/homework')
                 .then(response => response.json());
 
+            // 并行处理两个请求的结果
             Promise.all([subjectsPromise, homeworkPromise])
                 .then(([subjectsOrder, data]) => {
                     globalLabels = data.labels || [];
@@ -183,33 +186,33 @@
     
         // 更新作业容器（顺序填充各列，允许学科拆分）
         function updateHomeworkContainer(submissions, labels, subjectsOrder) {
-            const container = document.getElementById('homeworkContainer');
-            container.innerHTML = '';
+            const container = document.getElementById('homeworkContainer'); // 作业容器
+            container.innerHTML = ''; // 清空现有内容
             
-            if (!submissions || Object.keys(submissions).length === 0) {
-                const noSubmissionsDiv = document.createElement('div');
+            if (!submissions || Object.keys(submissions).length === 0) { // 无作业信息
+                const noSubmissionsDiv = document.createElement('div'); 
                 noSubmissionsDiv.className = 'no-submissions';
                 noSubmissionsDiv.textContent = '暂无作业信息';
                 container.appendChild(noSubmissionsDiv);
                 return;
             }
 
-            const colCount = getColumnCount();
-            const columns = [];
-            for (let i = 0; i < colCount; i++) {
-                const col = document.createElement('div');
-                col.className = 'column';
-                columns.push(col);
-                container.appendChild(col);
+            const colCount = getColumnCount(); // 获取当前列数
+            const columns = []; // 列数组
+            for (let i = 0; i < colCount; i++) { // 创建列
+                const col = document.createElement('div'); // 创建列元素
+                col.className = 'column'; // 添加列样式
+                columns.push(col); // 添加列
+                container.appendChild(col); // 添加到容器
             }
 
             // 收集所有作业项（按学科和时间排序）
-            const allHomeworkItems = [];
-            let subjectOrder;
-            if (subjectsOrder && Array.isArray(subjectsOrder)) {
-                subjectOrder = subjectsOrder.filter(subject => submissions.hasOwnProperty(subject));
+            const allHomeworkItems = []; // 作业项数组
+            let subjectOrder; // 科目排序数组
+            if (subjectsOrder && Array.isArray(subjectsOrder)) { // 如果有学科排序配置
+                subjectOrder = subjectsOrder.filter(subject => submissions.hasOwnProperty(subject)); // 过滤有效学科
             } else {
-                subjectOrder = Object.keys(submissions);
+                subjectOrder = Object.keys(submissions); // 否则使用原始学科
             }
             
             subjectOrder.forEach(subject => {
@@ -228,8 +231,7 @@
 
             // 顺序填充各列
             fillColumnsSequentially(allHomeworkItems, columns, colCount);
-            
-            applyHideExpired();
+            applyHideExpired(); // 隐藏过期作业
         }
     
         // 动态分栏参数

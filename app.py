@@ -160,6 +160,15 @@ class Homework:
         
         return {"submissions": grouped_submissions, "labels": labels}
 
+    @app.route('/api/subjects')
+    def api_subjects():
+        # API端点，返回JSON格式的学科顺序数据
+        subjects = Subject.load_subjects()
+        # 按order字段排序
+        subjects.sort(key=lambda x: x.get('order', 999))
+        # 返回学科名称列表，按排序顺序
+        return [subject['name'] for subject in subjects]
+
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
