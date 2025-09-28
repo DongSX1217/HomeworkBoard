@@ -258,109 +258,119 @@
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('deadline').min = today;
-            
-            // 添加清空截止日期功能
-            document.getElementById('clear-deadline').addEventListener('click', function() {
-                document.getElementById('deadline').value = '';
-            });
-            
-            // 常用词相关变量
-            const subjectsData = {{ subjects | tojson }};
-            const contentTextarea = document.getElementById('content');
-            const currentSubject = "{{ homework.subject }}";
-            
-            // 监听科目选择变化
-            const subjectRadios = document.querySelectorAll('.subject-radio');
-            subjectRadios.forEach(radio => {
-                radio.addEventListener('change', updateCommonWords);
-            });
-            
-            // 页面加载完成后初始化常用词显示
-            updateCommonWords();
-            
-            // 更新常用词显示
-            function updateCommonWords() {
-                const selectedSubjectName = document.querySelector('.subject-radio:checked')?.value || subjectsData[0]?.name;
-                const subjectCommonWordsContainer = document.getElementById('subject-common-words');
-                const generalCommonWordsContainer = document.getElementById('general-common-words');
+            // 仅在存在截止日期输入框时设置最小日期
+            const deadlineInput = document.getElementById('deadline');
+            if (deadlineInput) {
+                const today = new Date().toISOString().split('T')[0];
+                deadlineInput.min = today;
                 
-                // 清空容器
-                subjectCommonWordsContainer.innerHTML = '';
-                generalCommonWordsContainer.innerHTML = '';
-                
-                // 找到选中的科目
-                const selectedSubject = subjectsData.find(subject => subject.name === selectedSubjectName);
-                
-                // 收集所有词并统计词频，出现多次的作为通用词
-                const allWords = [];
-                subjectsData.forEach(subject => {
-                    if (subject.common_words) {
-                        allWords.push(...subject.common_words);
-                    }
+                // 添加清空截止日期功能
+                document.getElementById('clear-deadline').addEventListener('click', function() {
+                    deadlineInput.value = '';
                 });
+            }
+            
+            // 只在编辑页面（非确认和删除页面）执行常用词相关功能
+            const subjectsDataElement = document.getElementById('subject-common-words');
+            if (subjectsDataElement) {
+                // 常用词相关变量
+                const subjectsData = {{ subjects | tojson if subjects else '[]' }};
+                const contentTextarea = document.getElementById('content');
                 
-                // 统计词频，出现多次的作为通用词
-                const wordCount = {};
-                allWords.forEach(word => {
-                    wordCount[word] = (wordCount[word] || 0) + 1;
-                });
-                
-                // 先显示通用常用词
-                const generalWords = Object.entries(wordCount)
-                    .filter(([word, count]) => count > 1)
-                    .map(([word, count]) => word);
-                
-                    if (generalWords.length > 0) {
-                    const title = document.createElement('div');
-                    title.className = 'fw-bold mt-2 mb-1';
-                    title.textContent = '通用常用词:';
-                    generalCommonWordsContainer.appendChild(title);
-                    
-                    generalWords.forEach(word => {
-                        const badge = document.createElement('span');
-                        badge.className = 'badge bg-secondary word-badge cursor-pointer';
-                        badge.textContent = word;
-                        badge.style.cursor = 'pointer';
-                        badge.addEventListener('click', () => insertWordToContent(word));
-                        generalCommonWordsContainer.appendChild(badge);
+                // 检查subjectsData是否有效
+                if (subjectsData && subjectsData.length > 0) {
+                    // 监听科目选择变化
+                    const subjectRadios = document.querySelectorAll('input[name="subject"]');
+                    subjectRadios.forEach(radio => {
+                        radio.addEventListener('change', updateCommonWords);
                     });
-                }
-
-                // 显示科目专用常用词（排除通用词）
-                if (selectedSubject && selectedSubject.common_words && selectedSubject.common_words.length > 0) {
-                    const title = document.createElement('div');
-                    title.className = 'fw-bold mt-2 mb-1';
-                    title.textContent = selectedSubject.name + '常用词:';
-                    subjectCommonWordsContainer.appendChild(title);
                     
-                    // 只显示该科目的专用词（不是通用词）
-                    const subjectSpecificWords = selectedSubject.common_words.filter(word => !generalWords.includes(word));
-                    if (subjectSpecificWords.length > 0) {
-                        subjectSpecificWords.forEach(word => {
+                    // 页面加载完成后初始化常用词显示
+                    updateCommonWords();
+                }
+                
+                // 更新常用词显示
+                function updateCommonWords() {
+                    const selectedSubjectName = document.querySelector('input[name="subject"]:checked')?.value || subjectsData[0]?.name;
+                    const subjectCommonWordsContainer = document.getElementById('subject-common-words');
+                    const generalCommonWordsContainer = document.getElementById('general-common-words');
+                    
+                    // 清空容器
+                    subjectCommonWordsContainer.innerHTML = '';
+                    generalCommonWordsContainer.innerHTML = '';
+                    
+                    // 找到选中的科目
+                    const selectedSubject = subjectsData.find(subject => subject.name === selectedSubjectName);
+                    
+                    // 收集所有词并统计词频，出现多次的作为通用词
+                    const allWords = [];
+                    subjectsData.forEach(subject => {
+                        if (subject.common_words) {
+                            allWords.push(...subject.common_words);
+                        }
+                    });
+                    
+                    // 统计词频，出现多次的作为通用词
+                    const wordCount = {};
+                    allWords.forEach(word => {
+                        wordCount[word] = (wordCount[word] || 0) + 1;
+                    });
+                    
+                    // 先显示通用常用词
+                    const generalWords = Object.entries(wordCount)
+                        .filter(([word, count]) => count > 1)
+                        .map(([word, count]) => word);
+                    
+                    if (generalWords.length > 0) {
+                        const title = document.createElement('div');
+                        title.className = 'fw-bold mt-2 mb-1';
+                        title.textContent = '通用常用词:';
+                        generalCommonWordsContainer.appendChild(title);
+                        
+                        generalWords.forEach(word => {
                             const badge = document.createElement('span');
-                            badge.className = 'badge bg-primary word-badge cursor-pointer';
+                            badge.className = 'badge bg-secondary word-badge cursor-pointer';
                             badge.textContent = word;
                             badge.style.cursor = 'pointer';
                             badge.addEventListener('click', () => insertWordToContent(word));
-                            subjectCommonWordsContainer.appendChild(badge);
+                            generalCommonWordsContainer.appendChild(badge);
                         });
-                    } else {
-                        const noWords = document.createElement('span');
-                        noWords.className = 'text-muted';
-                        noWords.textContent = '暂无专用词';
-                        subjectCommonWordsContainer.appendChild(noWords);
+                    }
+
+                    // 显示科目专用常用词（排除通用词）
+                    if (selectedSubject && selectedSubject.common_words && selectedSubject.common_words.length > 0) {
+                        const title = document.createElement('div');
+                        title.className = 'fw-bold mt-2 mb-1';
+                        title.textContent = selectedSubject.name + '常用词:';
+                        subjectCommonWordsContainer.appendChild(title);
+                        
+                        // 只显示该科目的专用词（不是通用词）
+                        const subjectSpecificWords = selectedSubject.common_words.filter(word => !generalWords.includes(word));
+                        if (subjectSpecificWords.length > 0) {
+                            subjectSpecificWords.forEach(word => {
+                                const badge = document.createElement('span');
+                                badge.className = 'badge bg-primary word-badge cursor-pointer';
+                                badge.textContent = word;
+                                badge.style.cursor = 'pointer';
+                                badge.addEventListener('click', () => insertWordToContent(word));
+                                subjectCommonWordsContainer.appendChild(badge);
+                            });
+                        } else {
+                            const noWords = document.createElement('span');
+                            noWords.className = 'text-muted';
+                            noWords.textContent = '暂无专用词';
+                            subjectCommonWordsContainer.appendChild(noWords);
+                        }
                     }
                 }
-            }
-            
-            // 插入词语到内容末尾
-            function insertWordToContent(word) {
-                const content = contentTextarea.value;
-                const newContent = content + word; 
-                contentTextarea.value = newContent;
-                contentTextarea.focus();
+                
+                // 插入词语到内容末尾
+                function insertWordToContent(word) {
+                    const content = contentTextarea.value;
+                    const newContent = content + word; 
+                    contentTextarea.value = newContent;
+                    contentTextarea.focus();
+                }
             }
         });
     </script>
