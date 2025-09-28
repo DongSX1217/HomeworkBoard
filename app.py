@@ -15,6 +15,7 @@ if not os.path.exists(DATA_DIR):
 DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
 LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
 LOG_FILE = os.path.join(DATA_DIR, 'operation.log')
+SUBJECTS_FILE = os.path.join(DATA_DIR, 'subjects.json')
 
 default_labels = [
   {
@@ -159,6 +160,7 @@ class Homework:
     def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
         labels = Label.load_labels()
+        subjects = Subject.load_subjects()
         
         if request.method == 'POST':
             # 检查是否是返回修改操作
@@ -223,6 +225,7 @@ class Homework:
                                          now=datetime.now(), 
                                          tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
                                          labels=labels,
+                                         subjects=subjects,
                                          confirm_data=confirm_data)
                 
                 # 确认后执行添加操作
@@ -266,16 +269,19 @@ class Homework:
         
         # 每次访问GET请求时都重新加载标签
         labels = Label.load_labels()
+        subjects = Subject.load_subjects()
         return render_template('homework_publish.html', 
                              now=datetime.now(), 
                              tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
-                             labels=labels)
+                             labels=labels,
+                             subjects=subjects)
 
     @app.route('/homework/edit/<int:homework_id>', methods=['GET', 'POST'])
     def edit_homework(homework_id):
         # 加载数据
         submissions = load_submissions()
         labels = Label.load_labels()
+        subjects = Subject.load_subjects()
         
         # 查找要编辑的作业
         homework = next((s for s in submissions if s['id'] == homework_id), None)
@@ -349,7 +355,8 @@ class Homework:
                     session['edit_deadline_' + str(homework_id)] = deadline
                     return render_template('homework_edit.html', 
                                          homework=updated_homework, 
-                                         labels=labels, 
+                                         labels=labels,
+                                         subjects=subjects,
                                          now=datetime.now(),
                                          confirm=True)
                 
@@ -405,8 +412,11 @@ class Homework:
                 'timestamp': homework['timestamp']
             }
 
-            return render_template('homework_edit.html', homework=temp_homework, labels=labels, now=datetime.now())
-    
+            return render_template('homework_edit.html', 
+                                 homework=temp_homework, 
+                                 labels=labels, 
+                                 subjects=subjects,
+                                 now=datetime.now())
     @app.route('/homework/delete/<int:homework_id>', methods=['POST'])
     def delete_homework(homework_id):
         # 加载数据
@@ -547,7 +557,128 @@ class Label:
         labels = Label.load_labels()
         return render_template('label_edit.html', labels=labels)
 
+
+class Subject:
+    @staticmethod
+    def load_subjects():
+        """从JSON文件加载科目数据"""
+        if os.path.exists(SUBJECTS_FILE):
+            with open(SUBJECTS_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    pass
+        
+        # 默认科目列表
+        default_subjects = [
+            {"id": 1, "name": "语文", "order": 1, "common_words": []},
+            {"id": 2, "name": "数学", "order": 2, "common_words": []},
+            {"id": 3, "name": "英语", "order": 3, "common_words": []},
+            {"id": 4, "name": "物理", "order": 4, "common_words": []},
+            {"id": 5, "name": "化学", "order": 5, "common_words": []},
+            {"id": 6, "name": "生物学", "order": 6, "common_words": []},
+            {"id": 7, "name": "历史", "order": 7, "common_words": []},
+            {"id": 8, "name": "地理", "order": 8, "common_words": []},
+            {"id": 9, "name": "思想政治", "order": 9, "common_words": []},
+            {"id": 10, "name": "其他", "order": 10, "common_words": []}
+        ]
+        
+        Subject.save_subjects(default_subjects)
+        return default_subjects
+    
+    @staticmethod
+    def save_subjects(subjects):
+        """将科目数据保存到JSON文件"""
+        with open(SUBJECTS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(subjects, f, ensure_ascii=False, indent=2)
+    
+    @staticmethod
+    def get_common_words_by_subject(subject_name):
+        """根据科目名称获取常用词"""
+        subjects = Subject.load_subjects()
+        subject = next((s for s in subjects if s["name"] == subject_name), None)
+        if subject:
+            return subject.get("common_words", [])
+        return []
+    
+    @staticmethod
+    def get_all_common_words():
+        """获取所有通用常用词（不属于特定科目的词）"""
+        subjects = Subject.load_subjects()
+        all_words = []
+        for subject in subjects:
+            all_words.extend(subject.get("common_words", []))
+        # 只返回通用词（出现在多个科目中的词）
+        word_count = {}
+        for word in all_words:
+            word_count[word] = word_count.get(word, 0) + 1
+        return [word for word, count in word_count.items() if count > 1]
+
+    @app.route('/subjects', methods=['GET', 'POST'])
+    def manage_subjects():
+        """管理科目和常用词"""
+        subjects = Subject.load_subjects()
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'update_order':
+                # 更新科目顺序
+                subject_orders = request.form.getlist('subject_order')
+                subject_names = request.form.getlist('subject_name')
+                
+                for i, (name, order) in enumerate(zip(subject_names, subject_orders)):
+                    for subject in subjects:
+                        if subject['name'] == name:
+                            subject['order'] = int(order)
+                            break
+                
+                # 根据order字段排序
+                subjects.sort(key=lambda x: x['order'])
+                Subject.save_subjects(subjects)
+                flash('科目顺序更新成功！', 'success')
+                
+            elif action == 'add_word':
+                # 添加常用词
+                subject_id = int(request.form.get('subject_id'))
+                new_word = request.form.get('new_word')
+                
+                if new_word:
+                    for subject in subjects:
+                        if subject['id'] == subject_id:
+                            if 'common_words' not in subject:
+                                subject['common_words'] = []
+                            if new_word not in subject['common_words']:
+                                subject['common_words'].append(new_word)
+                            break
+                    
+                    Subject.save_subjects(subjects)
+                    flash(f'常用词"{new_word}"添加成功！', 'success')
+                else:
+                    flash('常用词不能为空！', 'error')
+                    
+            elif action == 'remove_word':
+                # 删除常用词
+                subject_id = int(request.form.get('subject_id'))
+                word_to_remove = request.form.get('word')
+                
+                for subject in subjects:
+                    if subject['id'] == subject_id:
+                        if 'common_words' in subject and word_to_remove in subject['common_words']:
+                            subject['common_words'].remove(word_to_remove)
+                        break
+                
+                Subject.save_subjects(subjects)
+                flash(f'常用词"{word_to_remove}"删除成功！', 'success')
+            
+            # 重新加载数据
+            subjects = Subject.load_subjects()
+        
+        return render_template('subjects.html', subjects=subjects)
+
+
 homework = Homework()
 label = Label()
+subject = Subject()
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=2025)
