@@ -1,0 +1,21 @@
+{"timestamp": "2025-09-27 17:49:07", "operation": "添加作业", "details": {"subject": "其他", "content": "测试（其他科目作业）", "labels": ["小组任务"], "deadline": "2025-10-01"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 17:50:39", "operation": "编辑作业", "details": {"id": 8, "subject": "语文", "content": "测试语文作业（多项，修改后的一条）", "labels": ["复习作业", "未知标签"], "deadline": "2025-09-27"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 17:50:51", "operation": "删除作业", "details": {"id": 9, "subject": "数学", "content": "测试（数学作业）（修改后）", "labels": ["课堂前由科代表或小组长检查", "小组任务"], "deadline": "2025-09-27"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:13:44", "operation": "编辑作业", "details": {"id": 1, "subject": "语文", "content": "1.试卷两张", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:14:02", "operation": "删除作业", "details": {"id": 2, "subject": "语文", "content": "测试语文作业", "labels": ["课堂前由授课教师检查"], "deadline": "2025-09-27"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:14:13", "operation": "编辑作业", "details": {"id": 1, "subject": "语文", "content": "1.试卷两张\r\n2.看微信群内的作业", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:14:18", "operation": "删除作业", "details": {"id": 2, "subject": "语文", "content": "测试内容111", "labels": ["未知标签"], "deadline": "2025-09-27"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:16:23", "operation": "编辑作业", "details": {"id": 2, "subject": "英语", "content": "1. 《双练一测》第155页-第156页\r\n2. 背诵《词汇表》第56页单词，背诵课本单词直到“flash cards”\r\n3. 完成《手账本》第5页“第2天”", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:16:38", "operation": "删除作业", "details": {"id": 3, "subject": "化学", "content": "测试作业内容", "labels": ["教师布置"], "deadline": "2025-09-27"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:17:41", "operation": "编辑作业", "details": {"id": 3, "subject": "地理", "content": "1. 《填充图册》写完第2课\r\n2. 完成笔记本", "labels": ["课堂前由授课教师检查"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:18:07", "operation": "编辑作业", "details": {"id": 4, "subject": "思想政治", "content": "整理、背诵笔记", "labels": ["课堂前由授课教师检查"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:18:17", "operation": "删除作业", "details": {"id": 5, "subject": "语文", "content": "测试语文作业（多项，修改后的一条）", "labels": ["复习作业", "未知标签"], "deadline": "2025-09-27"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:19:02", "operation": "编辑作业", "details": {"id": 5, "subject": "数学", "content": "《创新设计》第38页-第39页", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:20:02", "operation": "添加作业", "details": {"subject": "地理", "content": "《填充图册》第3课", "labels": ["选做"], "deadline": "2025-09-30"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:20:32", "operation": "编辑作业", "details": {"id": 1, "subject": "语文", "content": "1.试卷两张<br>\r\n2.看微信群内的作业", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:20:44", "operation": "编辑作业", "details": {"id": 2, "subject": "英语", "content": "1. 《双练一测》第155页-第156页<br>\r\n2. 背诵《词汇表》第56页单词，背诵课本单词直到“flash cards”<br>\r\n3. 完成《手账本》第5页“第2天”", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:20:52", "operation": "编辑作业", "details": {"id": 3, "subject": "地理", "content": "1. 《填充图册》写完第2课<br>\r\n2. 完成笔记本", "labels": ["课堂前由授课教师检查"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:31:13", "operation": "添加作业", "details": {"subject": "语文", "content": "11111111111111", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:31:20", "operation": "删除作业", "details": {"id": 7, "subject": "语文", "content": "11111111111111", "labels": ["未知标签"], "deadline": "2025-09-28"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:33:44", "operation": "添加作业", "details": {"subject": "语文", "content": "1111111111111", "labels": ["未知标签"], "deadline": "无截止日期"}, "ip_address": "127.0.0.1"}
+{"timestamp": "2025-09-27 18:33:51", "operation": "删除作业", "details": {"id": 7, "subject": "语文", "content": "1111111111111", "labels": ["未知标签"], "deadline": ""}, "ip_address": "127.0.0.1"}
