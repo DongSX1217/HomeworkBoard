@@ -66,3 +66,19 @@ body {
 .checkbox-item input {
     margin-right: 8px;
 }
+
+.home-button {
+position: absolute;
+    top: 20px;
+    left: 30px;
+    z-index: 150;
+    padding: 8px 16px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.home-button:hover {
+    background-color: #0b7dda;
+}
