@@ -190,6 +190,25 @@
             });
             
             // 阻止表单默认提交，改为 AJAX 提交
+            $('#sortForm').submit(function(e) {
+                e.preventDefault();
+                
+                // 更新排序数字以确保与UI一致
+                $('#sortable li').each(function(index) {
+                    $(this).find('.order-input').val(index + 1);
+                });
+                
+                const form = $(this);
+                const formData = form.serialize();
+                
+                $.post(form.attr('action'), formData, function(response) {
+                    location.reload();
+                }).fail(function() {
+                    alert('保存失败，请重试');
+                });
+            });
+            
+            // 阻止表单默认提交，改为 AJAX 提交
             $('.word-form').submit(function(e) {
                 e.preventDefault();
                 
