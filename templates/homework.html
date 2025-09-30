@@ -382,9 +382,9 @@
 
         // 计算作业项的大致高度
         function calculateItemHeight(submission) {
-            const baseHeight = 100; // 基础高度
+            const baseHeight = 98; // 基础高度
             const contentHeight = Math.max(20, Math.ceil(submission.content.length / 25) * 21); // 内容高度估算
-            const labelHeight = submission.labels.length > 0 ? 26 : 0; // 标签高度
+            const labelHeight = submission.labels.length > 0 ? 28 : 0; // 标签高度
             return baseHeight + contentHeight + labelHeight;
         }
        
