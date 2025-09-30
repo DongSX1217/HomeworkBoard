@@ -373,19 +373,67 @@
         // 计算最大列高度（基于屏幕高度）
         function calculateMaxColumnHeight() {
             const screenHeight = window.innerHeight;
-            const headerHeight = document.querySelector('h1').offsetHeight + 
-                               document.querySelector('.top-buttons').offsetHeight + 
-                               document.querySelector('.home-button').offsetHeight + 40; // 包含margin和padding
+            
+            // 获取各个元素的实际高度（考虑字体大小和缩放）
+            const headerElement = document.querySelector('h1');
+            const topButtonsElement = document.querySelector('.top-buttons');
+            const homeButtonElement = document.querySelector('.home-button');
+            
+            // 使用getComputedStyle获取实际渲染的高度
+            const headerHeight = headerElement ? headerElement.offsetHeight : 0;
+            const topButtonsHeight = topButtonsElement ? topButtonsElement.offsetHeight : 0;
+            const homeButtonHeight = homeButtonElement ? homeButtonElement.offsetHeight : 0;
+            
+            // 计算实际的margin和padding
+            let additionalSpacing = 40; // 默认边距
+            if (headerElement && topButtonsElement && homeButtonElement) {
+                // 获取实际的margin和padding值
+                const headerStyle = getComputedStyle(headerElement);
+                const topButtonsStyle = getComputedStyle(topButtonsElement);
+                const homeButtonStyle = getComputedStyle(homeButtonElement);
+                
+                // 计算实际的垂直间距（margin + padding）
+                const headerSpacing = parseFloat(headerStyle.marginTop) + parseFloat(headerStyle.marginBottom) + 
+                                    parseFloat(headerStyle.paddingTop) + parseFloat(headerStyle.paddingBottom);
+                const topButtonsSpacing = parseFloat(topButtonsStyle.marginTop) + parseFloat(topButtonsStyle.marginBottom) + 
+                                        parseFloat(topButtonsStyle.paddingTop) + parseFloat(topButtonsStyle.paddingBottom);
+                const homeButtonSpacing = parseFloat(homeButtonStyle.marginTop) + parseFloat(homeButtonStyle.marginBottom) + 
+                                        parseFloat(homeButtonStyle.paddingTop) + parseFloat(homeButtonStyle.paddingBottom);
+                
+                additionalSpacing = Math.ceil(headerSpacing + topButtonsSpacing + homeButtonSpacing);
+            }
+            
             const padding = 20; // 边距
-            return screenHeight - headerHeight - padding;
+            // 增加可用高度以减少列拆分
+            return (screenHeight - headerHeight - topButtonsHeight - homeButtonHeight - additionalSpacing - padding) * 1.2;
         }
 
         // 计算作业项的大致高度
         function calculateItemHeight(submission) {
-            const baseHeight = 98; // 基础高度
-            const contentHeight = Math.max(20, Math.ceil(submission.content.length / 25) * 21); // 内容高度估算
-            const labelHeight = submission.labels.length > 0 ? 28 : 0; // 标签高度
-            return baseHeight + contentHeight + labelHeight;
+            // 获取当前body的字体大小
+            const bodyStyle = getComputedStyle(document.body);
+            const currentFontSize = parseFloat(bodyStyle.fontSize);
+            const baseFontSize = 16; // 默认字体大小
+            
+            // 根据当前字体大小调整基础高度
+            const fontScale = currentFontSize / baseFontSize;
+            
+            // 基础高度（根据字体大小调整）
+            const baseHeight = Math.ceil(98 * fontScale);
+            
+            // 内容高度估算（根据字体大小和字符数计算）
+            const charsPerLine = Math.max(15, Math.floor(25 / fontScale)); // 字体越大，每行字符数越少
+            const lineHeight = Math.ceil(21 * fontScale); // 行高也根据字体大小调整
+            const contentHeight = Math.max(Math.ceil(20 * fontScale), Math.ceil(submission.content.length / charsPerLine) * lineHeight);
+            
+            // 标签高度（根据字体大小调整）
+            const labelHeight = submission.labels.length > 0 ? Math.ceil(28 * fontScale) : 0;
+            
+            // 考虑缩放因子
+            const zoomFactor = window.devicePixelRatio || 1;
+            
+            // 减少高度估算以减少列拆分
+            return Math.ceil((baseHeight + contentHeight + labelHeight) * zoomFactor * 0.85);
         }
        
             // 创建作业项
