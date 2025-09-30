@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, render_template, request, flash, redirect, url_for, session
+from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
 import http.client
 from datetime import datetime, timedelta
@@ -158,7 +158,7 @@ class Homework:
                 grouped_submissions[subject] = []
             grouped_submissions[subject].append(submission)
         
-        return {"submissions": grouped_submissions, "labels": labels}
+        return jsonify({"submissions": grouped_submissions, "labels": labels})
 
     @app.route('/api/subjects')
     def api_subjects():
@@ -167,7 +167,7 @@ class Homework:
         # 按order字段排序
         subjects.sort(key=lambda x: x.get('order', 999))
         # 返回学科名称列表，按排序顺序
-        return [subject['name'] for subject in subjects]
+        return jsonify([subject['name'] for subject in subjects])
 
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():
