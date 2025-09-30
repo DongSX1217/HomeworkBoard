@@ -59,8 +59,9 @@
                     </div>
                     <p><strong>内容:</strong></p>
                     <p class="bg-light p-3 rounded">{{ submission.content }}</p>
-                    <!-- 添加编辑按钮 -->
+                    <!-- 添加编辑和删除按钮 -->
                     <a href="{{ url_for('edit_homework', homework_id=submission.id) }}" class="btn btn-primary"><i class="fas fa-edit me-1"></i>编辑</a>
+                    <a href="{{ url_for('delete_homework_confirm', homework_id=submission.id) }}" class="btn btn-danger"><i class="fas fa-trash me-1"></i>删除</a>
                 </div>
             </div>
             {% endfor %}

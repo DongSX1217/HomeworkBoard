@@ -430,6 +430,7 @@ class Homework:
                                  labels=labels, 
                                  subjects=subjects,
                                  now=datetime.now())
+    
     @app.route('/homework/delete/<int:homework_id>', methods=['POST'])
     def delete_homework(homework_id):
         # 加载数据
@@ -438,6 +439,9 @@ class Homework:
         # 查找要删除的作业
         homework = next((s for s in submissions if s['id'] == homework_id), None)
         if not homework:
+            # 检查是否是 AJAX 请求
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': '作业未找到！'}), 404
             flash('作业未找到！', 'error')
             return redirect(url_for('view_submissions'))
         
@@ -468,8 +472,25 @@ class Homework:
             "deadline": homework['deadline']
         }, request.remote_addr)
         
+        # 检查是否是 AJAX 请求
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({'success': True, 'message': '作业删除成功！'})
+        
         flash('作业删除成功！', 'success')
         return redirect(url_for('view_submissions'))
+
+    @app.route('/homework/delete_confirm/<int:homework_id>')
+    def delete_homework_confirm(homework_id):
+        # 加载数据
+        submissions = load_submissions()
+        
+        # 查找要删除的作业
+        homework = next((s for s in submissions if s['id'] == homework_id), None)
+        if not homework:
+            flash('作业未找到！', 'error')
+            return redirect(url_for('view_submissions'))
+        
+        return render_template('homework_delete.html', homework=homework)
 
 @app.route('/submissions')
 def view_submissions():

@@ -243,9 +243,7 @@
                     
                     <!-- 删除按钮 -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-3">
-                        <form method="POST" action="{{ url_for('delete_homework', homework_id=homework.id) }}">
-                            <button type="submit" class="btn btn-danger"><i class="fas fa-trash me-1"></i>删除作业</button>
-                        </form>
+                        <a href="{{ url_for('delete_homework_confirm', homework_id=homework.id) }}" class="btn btn-danger"><i class="fas fa-trash me-1"></i>删除作业</a>
                     </div>
                 </div>
                 {% endif %}
