@@ -373,16 +373,18 @@
         // 计算最大列高度（基于屏幕高度）
         function calculateMaxColumnHeight() {
             const screenHeight = window.innerHeight;
-            const headerHeight = 120; // 标题和按钮区域高度
+            const headerHeight = document.querySelector('h1').offsetHeight + 
+                               document.querySelector('.top-buttons').offsetHeight + 
+                               document.querySelector('.home-button').offsetHeight + 40; // 包含margin和padding
             const padding = 20; // 边距
             return screenHeight - headerHeight - padding;
         }
 
         // 计算作业项的大致高度
         function calculateItemHeight(submission) {
-            const baseHeight = 90; // 基础高度
-            const contentHeight = Math.max(20, Math.ceil(submission.content.length / 25) * 18); // 内容高度估算
-            const labelHeight = submission.labels.length > 0 ? 25 : 0; // 标签高度
+            const baseHeight = 100; // 基础高度
+            const contentHeight = Math.max(20, Math.ceil(submission.content.length / 25) * 21); // 内容高度估算
+            const labelHeight = submission.labels.length > 0 ? 26 : 0; // 标签高度
             return baseHeight + contentHeight + labelHeight;
         }
        
