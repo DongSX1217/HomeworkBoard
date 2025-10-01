@@ -123,7 +123,7 @@ def homepage():
 @app.before_request
 def check_banned_ip():
     """拦截禁止访问的IP"""
-    banned_ips = ['127.0.0.1']
+    banned_ips = []
     user_ip = get_client_ip() # 获取用户IP地址
     if user_ip in banned_ips:
         return "<br><br><h3>您的IP已被禁止访问，如有疑问，请联系开发者。</h3>", 403
