@@ -128,7 +128,7 @@
             }
             const fontSize = document.getElementById("fontSize").value;
             document.body.style.fontSize = fontSize + 'px';
-            setCookie("fontSize", fontSize, 30);
+            setCookie("fontSize", fontSize, 20); // 保存字体大小，若没有设置则使用默认值20
             const hideExpired = document.getElementById("hideExpired").checked;
             setCookie("hideExpired", hideExpired, 30);
             applyHideExpired();
