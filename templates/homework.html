@@ -324,49 +324,7 @@
             }
             
             // 创建作业项
-            const homeworkItem = document.createElement('li');
-            homeworkItem.className = 'homework-item';
-            homeworkItem.setAttribute('data-deadline', submission.deadline);
-
-            const contentWrapper = document.createElement('div');
-            contentWrapper.className = 'content-wrapper';
-
-            const contentSpan = document.createElement('span');
-            contentSpan.className = 'content';
-            contentSpan.textContent = submission.content;
-            contentWrapper.appendChild(contentSpan);
-
-            const labelsSpan = document.createElement('span');
-            labelsSpan.className = 'labels';
-            submission.labels.forEach(labelName => {
-                const labelTag = document.createElement('span');
-                labelTag.className = 'label-tag';
-                labelTag.textContent = labelName;
-                const labelObj = globalLabels.find(l => l.name === labelName);
-                if (labelObj) {
-                    labelTag.style.backgroundColor = labelObj.color;
-                }
-                labelsSpan.appendChild(labelTag);
-            });
-            contentWrapper.appendChild(labelsSpan);
-            homeworkItem.appendChild(contentWrapper);
-
-            const datesContainer = document.createElement('div');
-            datesContainer.className = 'dates-container';
-
-            const deadlineDiv = document.createElement('div');
-            deadlineDiv.className = 'deadline';
-            deadlineDiv.textContent = '截止日期: ' + (submission.deadline ? submission.deadline.substring(5) : '未设置');
-            datesContainer.appendChild(deadlineDiv);
-
-            const timestampDiv = document.createElement('div');
-            timestampDiv.className = 'timestamp';
-            timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
-            datesContainer.appendChild(timestampDiv);
-
-            homeworkItem.appendChild(datesContainer);
-            
-            // 添加到对应的作业列表
+            const homeworkItem = createHomeworkItem(submission);
             columnSubjects[subject].appendChild(homeworkItem);
         }
 
@@ -437,47 +395,7 @@
         }
        
             // 创建作业项
-            const homeworkItem = document.createElement('li');
-            homeworkItem.className = 'homework-item';
-            homeworkItem.setAttribute('data-deadline', submission.deadline);
-
-            const contentWrapper = document.createElement('div');
-            contentWrapper.className = 'content-wrapper';
-
-            const contentSpan = document.createElement('span');
-            contentSpan.className = 'content';
-            contentSpan.textContent = submission.content;
-            contentWrapper.appendChild(contentSpan);
-
-            const labelsSpan = document.createElement('span');
-            labelsSpan.className = 'labels';
-            submission.labels.forEach(labelName => {
-                const labelTag = document.createElement('span');
-                labelTag.className = 'label-tag';
-                labelTag.textContent = labelName;
-                const labelObj = globalLabels.find(l => l.name === labelName);
-                if (labelObj) {
-                    labelTag.style.backgroundColor = labelObj.color;
-                }
-                labelsSpan.appendChild(labelTag);
-            });
-            contentWrapper.appendChild(labelsSpan);
-            homeworkItem.appendChild(contentWrapper);
-
-            const datesContainer = document.createElement('div');
-            datesContainer.className = 'dates-container';
-
-            const deadlineDiv = document.createElement('div');
-            deadlineDiv.className = 'deadline';
-            deadlineDiv.textContent = '截止日期: ' + submission.deadline.substring(5);
-            datesContainer.appendChild(deadlineDiv);
-
-            const timestampDiv = document.createElement('div');
-            timestampDiv.className = 'timestamp';
-            timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
-            datesContainer.appendChild(timestampDiv);
-
-            homeworkItem.appendChild(datesContainer);
+            const homeworkItem = createHomeworkItem(item.submission);
             columnSubjects[subject].appendChild(homeworkItem);
     
         // 打开设置弹窗
@@ -529,6 +447,63 @@
             if (event.target == modal) {
                 closeSettings();
             }
+        }
+        
+        // 获取日期对应的星期几
+        function getWeekday(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+            return weekdays[date.getDay()];
+        }
+
+        // 创建作业项
+        function createHomeworkItem(submission) {
+            const homeworkItem = document.createElement('li');
+            homeworkItem.className = 'homework-item';
+            homeworkItem.setAttribute('data-deadline', submission.deadline);
+
+            const contentWrapper = document.createElement('div');
+            contentWrapper.className = 'content-wrapper';
+
+            const contentSpan = document.createElement('span');
+            contentSpan.className = 'content';
+            contentSpan.textContent = submission.content;
+            contentWrapper.appendChild(contentSpan);
+
+            const labelsSpan = document.createElement('span');
+            labelsSpan.className = 'labels';
+            submission.labels.forEach(labelName => {
+                const labelTag = document.createElement('span');
+                labelTag.className = 'label-tag';
+                labelTag.textContent = labelName;
+                const labelObj = globalLabels.find(l => l.name === labelName);
+                if (labelObj) {
+                    labelTag.style.backgroundColor = labelObj.color;
+                }
+                labelsSpan.appendChild(labelTag);
+            });
+            contentWrapper.appendChild(labelsSpan);
+            homeworkItem.appendChild(contentWrapper);
+
+            const datesContainer = document.createElement('div');
+            datesContainer.className = 'dates-container';
+
+            const deadlineDiv = document.createElement('div');
+            deadlineDiv.className = 'deadline';
+            const deadlineText = submission.deadline ? 
+                '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')' : 
+                '截止日期: 未设置';
+            deadlineDiv.textContent = deadlineText;
+            datesContainer.appendChild(deadlineDiv);
+
+            const timestampDiv = document.createElement('div');
+            timestampDiv.className = 'timestamp';
+            timestampDiv.textContent = '发布时间: ' + submission.timestamp.substring(5, 16);
+            datesContainer.appendChild(timestampDiv);
+
+            homeworkItem.appendChild(datesContainer);
+            return homeworkItem;
         }
     </script>
 </body>

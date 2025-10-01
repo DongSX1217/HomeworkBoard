@@ -243,18 +243,19 @@ position: absolute;
     display: flex;
     justify-content: space-between;
     margin-top: 5px;
-    font-size: 0.8em;
 }
 
 /* 截止日期 */
 .deadline {
     color: #e74c3c;
     font-weight: bold;
+    font-size: 0.7em;
 }
 
 /* 时间戳 */
 .timestamp {
     color: #7f8c8d;
+    font-size: 0.6em;
 }
 
 /* 无作业信息 */
