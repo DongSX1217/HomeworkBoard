@@ -638,6 +638,16 @@ class Subject:
     @staticmethod
     def get_all_common_words():
         """获取所有通用常用词（不属于特定科目的词）"""
+        # 检查是否存在专门的通用词文件
+        GLOBAL_WORDS_FILE = os.path.join(DATA_DIR, 'global_words.json')
+        if os.path.exists(GLOBAL_WORDS_FILE):
+            with open(GLOBAL_WORDS_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    pass
+        
+        # 如果没有单独的通用词文件，则回退到原来的逻辑
         subjects = Subject.load_subjects()
         all_words = []
         for subject in subjects:
@@ -647,6 +657,13 @@ class Subject:
         for word in all_words:
             word_count[word] = word_count.get(word, 0) + 1
         return [word for word, count in word_count.items() if count > 1]
+    
+    @staticmethod
+    def save_global_common_words(words):
+        """保存全局常用词到独立文件"""
+        GLOBAL_WORDS_FILE = os.path.join(DATA_DIR, 'global_words.json')
+        with open(GLOBAL_WORDS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(words, f, ensure_ascii=False, indent=2)
 
     @app.route('/subjects', methods=['GET', 'POST'])
     def manage_subjects():
@@ -674,56 +691,62 @@ class Subject:
                 
             elif action == 'add_word':
                 # 添加常用词
-                subject_id = int(request.form.get('subject_id'))
+                subject_id_str = request.form.get('subject_id')
+                subject_id = int(subject_id_str) if subject_id_str else None
                 new_word = request.form.get('new_word')
                 is_global = request.form.get('is_global') == 'true'
                 
                 if new_word:
-                    # 如果是全局词，添加到所有科目
+                    # 如果是全局词，添加到全局词列表
                     if is_global:
-                        for subject in subjects:
-                            if 'common_words' not in subject:
-                                subject['common_words'] = []
-                            if new_word not in subject['common_words']:
-                                subject['common_words'].append(new_word)
-                        Subject.save_subjects(subjects)
+                        global_words = Subject.get_all_common_words()
+                        if new_word not in global_words:
+                            global_words.append(new_word)
+                            Subject.save_global_common_words(global_words)
                         flash(f'通用常用词"{new_word}"添加成功！', 'success')
                     else:
                         # 否则添加到指定科目
-                        for subject in subjects:
-                            if subject['id'] == subject_id:
-                                if 'common_words' not in subject:
-                                    subject['common_words'] = []
-                                if new_word not in subject['common_words']:
-                                    subject['common_words'].append(new_word)
-                                break
-                        Subject.save_subjects(subjects)
-                        flash(f'常用词"{new_word}"添加成功！', 'success')
+                        if subject_id is not None:
+                            for subject in subjects:
+                                if subject['id'] == subject_id:
+                                    if 'common_words' not in subject:
+                                        subject['common_words'] = []
+                                    if new_word not in subject['common_words']:
+                                        subject['common_words'].append(new_word)
+                                    break
+                            Subject.save_subjects(subjects)
+                            flash(f'常用词"{new_word}"添加成功！', 'success')
+                        else:
+                            flash('请选择科目！', 'error')
                 else:
                     flash('常用词不能为空！', 'error')
                     
             elif action == 'remove_word':
                 # 删除常用词
-                subject_id = int(request.form.get('subject_id'))
+                subject_id_str = request.form.get('subject_id')
+                subject_id = int(subject_id_str) if subject_id_str else None
                 word_to_remove = request.form.get('word')
                 is_global = request.form.get('is_global') == 'true'
                 
-                # 如果是全局词，从所有科目中删除
+                # 如果是全局词，从全局词列表中删除
                 if is_global:
-                    for subject in subjects:
-                        if 'common_words' in subject and word_to_remove in subject['common_words']:
-                            subject['common_words'].remove(word_to_remove)
-                    Subject.save_subjects(subjects)
+                    global_words = Subject.get_all_common_words()
+                    if word_to_remove in global_words:
+                        global_words.remove(word_to_remove)
+                        Subject.save_global_common_words(global_words)
                     flash(f'通用常用词"{word_to_remove}"删除成功！', 'success')
                 else:
                     # 否则只从指定科目中删除
-                    for subject in subjects:
-                        if subject['id'] == subject_id:
-                            if 'common_words' in subject and word_to_remove in subject['common_words']:
-                                subject['common_words'].remove(word_to_remove)
-                            break
-                    Subject.save_subjects(subjects)
-                    flash(f'常用词"{word_to_remove}"删除成功！', 'success')
+                    if subject_id is not None:
+                        for subject in subjects:
+                            if subject['id'] == subject_id:
+                                if 'common_words' in subject and word_to_remove in subject['common_words']:
+                                    subject['common_words'].remove(word_to_remove)
+                                break
+                        Subject.save_subjects(subjects)
+                        flash(f'常用词"{word_to_remove}"删除成功！', 'success')
+                    else:
+                        flash('请选择科目！', 'error')
             # 重新加载数据
             subjects = Subject.load_subjects()
         return render_template('subjects.html', subjects=subjects)

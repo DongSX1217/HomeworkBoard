@@ -73,7 +73,6 @@
                         <div class="mt-3">
                             <form method="POST" action="{{ url_for('manage_subjects') }}" class="d-flex mb-3" id="globalWordForm">
                                 <input type="hidden" name="action" value="add_word">
-                                <input type="hidden" name="subject_id" value="1"> <!-- 使用第一个科目作为通用词存储 -->
                                 <input type="hidden" name="is_global" value="true">
                                 <input type="text" name="new_word" class="form-control" id="newGlobalWord" placeholder="输入新常用词" required>
                                 <button type="submit" class="btn btn-primary ms-2"><i class="fas fa-plus me-1"></i>添加</button>
@@ -87,7 +86,6 @@
                                         {{ word }}
                                         <form method="POST" action="{{ url_for('manage_subjects') }}" class="d-inline remove-global-word-form">
                                             <input type="hidden" name="action" value="remove_word">
-                                            <input type="hidden" name="subject_id" value="1">
                                             <input type="hidden" name="word" value="{{ word }}">
                                             <input type="hidden" name="is_global" value="true">
                                             <button type="submit" class="btn-close btn-close-white ms-1 p-0 remove-global-word-btn" style="font-size: 0.5rem;"></button>
@@ -189,6 +187,21 @@
                 }
             });
             
+            // 页面加载时恢复之前选中的标签页
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('active_tab');
+            if (activeTab) {
+                $('.nav-tabs button[data-bs-target="' + activeTab + '"]').tab('show');
+            }
+            
+            // 点击标签页时更新URL参数
+            $('.nav-tabs button').on('shown.bs.tab', function (e) {
+                const target = $(e.target).attr('data-bs-target');
+                const url = new URL(window.location);
+                url.searchParams.set('active_tab', target);
+                window.history.replaceState({}, '', url);
+            });
+            
             // 阻止表单默认提交，改为 AJAX 提交
             $('#sortForm').submit(function(e) {
                 e.preventDefault();
@@ -214,10 +227,13 @@
                 
                 const form = $(this);
                 const formData = form.serialize();
+                const subjectId = form.find('input[name="subject_id"]').val();
                 
                 $.post(form.attr('action'), formData, function(response) {
-                    // 重新加载页面以显示更新
-                    location.reload();
+                    // 重新加载页面并保持当前标签页
+                    const url = new URL(window.location);
+                    url.searchParams.set('active_tab', '#subject-' + subjectId);
+                    window.location.href = url;
                 }).fail(function() {
                     alert('操作失败，请重试');
                 });
@@ -231,7 +247,7 @@
                 const formData = form.serialize();
                 
                 $.post(form.attr('action'), formData, function(response) {
-                    // 重新加载页面以显示更新
+                    // 重新加载页面并保持当前标签页
                     location.reload();
                 }).fail(function() {
                     alert('操作失败，请重试');
@@ -248,10 +264,13 @@
                 
                 const form = $(this);
                 const formData = form.serialize();
+                const subjectId = form.find('input[name="subject_id"]').val();
                 
                 $.post(form.attr('action'), formData, function(response) {
-                    // 重新加载页面以显示更新
-                    location.reload();
+                    // 重新加载页面并保持当前标签页
+                    const url = new URL(window.location);
+                    url.searchParams.set('active_tab', '#subject-' + subjectId);
+                    window.location.href = url;
                 }).fail(function() {
                     alert('删除失败，请重试');
                 });
@@ -269,7 +288,7 @@
                 const formData = form.serialize();
                 
                 $.post(form.attr('action'), formData, function(response) {
-                    // 重新加载页面以显示更新
+                    // 重新加载页面并保持当前标签页
                     location.reload();
                 }).fail(function() {
                     alert('删除失败，请重试');
