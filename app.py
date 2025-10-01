@@ -686,16 +686,14 @@ class Subject:
         return []
     
     @staticmethod
-    @app.route('/api/global_words', methods=['GET'])
-    def get_all_common_words():
-        """获取所有通用常用词（不属于特定科目的词）"""
+    def get_all_common_words_list():
+        """获取所有通用常用词列表（用于模板渲染）"""
         # 检查是否存在专门的通用词文件
         GLOBAL_WORDS_FILE = os.path.join(DATA_DIR, 'global_words.json')
         if os.path.exists(GLOBAL_WORDS_FILE):
             with open(GLOBAL_WORDS_FILE, 'r', encoding='utf-8') as f:
                 try:
-                    words = json.load(f)
-                    return jsonify(words)
+                    return json.load(f)
                 except json.JSONDecodeError:
                     pass
         
@@ -708,8 +706,15 @@ class Subject:
         word_count = {}
         for word in all_words:
             word_count[word] = word_count.get(word, 0) + 1
-        return jsonify([word for word, count in word_count.items() if count > 1])
+        return [word for word, count in word_count.items() if count > 1]
     
+    @staticmethod
+    @app.route('/api/global_words', methods=['GET'])
+    def get_all_common_words():
+        """获取所有通用常用词（不属于特定科目的词）"""
+        words = Subject.get_all_common_words_list()
+        return jsonify(words)
+
     @staticmethod
     def save_global_common_words(words):
         """保存全局常用词到独立文件"""

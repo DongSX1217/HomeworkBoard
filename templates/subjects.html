@@ -79,7 +79,7 @@
                             </form>
                             
                             <div class="d-flex flex-wrap gap-2 mb-3" id="globalWordsContainer">
-                                {% set global_words = Subject.get_all_common_words() %}
+                                {% set global_words = Subject.get_all_common_words_list() %}
                                 {% if global_words %}
                                     {% for word in global_words %}
                                     <span class="badge bg-primary global-word-badge" data-word="{{ word }}">
