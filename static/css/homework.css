@@ -297,6 +297,227 @@ position: absolute;
     color: #7f8c8d;
 }
 
+/* 快捷布置作业浮动按钮 */
+.quick-publish-float-button {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    cursor: pointer;
+    z-index: 1000;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.quick-publish-float-button:hover {
+    background-color: #45a049;
+    transform: scale(1.1);
+}
+
+/* 快捷布置弹窗样式 */
+.quick-publish-modal {
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.quick-publish-modal .form-group {
+    margin-bottom: 15px;
+}
+
+.quick-publish-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #333;
+}
+
+.quick-publish-modal .form-control {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px; /* 适合触屏操作 */
+}
+
+.quick-publish-modal textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* 常用词宫格 */
+.common-words-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.word-grid-btn {
+    padding: 10px 5px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    transition: all 0.2s ease;
+    touch-action: manipulation; /* 改善触屏体验 */
+}
+
+.word-grid-btn:hover {
+    background-color: #e9ecef;
+    border-color: #007bff;
+}
+
+.word-grid-btn:active {
+    background-color: #007bff;
+    color: white;
+}
+
+/* 日期快捷按钮 */
+.date-quick-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.date-btn {
+    padding: 10px;
+    border: 1px solid #ddd;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.date-btn:hover {
+    background-color: #e9ecef;
+}
+
+.date-btn.clear {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+}
+
+.date-btn.clear:hover {
+    background-color: #f1b0b7;
+}
+
+/* 表单按钮 */
+.form-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-cancel, .btn-submit {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.btn-cancel {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-cancel:hover {
+    background-color: #5a6268;
+}
+
+.btn-submit {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-submit:hover {
+    background-color: #218838;
+}
+
+/* 多选下拉框样式 */
+.quick-publish-modal select[multiple] {
+    height: auto;
+    min-height: 100px;
+}
+
+.quick-publish-modal select[multiple] option {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.quick-publish-modal select[multiple] option:checked {
+    background-color: #007bff;
+    color: white;
+}
+
+/* 触屏优化 */
+@media (max-width: 768px) {
+    .quick-publish-float-button {
+        bottom: 20px;
+        right: 20px;
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .quick-publish-modal {
+        width: 95%;
+        margin: 5% auto;
+    }
+    
+    .common-words-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .date-quick-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .form-buttons {
+        flex-direction: column;
+    }
+    
+    .btn-cancel, .btn-submit {
+        width: 100%;
+    }
+}
+
+/* 确保弹窗在移动设备上显示正常 */
+@media (max-width: 480px) {
+    .quick-publish-modal .modal-content {
+        margin: 10% auto;
+        padding: 15px;
+    }
+    
+    .common-words-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+    
+    .word-grid-btn {
+        padding: 8px 4px;
+        font-size: 12px;
+    }
+}
+
 /* 响应式设计 */
 @media (max-width: 1200px) {
     .columns {
