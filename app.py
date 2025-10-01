@@ -135,45 +135,38 @@ def check_banned_ip():
     if user_ip in banned_ips:
         return "<br><br><h3>您的IP已被禁止访问，如有疑问，请联系开发者。</h3>", 403
 def get_client_ip():
-        """获取客户端真实IP（兼容代理服务器）"""
-        app.logger.info(f"Request environ keys: {list(request.environ.keys())}")
-        
-        # 尝试从各种可能的请求头中获取真实IP
-        if request.environ.get('HTTP_X_REAL_IP'):
-            ip = request.environ.get('HTTP_X_REAL_IP')
-            app.logger.info(f"Got IP from HTTP_X_REAL_IP: {ip}")
+    """
+    获取客户端真实IP地址
+    无论是否使用代理服务器，都尝试获取最可靠的客户端IP
+    """
+    # 首先检查常见的代理相关头部
+    if request.headers.get('X-Forwarded-For'):
+        # X-Forwarded-For格式: client_ip, proxy1_ip, proxy2_ip...
+        # 最左侧的是原始客户端IP
+        ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
+        if ip and ip != 'unknown':
+            app.logger.info(f"Got IP from X-Forwarded-For: {ip}")
             return ip
-        elif request.environ.get('HTTP_X_FORWARDED_FOR'):
-            # X-Forwarded-For可能包含多个IP，取第一个
-            forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR').split(',')[0].strip()
-            if forwarded_for:
-                app.logger.info(f"Got IP from HTTP_X_FORWARDED_FOR: {forwarded_for}")
-                return forwarded_for
-        elif request.headers.getlist("X-Forwarded-For"):
-            ip = request.headers.getlist("X-Forwarded-For")[0].split(',')[0]
-            app.logger.info(f"Got IP from X-Forwarded-For header: {ip}")
+    
+    # 检查X-Real-IP头部
+    if request.headers.get('X-Real-IP'):
+        ip = request.headers.get('X-Real-IP')
+        if ip and ip != 'unknown':
+            app.logger.info(f"Got IP from X-Real-IP: {ip}")
             return ip
-        elif request.environ.get('HTTP_X_FORWARDED'):
-            ip = request.environ.get('HTTP_X_FORWARDED')
-            app.logger.info(f"Got IP from HTTP_X_FORWARDED: {ip}")
-            return ip
-        elif request.environ.get('HTTP_X_CLUSTER_CLIENT_IP'):
-            ip = request.environ.get('HTTP_X_CLUSTER_CLIENT_IP')
-            app.logger.info(f"Got IP from HTTP_X_CLUSTER_CLIENT_IP: {ip}")
-            return ip
-        elif request.environ.get('HTTP_FORWARDED_FOR'):
-            ip = request.environ.get('HTTP_FORWARDED_FOR')
-            app.logger.info(f"Got IP from HTTP_FORWARDED_FOR: {ip}")
-            return ip
-        elif request.environ.get('HTTP_FORWARDED'):
-            ip = request.environ.get('HTTP_FORWARDED')
-            app.logger.info(f"Got IP from HTTP_FORWARDED: {ip}")
-            return ip
-        
-        # 如果以上都失败，使用REMOTE_ADDR
-        remote_addr = request.remote_addr or 'unknown'
-        app.logger.info(f"Using REMOTE_ADDR: {remote_addr}")
-        return remote_addr
+    
+    # 检查其他可能的代理头部
+    for header in ['X-Client-IP', 'X-ProxyUser-Ip', 'CF-Connecting-IP', 'True-Client-IP']:
+        if request.headers.get(header):
+            ip = request.headers.get(header)
+            if ip and ip != 'unknown':
+                app.logger.info(f"Got IP from {header}: {ip}")
+                return ip
+    
+    # 最后使用REMOTE_ADDR作为兜底方案
+    ip = request.remote_addr or 'unknown'
+    app.logger.info(f"Using REMOTE_ADDR: {ip}")
+    return ip
 
 class Homework:
     '''
@@ -325,7 +318,7 @@ class Homework:
                     "content": content,
                     "labels": selected_labels,
                     "deadline": deadline if deadline else '无截止日期'
-                }, request.remote_addr)
+                }, get_client_ip())
                 
                 flash('作业布置成功！', 'success')
                 return redirect(url_for('view_submissions'))
@@ -454,7 +447,7 @@ class Homework:
                     "content": content,
                     "labels": selected_labels,
                     "deadline": deadline if deadline else '无截止日期'
-                }, request.remote_addr)
+                }, get_client_ip())
                 
                 flash('作业更新成功！', 'success')
                 return redirect(url_for('view_submissions'))
@@ -526,7 +519,7 @@ class Homework:
             "content": homework['content'],
             "labels": homework['labels'],
             "deadline": homework['deadline']
-        }, request.remote_addr)
+        }, get_client_ip())
         
         # 检查是否是 AJAX 请求
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
