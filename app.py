@@ -808,4 +808,4 @@ homework = Homework()
 label = Label()
 subject = Subject()
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=False,port=2025)
+    app.run(host='0.0.0.0',debug=True,port=2025)
