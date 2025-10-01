@@ -20,6 +20,7 @@ DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
 LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
 LOG_FILE = os.path.join(DATA_DIR, 'operation.log')
 SUBJECTS_FILE = os.path.join(DATA_DIR, 'subjects.json')
+IP_FILE = os.path.join(DATA_DIR, 'ips.json')
 
 default_labels = [
   {
@@ -123,8 +124,14 @@ def homepage():
 @app.before_request
 def check_banned_ip():
     """拦截禁止访问的IP"""
-    banned_ips = []
+    if os.path.exists(IP_FILE):
+        with open(IP_FILE, 'r', encoding='utf-8') as f:
+            try:
+                data_json = json.load(f)
+            except json.JSONDecodeError:
+                pass
     user_ip = get_client_ip() # 获取用户IP地址
+    banned_ips = data_json.get('banned_ips', [])
     if user_ip in banned_ips:
         return "<br><br><h3>您的IP已被禁止访问，如有疑问，请联系开发者。</h3>", 403
 def get_client_ip():
