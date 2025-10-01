@@ -644,7 +644,8 @@ class Subject:
         if os.path.exists(GLOBAL_WORDS_FILE):
             with open(GLOBAL_WORDS_FILE, 'r', encoding='utf-8') as f:
                 try:
-                    return json.load(f)
+                    words = json.load(f)
+                    return jsonify(words)
                 except json.JSONDecodeError:
                     pass
         
@@ -657,7 +658,7 @@ class Subject:
         word_count = {}
         for word in all_words:
             word_count[word] = word_count.get(word, 0) + 1
-        return [word for word, count in word_count.items() if count > 1]
+        return jsonify([word for word, count in word_count.items() if count > 1])
     
     @staticmethod
     def save_global_common_words(words):
