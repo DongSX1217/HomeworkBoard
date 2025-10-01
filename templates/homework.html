@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>作业公告板</title>
     <link rel="stylesheet" href="/static/css/homework.css">
+    <!-- Font Awesome 图标 -->
+    <link rel="stylesheet" href="/static/fontawesome-free-6.4.0-web/css/all.min.css">
 </head>
 <body>
     <div class="container">
@@ -76,6 +78,12 @@
                     <label for="hideExpired">不显示已截止的作业</label>
                 </div>
             </div>
+            <div class="setting-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="bigScreenMode">
+                    <label for="bigScreenMode">大屏模式</label>
+                </div>
+            </div>
             <button class="save-settings" onclick="saveSettings()">保存设置</button>
         </div>
     </div>
@@ -112,6 +120,10 @@
                 document.getElementById("hideExpired").checked = true;
                 applyHideExpired();
             }
+            const bigScreenMode = getCookie("bigScreenMode");
+            if (bigScreenMode === "true") {
+                document.getElementById("bigScreenMode").checked = true;
+            }
         }
     
         // 保存设置（到cookie）
@@ -131,6 +143,8 @@
             setCookie("fontSize", fontSize, 20); // 保存字体大小，若没有设置则使用默认值20
             const hideExpired = document.getElementById("hideExpired").checked;
             setCookie("hideExpired", hideExpired, 30);
+            const bigScreenMode = document.getElementById("bigScreenMode").checked;
+            setCookie("bigScreenMode", bigScreenMode, 30);
             applyHideExpired();
             closeSettings();
             alert('设置已保存');
@@ -491,10 +505,27 @@
 
             const deadlineDiv = document.createElement('div');
             deadlineDiv.className = 'deadline';
+            
+            // 检查是否启用了大屏模式并添加编辑按钮
+            const bigScreenMode = getCookie("bigScreenMode") === "true";
+            if (bigScreenMode && submission.id) {
+                const editButton = document.createElement('button');
+                editButton.className = 'edit-button';
+                const editIcon = document.createElement('i');
+                editIcon.className = 'fas fa-edit'; // 改为fas类前缀
+                editButton.appendChild(editIcon);
+                editButton.title = '编辑作业';
+                editButton.onclick = function() {
+                    window.open('/homework/edit/' + submission.id, '_blank');
+                };
+                deadlineDiv.appendChild(editButton);
+            }
+            
             const deadlineText = submission.deadline ? 
                 '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')' : 
                 '截止日期: 未设置';
-            deadlineDiv.textContent = deadlineText;
+            const deadlineTextNode = document.createTextNode(deadlineText);
+            deadlineDiv.appendChild(deadlineTextNode);
             datesContainer.appendChild(deadlineDiv);
 
             const timestampDiv = document.createElement('div');
