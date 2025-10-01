@@ -119,6 +119,55 @@ submissions = load_submissions()
 def homepage():
     return render_template('home.html')
 
+@staticmethod # 静态方法，避免每次请求都创建实例
+@app.before_request
+def check_banned_ip():
+    """拦截禁止访问的IP"""
+    banned_ips = ['127.0.0.1']
+    user_ip = get_client_ip() # 获取用户IP地址
+    if user_ip in banned_ips:
+        return "<br><br><h3>您的IP已被禁止访问，如有疑问，请联系开发者。</h3>", 403
+def get_client_ip():
+        """获取客户端真实IP（兼容代理服务器）"""
+        app.logger.info(f"Request environ keys: {list(request.environ.keys())}")
+        
+        # 尝试从各种可能的请求头中获取真实IP
+        if request.environ.get('HTTP_X_REAL_IP'):
+            ip = request.environ.get('HTTP_X_REAL_IP')
+            app.logger.info(f"Got IP from HTTP_X_REAL_IP: {ip}")
+            return ip
+        elif request.environ.get('HTTP_X_FORWARDED_FOR'):
+            # X-Forwarded-For可能包含多个IP，取第一个
+            forwarded_for = request.environ.get('HTTP_X_FORWARDED_FOR').split(',')[0].strip()
+            if forwarded_for:
+                app.logger.info(f"Got IP from HTTP_X_FORWARDED_FOR: {forwarded_for}")
+                return forwarded_for
+        elif request.headers.getlist("X-Forwarded-For"):
+            ip = request.headers.getlist("X-Forwarded-For")[0].split(',')[0]
+            app.logger.info(f"Got IP from X-Forwarded-For header: {ip}")
+            return ip
+        elif request.environ.get('HTTP_X_FORWARDED'):
+            ip = request.environ.get('HTTP_X_FORWARDED')
+            app.logger.info(f"Got IP from HTTP_X_FORWARDED: {ip}")
+            return ip
+        elif request.environ.get('HTTP_X_CLUSTER_CLIENT_IP'):
+            ip = request.environ.get('HTTP_X_CLUSTER_CLIENT_IP')
+            app.logger.info(f"Got IP from HTTP_X_CLUSTER_CLIENT_IP: {ip}")
+            return ip
+        elif request.environ.get('HTTP_FORWARDED_FOR'):
+            ip = request.environ.get('HTTP_FORWARDED_FOR')
+            app.logger.info(f"Got IP from HTTP_FORWARDED_FOR: {ip}")
+            return ip
+        elif request.environ.get('HTTP_FORWARDED'):
+            ip = request.environ.get('HTTP_FORWARDED')
+            app.logger.info(f"Got IP from HTTP_FORWARDED: {ip}")
+            return ip
+        
+        # 如果以上都失败，使用REMOTE_ADDR
+        remote_addr = request.remote_addr or 'unknown'
+        app.logger.info(f"Using REMOTE_ADDR: {remote_addr}")
+        return remote_addr
+
 class Homework:
     '''
     def __init__(self, subject, content, labels, deadline):
