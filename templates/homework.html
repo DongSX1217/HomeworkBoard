@@ -80,8 +80,8 @@
             </div>
             <div class="setting-group">
                 <div class="checkbox-group">
-                    <input type="checkbox" id="bigScreenMode">
-                    <label for="bigScreenMode">大屏模式</label>
+                    <input type="checkbox" id="EditButton">
+                    <label for="EditButton">显示编辑按钮</label>
                 </div>
             </div>
             <button class="save-settings" onclick="saveSettings()">保存设置</button>
@@ -120,9 +120,9 @@
                 document.getElementById("hideExpired").checked = true;
                 applyHideExpired();
             }
-            const bigScreenMode = getCookie("bigScreenMode");
-            if (bigScreenMode === "true") {
-                document.getElementById("bigScreenMode").checked = true;
+            const EditButton = getCookie("EditButton");
+            if (EditButton === "true") {
+                document.getElementById("EditButton").checked = true;
             }
         }
     
@@ -143,8 +143,8 @@
             setCookie("fontSize", fontSize, 20); // 保存字体大小，若没有设置则使用默认值20
             const hideExpired = document.getElementById("hideExpired").checked;
             setCookie("hideExpired", hideExpired, 30);
-            const bigScreenMode = document.getElementById("bigScreenMode").checked;
-            setCookie("bigScreenMode", bigScreenMode, 30);
+            const EditButton = document.getElementById("EditButton").checked;
+            setCookie("EditButton", EditButton, 30);
             applyHideExpired();
             closeSettings();
             alert('设置已保存');
@@ -506,9 +506,9 @@
             const deadlineDiv = document.createElement('div');
             deadlineDiv.className = 'deadline';
             
-            // 检查是否启用了大屏模式并添加编辑按钮
-            const bigScreenMode = getCookie("bigScreenMode") === "true";
-            if (bigScreenMode && submission.id) {
+            // 检查设置并添加编辑按钮
+            const EditButton = getCookie("EditButton") === "true";
+            if (EditButton && submission.id) {
                 const editButton = document.createElement('button');
                 editButton.className = 'edit-button';
                 const editIcon = document.createElement('i');
