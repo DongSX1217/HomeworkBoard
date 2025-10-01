@@ -260,16 +260,19 @@ class Homework:
             else:
                 # 处理标签
                 selected_labels = []
+                selected_label_ids = []
                 for label_id in label_ids:
                     label_obj = next((label for label in labels if label["id"] == int(label_id)), None)
                     if label_obj:
                         selected_labels.append(label_obj["name"])
+                        selected_label_ids.append(int(label_id))
                 
                 # 如果没有选择标签，则添加"未知标签"
                 if not selected_labels:
                     unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
                     if unknown_label:
                         selected_labels.append(unknown_label["name"])
+                        selected_label_ids.append(unknown_label["id"])
                 
                 # 如果未确认，则显示确认页面
                 if not confirm:
@@ -301,6 +304,7 @@ class Homework:
                     'subject': subject,
                     'content': content,
                     'labels': selected_labels,
+                    'label_ids': selected_label_ids,
                     'deadline': deadline if deadline else '',
                     'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 }
@@ -308,10 +312,11 @@ class Homework:
                 save_submissions(submissions)
                 
                 # 清除session中的发布数据
+                '''
                 session.pop('publish_subject', None)
                 session.pop('publish_content', None)
                 session.pop('publish_label_ids', None)
-                session.pop('publish_deadline', None)
+                session.pop('publish_deadline', None)'''
                 
                 # 记录日志
                 log_operation("添加作业", {
@@ -390,16 +395,19 @@ class Homework:
             else:
                 # 处理标签
                 selected_labels = []
+                selected_label_ids = []
                 for label_id in label_ids:
                     label_obj = next((label for label in labels if label["id"] == int(label_id)), None)
                     if label_obj:
                         selected_labels.append(label_obj["name"])
+                        selected_label_ids.append(int(label_id))
                 
                 # 如果没有选择标签，则添加"未知标签"
                 if not selected_labels:
                     unknown_label = next((label for label in labels if label["name"] == "未知标签"), None)
                     if unknown_label:
                         selected_labels.append(unknown_label["name"])
+                        selected_label_ids.append(unknown_label["id"])
                 
                 # 如果未确认，则显示确认页面
                 if not confirm:
@@ -428,6 +436,7 @@ class Homework:
                 homework['subject'] = subject
                 homework['content'] = content
                 homework['labels'] = selected_labels
+                homework['label_ids'] = selected_label_ids
                 homework['deadline'] = deadline if deadline else ''
                 # 更新时间戳为当前时间（编辑时间）
                 homework['timestamp'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -435,11 +444,12 @@ class Homework:
                 # 保存更新后的数据
                 save_submissions(submissions)
                 
-                # 清除session中的编辑数据
+                # 清除session中的编辑数据，'
+                '''
                 session.pop('edit_subject_' + str(homework_id), None)
                 session.pop('edit_content_' + str(homework_id), None)
                 session.pop('edit_label_ids_' + str(homework_id), None)
-                session.pop('edit_deadline_' + str(homework_id), None)
+                session.pop('edit_deadline_' + str(homework_id), None)'''
                 
                 # 记录日志
                 log_operation("编辑作业", {

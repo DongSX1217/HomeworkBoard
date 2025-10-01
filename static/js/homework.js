@@ -425,7 +425,21 @@ function createHomeworkItem(submission) {
 
     const labelsSpan = document.createElement('span');
     labelsSpan.className = 'labels';
-    submission.labels.forEach(labelName => {
+    
+    // 优先使用label_ids，如果不存在则回退到labels
+    let labelNames = [];
+    if (submission.label_ids && Array.isArray(submission.label_ids)) {
+        // 根据ID查找标签名称
+        labelNames = submission.label_ids.map(labelId => {
+            const labelObj = globalLabels.find(l => l.id === labelId);
+            return labelObj ? labelObj.name : '未知标签';
+        });
+    } else if (submission.labels && Array.isArray(submission.labels)) {
+        // 回退到使用标签名称
+        labelNames = submission.labels;
+    }
+    
+    labelNames.forEach(labelName => {
         const labelTag = document.createElement('span');
         labelTag.className = 'label-tag';
         labelTag.textContent = labelName;
@@ -435,6 +449,7 @@ function createHomeworkItem(submission) {
         }
         labelsSpan.appendChild(labelTag);
     });
+    
     contentWrapper.appendChild(labelsSpan);
     homeworkItem.appendChild(contentWrapper);
 

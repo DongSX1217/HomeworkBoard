@@ -34,10 +34,20 @@
 ') | replace('\r', '
 ') }}</span>
                                 <span class="labels">
-                                    {% for label_name in submission.labels %}
-                                        {% set label_obj = (labels | selectattr('name', 'equalto', label_name) | first) %}
-                                        <span class="label-tag" {% if label_obj %}style="background-color: {{ label_obj.color }}"{% endif %}>{{ label_name }}</span>
-                                    {% endfor %}
+                                    {% set submission_label_ids = submission.label_ids if submission.label_ids is defined else [] %}
+                                    {% if submission_label_ids %}
+                                        {% for label_id in submission_label_ids %}
+                                            {% set label_obj = (labels | selectattr('id', 'equalto', label_id) | first) %}
+                                            <span class="label-tag" {% if label_obj %}style="background-color: {{ label_obj.color }}"{% endif %}>
+                                                {% if label_obj %}{{ label_obj.name }}{% else %}未知标签{% endif %}
+                                            </span>
+                                        {% endfor %}
+                                    {% else %}
+                                        {% for label_name in submission.labels %}
+                                            {% set label_obj = (labels | selectattr('name', 'equalto', label_name) | first) %}
+                                            <span class="label-tag" {% if label_obj %}style="background-color: {{ label_obj.color }}"{% endif %}>{{ label_name }}</span>
+                                        {% endfor %}
+                                    {% endif %}
                                 </span>
                             </div>
                             <div class="dates-container">
