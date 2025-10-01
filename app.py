@@ -756,7 +756,7 @@ class Subject:
                 if new_word:
                     # 如果是全局词，添加到全局词列表
                     if is_global:
-                        global_words = Subject.get_all_common_words()
+                        global_words = Subject.get_all_common_words_list()
                         if new_word not in global_words:
                             global_words.append(new_word)
                             Subject.save_global_common_words(global_words)
@@ -787,7 +787,7 @@ class Subject:
                 
                 # 如果是全局词，从全局词列表中删除
                 if is_global:
-                    global_words = Subject.get_all_common_words()
+                    global_words = Subject.get_all_common_words_list()
                     if word_to_remove in global_words:
                         global_words.remove(word_to_remove)
                         Subject.save_global_common_words(global_words)
