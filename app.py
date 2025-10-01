@@ -116,6 +116,12 @@ def log_operation(operation, details, ip_address):
 # 初始化数据
 submissions = load_submissions()
 
+if os.path.exists(IP_FILE):
+    with open(IP_FILE, 'r', encoding='utf-8') as f:
+        try:
+            data_ip = json.load(f)
+        except json.JSONDecodeError:
+            pass
 @app.route('/')
 def homepage():
     return render_template('home.html')
@@ -124,14 +130,9 @@ def homepage():
 @app.before_request
 def check_banned_ip():
     """拦截禁止访问的IP"""
-    if os.path.exists(IP_FILE):
-        with open(IP_FILE, 'r', encoding='utf-8') as f:
-            try:
-                data_json = json.load(f)
-            except json.JSONDecodeError:
-                pass
+    global data_ip
     user_ip = get_client_ip() # 获取用户IP地址
-    banned_ips = data_json.get('banned_ips', [])
+    banned_ips = data_ip.get('banned_ips', [])
     if user_ip in banned_ips:
         return "<br><br><h3>您的IP已被禁止访问，如有疑问，请联系开发者。</h3>", 403
 def get_client_ip():
@@ -145,14 +146,14 @@ def get_client_ip():
         # 最左侧的是原始客户端IP
         ip = request.headers.get('X-Forwarded-For').split(',')[0].strip()
         if ip and ip != 'unknown':
-            app.logger.info(f"Got IP from X-Forwarded-For: {ip}")
+            # app.logger.info(f"Got IP from X-Forwarded-For: {ip}")
             return ip
     
     # 检查X-Real-IP头部
     if request.headers.get('X-Real-IP'):
         ip = request.headers.get('X-Real-IP')
         if ip and ip != 'unknown':
-            app.logger.info(f"Got IP from X-Real-IP: {ip}")
+            # app.logger.info(f"Got IP from X-Real-IP: {ip}")
             return ip
     
     # 检查其他可能的代理头部
@@ -160,12 +161,12 @@ def get_client_ip():
         if request.headers.get(header):
             ip = request.headers.get(header)
             if ip and ip != 'unknown':
-                app.logger.info(f"Got IP from {header}: {ip}")
+                # app.logger.info(f"Got IP from {header}: {ip}")
                 return ip
     
     # 最后使用REMOTE_ADDR作为兜底方案
     ip = request.remote_addr or 'unknown'
-    app.logger.info(f"Using REMOTE_ADDR: {ip}")
+    # app.logger.info(f"Using REMOTE_ADDR: {ip}")
     return ip
 
 class Homework:
