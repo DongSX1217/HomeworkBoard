@@ -636,6 +636,7 @@ class Subject:
         return []
     
     @staticmethod
+    @app.route('/api/global_words', methods=['GET'])
     def get_all_common_words():
         """获取所有通用常用词（不属于特定科目的词）"""
         # 检查是否存在专门的通用词文件
