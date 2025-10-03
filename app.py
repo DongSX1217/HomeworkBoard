@@ -187,6 +187,21 @@ if os.path.exists(STUDENTS_FILE):
     with open(STUDENTS_FILE, 'r', encoding='utf-8') as f:
         try:
             students_data = json.load(f)
+            # 确保students_data是字典类型
+            if isinstance(students_data, list):
+                # 如果是列表，转换为字典格式
+                students_data = {item.get('name', ''): item.get('student_id', '') for item in students_data if isinstance(item, dict)}
+                # 保存修复后的数据
+                with open(STUDENTS_FILE, 'w', encoding='utf-8') as f_save:
+                    json.dump(students_data, f_save, ensure_ascii=False, indent=4)
+            elif not isinstance(students_data, dict):
+                # 如果既不是字典也不是列表，使用默认数据
+                students_data = {
+                    "张三": "2023001",
+                    "李四": "2023002"
+                }
+                with open(STUDENTS_FILE, 'w', encoding='utf-8') as f_save:
+                    json.dump(students_data, f_save, ensure_ascii=False, indent=4)
         except json.JSONDecodeError:
             students_data = {}
 else:
@@ -918,29 +933,77 @@ class Fun:
     def fun_auth():
         """身份验证页面"""
         if request.method == 'POST':
-            name = request.form.get('name')
-            student_id = request.form.get('student_id')
+            name = request.form.get('name', '').strip()
+            student_id = request.form.get('student_id', '').strip()
+            
+            print(f"调试信息 - 输入姓名: '{name}', 学号: '{student_id}'")
+            print(f"调试信息 - students_data类型: {type(students_data)}")
+            print(f"调试信息 - students_data内容: {students_data}")
+            
+            # 确保students_data是字典
+            if not isinstance(students_data, dict):
+                print(f"错误: students_data不是字典，而是{type(students_data)}")
+                flash('系统配置错误，请联系管理员', 'error')
+                return render_template('fun_auth.html', name=name, student_id=student_id)
             
             # 验证用户信息
-            if name in students_data and students_data[name] == student_id:
+            authenticated = False
+            matched_name = None
+            matched_id = None
+            
+            # 方法1: 直接键值匹配
+            if name and name in students_data:
+                expected_id = str(students_data[name]).strip()
+                input_id = student_id.strip()
+                print(f"调试信息 - 直接匹配: 期望学号='{expected_id}', 输入学号='{input_id}'")
+                
+                if input_id == expected_id:
+                    authenticated = True
+                    matched_name = name
+                    matched_id = expected_id
+                    print(f"调试信息 - 直接匹配成功")
+            
+            # 方法2: 如果直接匹配失败，尝试遍历所有项进行模糊匹配
+            if not authenticated and students_data:
+                print(f"调试信息 - 开始模糊匹配")
+                for stored_name, stored_id in students_data.items():
+                    stored_name_clean = str(stored_name).strip()
+                    stored_id_clean = str(stored_id).strip()
+                    input_name_clean = name.strip()
+                    input_id_clean = student_id.strip()
+                    
+                    print(f"调试信息 - 比较: '{input_name_clean}' vs '{stored_name_clean}', '{input_id_clean}' vs '{stored_id_clean}'")
+                    
+                    # 比较去除空格后的值
+                    if (input_name_clean == stored_name_clean and 
+                        input_id_clean == stored_id_clean):
+                        authenticated = True
+                        matched_name = stored_name_clean
+                        matched_id = stored_id_clean
+                        print(f"调试信息 - 模糊匹配成功: {matched_name}")
+                        break
+            
+            if authenticated:
                 # 验证成功
                 ip_address = get_client_ip()
                 
                 # 记录登录日志
-                log_login(name, student_id, ip_address)
+                log_login(matched_name, matched_id, ip_address)
                 
                 # 创建响应并设置cookie
                 response = make_response(redirect(url_for('fun_index')))
                 # 设置cookie，有效期30天
-                response.set_cookie('fun_name', name, max_age=30*24*60*60)
-                response.set_cookie('fun_student_id', student_id, max_age=30*24*60*60)
+                response.set_cookie('fun_name', matched_name, max_age=30*24*60*60)
+                response.set_cookie('fun_student_id', matched_id, max_age=30*24*60*60)
                 
                 flash('身份验证成功！', 'success')
                 return response
             else:
                 # 验证失败
+                print(f"调试信息 - 验证失败")
                 flash('姓名或学号不正确，请重试！', 'error')
-                return render_template('fun_auth.html')
+                # 保留表单数据以便重新输入
+                return render_template('fun_auth.html', name=name, student_id=student_id)
         
         return render_template('fun_auth.html')
     
@@ -999,6 +1062,16 @@ class Fun:
         inputs.sort(key=lambda x: x['timestamp'], reverse=True)
         
         return render_template('fun_view.html', inputs=inputs, name=name)
+    
+    @app.route('/902504/debug/students')
+    def debug_students():
+        """调试页面，显示学生数据"""
+        return jsonify({
+            "students_data": students_data,
+            "data_type": type(students_data).__name__,
+            "is_dict": isinstance(students_data, dict),
+            "keys": list(students_data.keys()) if isinstance(students_data, dict) else "N/A"
+        })
 
 homework = Homework()
 label = Label()
