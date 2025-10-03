@@ -818,9 +818,14 @@ class Subject:
             subjects = Subject.load_subjects()
         return render_template('subjects.html', subjects=subjects)
 
+class Fun:
+    @app.route('/902504')
+    def index():
+        return "<br><h3>更好玩的页面</h3><p>开发中，敬请期待！</p>"
 
 homework = Homework()
 label = Label()
 subject = Subject()
+fun = Fun()
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=2025)
