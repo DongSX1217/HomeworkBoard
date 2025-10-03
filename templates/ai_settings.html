@@ -138,39 +138,69 @@
 
         <!-- 系统提示词设置 -->
         <div class="setting-section">
-            <h3>系统提示词设置</h3>
-            <div class="info-box">
-                <strong>提示：</strong> 系统提示词用于设定AI助手的基本行为和性格。修改后会影响所有后续对话。
-            </div>
-            
+            <h3>私人对话提示词设置</h3>
             <form method="POST">
                 <input type="hidden" name="action" value="update_prompt">
+                <input type="hidden" name="prompt_type" value="private">
                 <div class="form-group">
-                    <label for="system_prompt">系统提示词：</label>
-                    <textarea id="system_prompt" name="system_prompt" placeholder="请输入系统提示词...">{{ system_prompt }}</textarea>
+                    <label for="private_prompt">私人对话提示词：</label>
+                    <textarea id="private_prompt" name="system_prompt" placeholder="请输入私人对话的系统提示词...">{{ private_prompt }}</textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">保存提示词</button>
+                <button type="submit" class="btn btn-primary">保存私人提示词</button>
                 <button type="submit" class="btn btn-secondary" name="action" value="reset_prompt" 
-                        onclick="return confirm('确定要重置为默认提示词吗？')">重置为默认</button>
+                        onclick="this.form.prompt_type.value='private'; return confirm('确定要重置私人提示词吗？')">
+                    重置私人提示词
+                </button>
             </form>
         </div>
+        <div class="setting-section">
+            <h3>公共聊天提示词设置</h3>
+            <form method="POST">
+                <input type="hidden" name="action" value="update_prompt">
+                <input type="hidden" name="prompt_type" value="public">
+                <div class="form-group">
+                    <label for="public_prompt">公共聊天提示词：</label>
+                    <textarea id="public_prompt" name="system_prompt" placeholder="请输入公共聊天的系统提示词...">{{ public_prompt }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">保存公共提示词</button>
+                <button type="submit" class="btn btn-secondary" name="action" value="reset_prompt" 
+                        onclick="this.form.prompt_type.value='public'; return confirm('确定要重置公共提示词吗？')">
+                    重置公共提示词
+                </button>
+            </form>
+        </div>
+
 
         <!-- 聊天历史管理 -->
         <div class="setting-section">
             <h3>聊天历史管理</h3>
             <div class="stats">
                 <div class="stat-item">
-                    <strong>当前对话数：</strong> {{ history_count }}
+                    <strong>私人对话数：</strong> {{ private_count }}
+                </div>
+                <div class="stat-item">
+                    <strong>公共消息数：</strong> {{ public_count }}
                 </div>
             </div>
             
-            <form method="POST">
-                <input type="hidden" name="action" value="clear_my_history">
-                <button type="submit" class="btn btn-danger" 
-                        onclick="return confirm('确定要清空您的所有聊天历史吗？此操作不可撤销！')">
-                    清空我的聊天历史
-                </button>
-            </form>
+            <div style="display: flex; gap: 10px;">
+                <form method="POST">
+                    <input type="hidden" name="action" value="clear_my_history">
+                    <input type="hidden" name="history_type" value="private">
+                    <button type="submit" class="btn btn-danger" 
+                            onclick="return confirm('确定要清空您的私人聊天历史吗？此操作不可撤销！')">
+                        清空私人历史
+                    </button>
+                </form>
+                <form method="POST">
+                    <input type="hidden" name="action" value="clear_my_history">
+                    <input type="hidden" name="history_type" value="public">
+                    <button type="submit" class="btn btn-danger" 
+                            onclick="return confirm('确定要清空您在公共聊天中的所有消息吗？此操作不可撤销！')">
+                        清空公共消息
+                    </button>
+                </form>
+            </div>
         </div>
 
         <!-- 使用说明 -->

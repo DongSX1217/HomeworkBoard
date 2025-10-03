@@ -1253,8 +1253,10 @@ class Fun:
 class AI:
     # 保存对话历史的文件路径
     CHAT_HISTORY_FILE = os.path.join(DATA_DIR, 'chat_history.json')
+    PUBLIC_CHAT_HISTORY_FILE = os.path.join(DATA_DIR, 'public_chat_history.json')
     # 保存系统提示词的文件路径
     SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'system_prompt.txt')
+    PUBLIC_SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'public_system_prompt.txt')
     
     @staticmethod
     def get_default_system_prompt():
@@ -1262,82 +1264,140 @@ class AI:
         return "你是一个乐于助人的AI助手。请用友好、专业的语气回答用户的问题。"
     
     @staticmethod
-    def load_system_prompt():
+    def load_system_prompt(is_public=False):
         """加载系统提示词"""
-        if os.path.exists(AI.SYSTEM_PROMPT_FILE):
-            with open(AI.SYSTEM_PROMPT_FILE, 'r', encoding='utf-8') as f:
+        prompt_file = AI.PUBLIC_SYSTEM_PROMPT_FILE if is_public else AI.SYSTEM_PROMPT_FILE
+        if os.path.exists(prompt_file):
+            with open(prompt_file, 'r', encoding='utf-8') as f:
                 return f.read().strip()
         else:
             default_prompt = AI.get_default_system_prompt()
-            AI.save_system_prompt(default_prompt)
+            AI.save_system_prompt(default_prompt, is_public)
             return default_prompt
     
     @staticmethod
-    def save_system_prompt(prompt):
+    def save_system_prompt(prompt, is_public=False):
         """保存系统提示词"""
-        with open(AI.SYSTEM_PROMPT_FILE, 'w', encoding='utf-8') as f:
+        prompt_file = AI.PUBLIC_SYSTEM_PROMPT_FILE if is_public else AI.SYSTEM_PROMPT_FILE
+        with open(prompt_file, 'w', encoding='utf-8') as f:
             f.write(prompt)
     
     @staticmethod
-    def load_chat_history(user_identifier, max_history=10):
+    def load_chat_history(user_identifier, max_history=10, is_public=False):
         """加载用户的聊天历史"""
-        if os.path.exists(AI.CHAT_HISTORY_FILE):
-            with open(AI.CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+        history_file = AI.PUBLIC_CHAT_HISTORY_FILE if is_public else AI.CHAT_HISTORY_FILE
+        if os.path.exists(history_file):
+            with open(history_file, 'r', encoding='utf-8') as f:
                 try:
-                    all_history = json.load(f)
-                    return all_history.get(user_identifier, [])[-max_history:]
+                    if is_public:
+                        return json.load(f)[-max_history:]  # 公共聊天直接返回最新消息
+                    else:
+                        all_history = json.load(f)
+                        return all_history.get(user_identifier, [])[-max_history:]
                 except json.JSONDecodeError:
                     return []
         return []
     
     @staticmethod
-    def save_chat_message(user_identifier, role, content):
+    def save_chat_message(user_identifier, role, content, is_public=False, name=None):
         """保存聊天消息"""
+        history_file = AI.PUBLIC_CHAT_HISTORY_FILE if is_public else AI.CHAT_HISTORY_FILE
+        
         # 加载现有历史
-        if os.path.exists(AI.CHAT_HISTORY_FILE):
-            with open(AI.CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+        if os.path.exists(history_file):
+            with open(history_file, 'r', encoding='utf-8') as f:
                 try:
-                    all_history = json.load(f)
+                    if is_public:
+                        all_history = json.load(f)
+                    else:
+                        all_history = json.load(f)
                 except json.JSONDecodeError:
-                    all_history = {}
+                    all_history = [] if is_public else {}
         else:
-            all_history = {}
+            all_history = [] if is_public else {}
         
-        # 确保用户有历史记录
-        if user_identifier not in all_history:
-            all_history[user_identifier] = []
-        
-        # 添加新消息
-        message = {
-            'role': role,
-            'content': content,
-            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        all_history[user_identifier].append(message)
-        
-        # 限制历史记录长度（保留最近50条）
-        if len(all_history[user_identifier]) > 50:
-            all_history[user_identifier] = all_history[user_identifier][-50:]
+        if is_public:
+            # 公共聊天历史
+            message = {
+                'user_identifier': user_identifier,
+                'name': name,
+                'role': role,
+                'content': content,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            all_history.append(message)
+            
+            # 限制公共历史记录长度（保留最近200条）
+            if len(all_history) > 200:
+                all_history = all_history[-200:]
+        else:
+            # 私人聊天历史
+            if user_identifier not in all_history:
+                all_history[user_identifier] = []
+            
+            message = {
+                'role': role,
+                'content': content,
+                'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
+            all_history[user_identifier].append(message)
+            
+            # 限制私人历史记录长度（保留最近50条）
+            if len(all_history[user_identifier]) > 50:
+                all_history[user_identifier] = all_history[user_identifier][-50:]
         
         # 保存回文件
-        with open(AI.CHAT_HISTORY_FILE, 'w', encoding='utf-8') as f:
+        with open(history_file, 'w', encoding='utf-8') as f:
             json.dump(all_history, f, ensure_ascii=False, indent=2)
     
     @staticmethod
-    def clear_chat_history(user_identifier):
+    def clear_chat_history(user_identifier, is_public=False):
         """清空用户的聊天历史"""
-        if os.path.exists(AI.CHAT_HISTORY_FILE):
-            with open(AI.CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+        history_file = AI.PUBLIC_CHAT_HISTORY_FILE if is_public else AI.CHAT_HISTORY_FILE
+        
+        if os.path.exists(history_file):
+            with open(history_file, 'r', encoding='utf-8') as f:
                 try:
-                    all_history = json.load(f)
-                    if user_identifier in all_history:
-                        all_history[user_identifier] = []
-                    with open(AI.CHAT_HISTORY_FILE, 'w', encoding='utf-8') as fw:
+                    if is_public:
+                        # 公共聊天只能清空自己的消息
+                        all_history = json.load(f)
+                        all_history = [msg for msg in all_history if msg.get('user_identifier') != user_identifier]
+                    else:
+                        all_history = json.load(f)
+                        if user_identifier in all_history:
+                            all_history[user_identifier] = []
+                    
+                    with open(history_file, 'w', encoding='utf-8') as fw:
                         json.dump(all_history, fw, ensure_ascii=False, indent=2)
                     return True
                 except json.JSONDecodeError:
                     return False
         return False
+
+    @staticmethod
+    def check_public_chat_limit(user_identifier):
+        """检查公共聊天发送频率限制"""
+        public_history = AI.load_chat_history(user_identifier, max_history=100, is_public=True)
+        
+        # 获取当前时间和2分钟前的时间
+        now = datetime.now()
+        past_2_minutes = now - timedelta(minutes=2)
+        
+        # 统计用户2分钟内的非AI消息数量
+        user_messages_2min = []
+        
+        for message in public_history:
+            if (message.get('user_identifier') == user_identifier and 
+                message.get('role') == 'user' and 
+                not message.get('content', '').strip().startswith('@ai')):
+                try:
+                    entry_time = datetime.strptime(message['timestamp'], "%Y-%m-%d %H:%M:%S")
+                    if entry_time >= past_2_minutes:
+                        user_messages_2min.append(message)
+                except ValueError:
+                    continue
+        
+        return len(user_messages_2min) >= 1  # 2分钟内是否已有非AI消息
 
     @staticmethod
     def openai_stream(model="qwen3-max", messages=[]):
@@ -1372,7 +1432,7 @@ class AI:
 
     @app.route('/902504/ai-chat', methods=['GET', 'POST'])
     def ai_chat():
-        """AI聊天页面"""
+        """AI聊天页面 - 个人对话"""
         # 检查身份验证
         name = request.cookies.get('fun_name')
         student_id = request.cookies.get('fun_student_id')
@@ -1381,61 +1441,86 @@ class AI:
             return redirect(url_for('fun_auth'))
         
         user_identifier = f"{name}_{student_id}"
+        chat_type = request.args.get('type', 'private')  # private 或 public
         
         if request.method == 'POST':
             action = request.form.get('action')
             
             if action == 'clear_history':
                 # 清空聊天历史
-                AI.clear_chat_history(user_identifier)
+                is_public = request.form.get('chat_type') == 'public'
+                AI.clear_chat_history(user_identifier, is_public=is_public)
                 flash('聊天历史已清空！', 'success')
-                return redirect(url_for('ai_chat'))
+                return redirect(url_for('ai_chat', type=chat_type))
             
             elif action == 'send_message':
                 user_message = request.form.get('message', '').strip()
+                is_public = request.form.get('chat_type') == 'public'
+                
                 if not user_message:
                     flash('消息不能为空！', 'error')
-                    return redirect(url_for('ai_chat'))
+                    return redirect(url_for('ai_chat', type=chat_type))
+                
+                # 公共聊天频率限制检查
+                if is_public:
+                    if not user_message.startswith('@ai') and AI.check_public_chat_limit(user_identifier):
+                        flash('公共聊天中，非AI消息每2分钟只能发送一条！', 'error')
+                        return redirect(url_for('ai_chat', type=chat_type))
                 
                 # 保存用户消息
-                AI.save_chat_message(user_identifier, 'user', user_message)
+                AI.save_chat_message(user_identifier, 'user', user_message, is_public=is_public, name=name)
                 
-                # 准备对话历史
-                chat_history = AI.load_chat_history(user_identifier)
-                system_prompt = AI.load_system_prompt()
-                
-                # 构建消息列表
-                messages = [{'role': 'system', 'content': system_prompt}]
-                messages.extend(chat_history)
-                messages.append({'role': 'user', 'content': user_message})
-                
-                # 如果是AJAX请求，返回流式响应
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    def generate():
-                        full_response = ""
-                        for chunk in AI.openai_stream(messages=messages):
-                            full_response += chunk
-                            yield f"data: {json.dumps({'content': chunk})}\n\n"
-                        
-                        # 保存AI回复
-                        AI.save_chat_message(user_identifier, 'assistant', full_response)
-                        yield "data: [DONE]\n\n"
+                # 如果是@ai消息或者是私人聊天，调用AI
+                if user_message.startswith('@ai') or not is_public:
+                    # 准备对话历史
+                    chat_history = AI.load_chat_history(user_identifier, is_public=is_public)
+                    system_prompt = AI.load_system_prompt(is_public=is_public)
                     
-                    return Response(generate(), mimetype='text/plain')
-                
-                # 非AJAX请求，使用普通模式
-                try:
-                    ai_response = AI.openai(messages=messages)
-                    AI.save_chat_message(user_identifier, 'assistant', ai_response)
-                except Exception as e:
-                    flash(f'AI服务暂时不可用: {str(e)}', 'error')
+                    # 构建消息列表
+                    messages = [{'role': 'system', 'content': system_prompt}]
+                    
+                    if is_public:
+                        # 公共聊天只包含最近的10条消息作为上下文
+                        messages.extend([{'role': msg['role'], 'content': msg['content']} 
+                                       for msg in chat_history[-10:]])
+                    else:
+                        # 私人聊天包含完整历史
+                        messages.extend(chat_history)
+                    
+                    messages.append({'role': 'user', 'content': user_message})
+                    
+                    # 如果是AJAX请求，返回流式响应
+                    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                        def generate():
+                            full_response = ""
+                            for chunk in AI.openai_stream(messages=messages):
+                                full_response += chunk
+                                yield f"data: {json.dumps({'content': chunk})}\n\n"
+                            
+                            # 保存AI回复
+                            AI.save_chat_message(user_identifier, 'assistant', full_response, 
+                                               is_public=is_public, name="AI助手")
+                            yield "data: [DONE]\n\n"
+                        
+                        return Response(generate(), mimetype='text/plain')
+                    
+                    # 非AJAX请求，使用普通模式
+                    try:
+                        ai_response = AI.openai(messages=messages)
+                        AI.save_chat_message(user_identifier, 'assistant', ai_response, 
+                                           is_public=is_public, name="AI助手")
+                    except Exception as e:
+                        flash(f'AI服务暂时不可用: {str(e)}', 'error')
         
         # 加载聊天历史
-        chat_history = AI.load_chat_history(user_identifier)
+        is_public = chat_type == 'public'
+        chat_history = AI.load_chat_history(user_identifier, is_public=is_public)
+        
         return render_template('ai_chat.html', 
                              chat_history=chat_history,
                              name=name,
-                             student_id=student_id)
+                             student_id=student_id,
+                             chat_type=chat_type)
 
     @app.route('/902504/ai-settings', methods=['GET', 'POST'])
     def ai_settings():
@@ -1454,31 +1539,39 @@ class AI:
             
             if action == 'update_prompt':
                 new_prompt = request.form.get('system_prompt', '').strip()
+                prompt_type = request.form.get('prompt_type', 'private')  # private 或 public
                 if new_prompt:
-                    AI.save_system_prompt(new_prompt)
+                    AI.save_system_prompt(new_prompt, is_public=(prompt_type == 'public'))
                     flash('系统提示词更新成功！', 'success')
                 else:
                     flash('提示词不能为空！', 'error')
             
             elif action == 'reset_prompt':
+                prompt_type = request.form.get('prompt_type', 'private')
                 default_prompt = AI.get_default_system_prompt()
-                AI.save_system_prompt(default_prompt)
+                AI.save_system_prompt(default_prompt, is_public=(prompt_type == 'public'))
                 flash('系统提示词已重置为默认值！', 'success')
             
             elif action == 'clear_my_history':
-                if AI.clear_chat_history(user_identifier):
+                history_type = request.form.get('history_type', 'private')
+                if AI.clear_chat_history(user_identifier, is_public=(history_type == 'public')):
                     flash('您的聊天历史已清空！', 'success')
                 else:
                     flash('清空聊天历史失败！', 'error')
         
         # 加载当前系统提示词和用户聊天历史统计
-        system_prompt = AI.load_system_prompt()
-        chat_history = AI.load_chat_history(user_identifier)
-        history_count = len(chat_history)
+        private_prompt = AI.load_system_prompt(is_public=False)
+        public_prompt = AI.load_system_prompt(is_public=True)
+        private_history = AI.load_chat_history(user_identifier, is_public=False)
+        public_history = AI.load_chat_history(user_identifier, is_public=True)
+        private_count = len(private_history)
+        public_count = len([msg for msg in public_history if msg.get('user_identifier') == user_identifier])
         
         return render_template('ai_settings.html',
-                             system_prompt=system_prompt,
-                             history_count=history_count,
+                             private_prompt=private_prompt,
+                             public_prompt=public_prompt,
+                             private_count=private_count,
+                             public_count=public_count,
                              name=name,
                              student_id=student_id)
 

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI聊天 - 902504</title>
     <script src="/static/js/marked.min.js"></script>
+    <link rel="stylesheet" href="/static/fontawesome-free-6.4.0-web/css/all.min.css">
     <style>
         :root {
             --primary-color: #4f46e5;
@@ -539,6 +540,48 @@
             background: var(--text-secondary);
         }
 
+        .chat-tabs {
+            display: flex;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 1.5rem;
+        }
+
+        .tab-btn {
+            padding: 1rem 1.5rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--assistant-bubble);
+        }
+
+        .tab-btn.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .public-chat-tips {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1rem;
+            color: #856404;
+            font-size: 0.875rem;
+        }
+
         /* 选中文本样式 */
         ::selection {
             background: rgba(79, 70, 229, 0.2);
@@ -557,9 +600,22 @@
                 <a href="{{ url_for('fun_index') }}" class="btn btn-secondary">← 返回主页</a>
                 <form method="POST" style="display: inline;">
                     <input type="hidden" name="action" value="clear_history">
+                    <input type="hidden" name="chat_type" value="{{ chat_type }}">
                     <button type="submit" class="btn btn-danger" onclick="return confirm('确定要清空聊天历史吗？')">清空历史</button>
                 </form>
             </div>
+        </div>
+
+        <!-- 聊天类型切换标签 -->
+        <div class="chat-tabs">
+            <button class="tab-btn {% if chat_type == 'private' %}active{% endif %}" 
+                    onclick="switchChatType('private')">
+                <i class="fas fa-user"></i> 私人对话
+            </button>
+            <button class="tab-btn {% if chat_type == 'public' %}active{% endif %}" 
+                    onclick="switchChatType('public')">
+                <i class="fas fa-users"></i> 公共聊天
+            </button>
         </div>
 
         <!-- 闪存消息 -->
@@ -580,6 +636,32 @@
         <div class="chat-messages" id="chatMessages">
             {% for message in chat_history %}
                 <div class="message {% if message.role == 'user' %}user{% else %}assistant{% endif %}">
+                    {% if chat_type == 'public' %}
+                    <!-- 公共聊天显示模式 -->
+                    <div class="avatar">
+                        {% if message.role == 'user' %}
+                            {{ message.name|default('用户') }}
+                        {% else %}
+                            AI
+                        {% endif %}
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span>
+                                {% if message.role == 'user' %}
+                                    {{ message.name|default('用户') }}
+                                {% else %}
+                                    AI助手
+                                {% endif %}
+                            </span>
+                            <small>{{ message.timestamp }}</small>
+                        </div>
+                        <div class="message-text">
+                            {{ message.content|safe }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <!-- 私人聊天显示模式 -->
                     <div class="avatar">
                         {% if message.role == 'user' %}您{% else %}AI{% endif %}
                     </div>
@@ -592,6 +674,7 @@
                             {{ message.content|safe }}
                         </div>
                     </div>
+                    {% endif %}
                 </div>
             {% endfor %}
             
@@ -608,13 +691,19 @@
 
         <!-- 输入区域 -->
         <div class="chat-input-container">
+            {% if chat_type == 'public' %}
+            <div class="public-chat-tips">
+                <small>💡 提示：输入 @ai 开头的内容可唤醒AI，普通消息每2分钟只能发送一条</small>
+            </div>
+            {% endif %}
             <form id="chatForm">
+                <input type="hidden" name="chat_type" value="{{ chat_type }}">
                 <div class="input-wrapper">
                     <div class="text-input-container">
                         <textarea 
                             id="messageInput" 
                             name="message" 
-                            placeholder="输入您的问题..." 
+                            placeholder="{% if chat_type == 'public' %}输入消息，使用 @ai 开头可唤醒AI...{% else %}输入您的问题...{% endif %}" 
                             class="text-input"
                             rows="1"
                             required
@@ -653,6 +742,7 @@
 
                 this.currentStream = null;
                 this.currentAssistantMessage = null;
+                this.chatType = '{{ chat_type }}'; // 获取当前聊天类型
                 this.init();
             }
 
@@ -690,7 +780,7 @@
             autoResizeTextarea() {
                 this.elements.input.addEventListener('input', function() {
                     this.style.height = 'auto';
-                    this.style.height = Math.min(this.scrollHeight, 192) + 'px'; // 最大高度192px
+                    this.style.height = Math.min(this.scrollHeight, 192) + 'px';
                 });
             }
 
@@ -712,10 +802,26 @@
                 const message = this.elements.input.value.trim();
                 if (!message) return;
 
+                // 公共聊天频率限制检查
+                if (this.chatType === 'public' && !message.startsWith('@ai')) {
+                    const canSend = await this.checkPublicChatLimit();
+                    if (!canSend) {
+                        alert('公共聊天中，非AI消息每2分钟只能发送一条！');
+                        return;
+                    }
+                }
+
                 // 添加用户消息
                 this.addMessage('user', message);
                 this.clearInput();
                 
+                // 如果是公共聊天且不是@ai消息，不调用AI
+                if (this.chatType === 'public' && !message.startsWith('@ai')) {
+                    this.hideTypingIndicator();
+                    this.elements.input.focus();
+                    return;
+                }
+
                 // 显示打字指示器
                 this.showTypingIndicator();
                 
@@ -728,6 +834,12 @@
                     this.hideTypingIndicator();
                     this.elements.input.focus();
                 }
+            }
+
+            async checkPublicChatLimit() {
+                // 这里可以添加更复杂的频率限制检查
+                // 暂时返回true允许发送，实际应该调用后端API检查
+                return true;
             }
 
             async streamAIResponse(userMessage) {
@@ -743,16 +855,19 @@
                 this.currentAssistantMessage = this.createAssistantMessage();
 
                 try {
+                    const formData = new URLSearchParams({
+                        'action': 'send_message',
+                        'message': userMessage,
+                        'chat_type': this.chatType
+                    });
+
                     const response = await fetch('{{ url_for("ai_chat") }}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        body: new URLSearchParams({
-                            'action': 'send_message',
-                            'message': userMessage
-                        }),
+                        body: formData,
                         signal: controller.signal
                     });
 
@@ -806,16 +921,29 @@
                 const messageDiv = document.createElement('div');
                 messageDiv.className = 'message assistant';
                 
-                messageDiv.innerHTML = `
-                    <div class="avatar">AI</div>
-                    <div class="message-content">
-                        <div class="message-header">
-                            <span>AI助手</span>
-                            <small>${new Date().toLocaleString()}</small>
+                if (this.chatType === 'public') {
+                    messageDiv.innerHTML = `
+                        <div class="avatar">AI</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span>AI助手</span>
+                                <small>${new Date().toLocaleString()}</small>
+                            </div>
+                            <div class="message-text"></div>
                         </div>
-                        <div class="message-text"></div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="avatar">AI</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span>AI助手</span>
+                                <small>${new Date().toLocaleString()}</small>
+                            </div>
+                            <div class="message-text"></div>
+                        </div>
+                    `;
+                }
 
                 this.elements.messages.insertBefore(messageDiv, this.elements.typingIndicator);
                 this.scrollToBottom();
@@ -845,16 +973,29 @@
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${role}`;
                 
-                messageDiv.innerHTML = `
-                    <div class="avatar">${role === 'user' ? '您' : 'AI'}</div>
-                    <div class="message-content">
-                        <div class="message-header">
-                            <span>${role === 'user' ? '您' : 'AI助手'}</span>
-                            <small>${new Date().toLocaleString()}</small>
+                if (this.chatType === 'public') {
+                    messageDiv.innerHTML = `
+                        <div class="avatar">${role === 'user' ? '{{ name }}' : 'AI'}</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span>${role === 'user' ? '{{ name }}' : 'AI助手'}</span>
+                                <small>${new Date().toLocaleString()}</small>
+                            </div>
+                            <div class="message-text">${marked.parse(content)}</div>
                         </div>
-                        <div class="message-text">${marked.parse(content)}</div>
-                    </div>
-                `;
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="avatar">${role === 'user' ? '您' : 'AI'}</div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span>${role === 'user' ? '您' : 'AI助手'}</span>
+                                <small>${new Date().toLocaleString()}</small>
+                            </div>
+                            <div class="message-text">${marked.parse(content)}</div>
+                        </div>
+                    `;
+                }
 
                 this.elements.messages.insertBefore(messageDiv, this.elements.typingIndicator);
                 this.scrollToBottom();
@@ -876,6 +1017,11 @@
             }
         }
 
+        // 切换聊天类型
+        function switchChatType(type) {
+            window.location.href = `{{ url_for("ai_chat") }}?type=${type}`;
+        }
+
         // 初始化聊天界面
         document.addEventListener('DOMContentLoaded', () => {
             new AIChat();
@@ -884,7 +1030,6 @@
         // 处理页面可见性变化
         document.addEventListener('visibilitychange', function() {
             if (!document.hidden) {
-                // 页面重新可见时，重新聚焦输入框
                 const input = document.getElementById('messageInput');
                 if (input) input.focus();
             }
