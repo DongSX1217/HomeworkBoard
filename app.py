@@ -1257,6 +1257,8 @@ class AI:
     # 保存系统提示词的文件路径
     SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'system_prompt.txt')
     PUBLIC_SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'public_system_prompt.txt')
+    # 保存预设问答的文件路径
+    QA_PROMPT_FILE = os.path.join(DATA_DIR, 'qa_prompt.json')
     
     @staticmethod
     def get_default_system_prompt():
@@ -1281,6 +1283,23 @@ class AI:
         prompt_file = AI.PUBLIC_SYSTEM_PROMPT_FILE if is_public else AI.SYSTEM_PROMPT_FILE
         with open(prompt_file, 'w', encoding='utf-8') as f:
             f.write(prompt)
+    
+    @staticmethod
+    def load_qa_prompt():
+        """加载预设问答"""
+        if os.path.exists(AI.QA_PROMPT_FILE):
+            with open(AI.QA_PROMPT_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    return []
+        return []
+    
+    @staticmethod
+    def save_qa_prompt(qa_list):
+        """保存预设问答"""
+        with open(AI.QA_PROMPT_FILE, 'w', encoding='utf-8') as f:
+            json.dump(qa_list, f, ensure_ascii=False, indent=2)
     
     @staticmethod
     def load_chat_history(user_identifier, max_history=10, is_public=False):
@@ -1375,6 +1394,29 @@ class AI:
         return False
 
     @staticmethod
+    def check_private_chat_limit(user_identifier):
+        """检查私人聊天发送频率限制（每分钟最多3条）"""
+        private_history = AI.load_chat_history(user_identifier, max_history=10, is_public=False)
+        
+        # 获取当前时间和1分钟前的时间
+        now = datetime.now()
+        past_1_minute = now - timedelta(minutes=1)
+        
+        # 统计用户1分钟内的消息数量
+        user_messages_1min = []
+        
+        for message in private_history:
+            if message.get('role') == 'user':
+                try:
+                    entry_time = datetime.strptime(message['timestamp'], "%Y-%m-%d %H:%M:%S")
+                    if entry_time >= past_1_minute:
+                        user_messages_1min.append(message)
+                except ValueError:
+                    continue
+        
+        return len(user_messages_1min) >= 3  # 1分钟内是否已有3条消息
+
+    @staticmethod
     def check_public_chat_limit(user_identifier):
         """检查公共聊天发送频率限制"""
         public_history = AI.load_chat_history(user_identifier, max_history=100, is_public=True)
@@ -1461,33 +1503,58 @@ class AI:
                     flash('消息不能为空！', 'error')
                     return redirect(url_for('ai_chat', type=chat_type))
                 
+                # 私人聊天频率限制检查
+                if not is_public:
+                    if AI.check_private_chat_limit(user_identifier):
+                        flash('私人对话中，每分钟最多只能发送3条消息！', 'error')
+                        return redirect(url_for('ai_chat', type=chat_type))
+                
                 # 公共聊天频率限制检查
                 if is_public:
                     if not user_message.startswith('@ai') and AI.check_public_chat_limit(user_identifier):
                         flash('公共聊天中，非AI消息每2分钟只能发送一条！', 'error')
                         return redirect(url_for('ai_chat', type=chat_type))
                 
-                # 保存用户消息
+                # 保存用户消息（无论是否@ai都要保存）
                 AI.save_chat_message(user_identifier, 'user', user_message, is_public=is_public, name=name)
                 
                 # 如果是@ai消息或者是私人聊天，调用AI
                 if user_message.startswith('@ai') or not is_public:
                     # 准备对话历史
-                    chat_history = AI.load_chat_history(user_identifier, is_public=is_public)
+                    chat_history = AI.load_chat_history(user_identifier, max_history=20, is_public=is_public)
                     system_prompt = AI.load_system_prompt(is_public=is_public)
                     
                     # 构建消息列表
                     messages = [{'role': 'system', 'content': system_prompt}]
                     
+                    # 如果是公共聊天且不是@ai消息，添加预设问答作为知识参考
+                    if is_public and not user_message.startswith('@ai'):
+                        qa_prompt = AI.load_qa_prompt()
+                        for qa in qa_prompt:
+                            if 'question' in qa and 'answer' in qa:
+                                messages.append({'role': 'user', 'content': qa['question']})
+                                messages.append({'role': 'assistant', 'content': qa['answer']})
+                    
+                    # 添加上下文消息（包括非@ai的公共消息）
                     if is_public:
-                        # 公共聊天只包含最近的10条消息作为上下文
-                        messages.extend([{'role': msg['role'], 'content': msg['content']} 
-                                       for msg in chat_history[-10:]])
+                        # 公共聊天包含最近的15条消息作为上下文，包括非AI消息
+                        recent_messages = chat_history[-15:]
+                        for msg in recent_messages:
+                            # 在消息内容中显示用户名（如果是用户消息）
+                            content = msg['content']
+                            if msg['role'] == 'user' and msg.get('name'):
+                                content = f"{msg['name']}说：{content}"
+                            messages.append({'role': msg['role'], 'content': content})
                     else:
                         # 私人聊天包含完整历史
-                        messages.extend(chat_history)
+                        for msg in chat_history:
+                            messages.append({'role': msg['role'], 'content': msg['content']})
                     
-                    messages.append({'role': 'user', 'content': user_message})
+                    # 添加当前用户消息（显示用户名）
+                    current_user_content = user_message
+                    if is_public:
+                        current_user_content = f"{name}说：{user_message}"
+                    messages.append({'role': 'user', 'content': current_user_content})
                     
                     # 如果是AJAX请求，返回流式响应
                     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -1511,10 +1578,13 @@ class AI:
                                            is_public=is_public, name="AI助手")
                     except Exception as e:
                         flash(f'AI服务暂时不可用: {str(e)}', 'error')
+                else:
+                    # 对于公共聊天的非@ai消息，不调用AI，但已经保存了消息
+                    flash('消息已发送！', 'success')
         
         # 加载聊天历史
         is_public = chat_type == 'public'
-        chat_history = AI.load_chat_history(user_identifier, is_public=is_public)
+        chat_history = AI.load_chat_history(user_identifier, max_history=50, is_public=is_public)
         
         return render_template('ai_chat.html', 
                              chat_history=chat_history,
@@ -1558,10 +1628,36 @@ class AI:
                     flash('您的聊天历史已清空！', 'success')
                 else:
                     flash('清空聊天历史失败！', 'error')
+            
+            elif action == 'add_qa':
+                # 添加预设问答
+                question = request.form.get('qa_question', '').strip()
+                answer = request.form.get('qa_answer', '').strip()
+                if question and answer:
+                    qa_list = AI.load_qa_prompt()
+                    qa_list.append({
+                        'question': question,
+                        'answer': answer,
+                        'id': len(qa_list) + 1
+                    })
+                    AI.save_qa_prompt(qa_list)
+                    flash('预设问答添加成功！', 'success')
+                else:
+                    flash('问题和答案都不能为空！', 'error')
+            
+            elif action == 'delete_qa':
+                # 删除预设问答
+                qa_id = int(request.form.get('qa_id', 0))
+                if qa_id > 0:
+                    qa_list = AI.load_qa_prompt()
+                    qa_list = [qa for qa in qa_list if qa.get('id') != qa_id]
+                    AI.save_qa_prompt(qa_list)
+                    flash('预设问答删除成功！', 'success')
         
-        # 加载当前系统提示词和用户聊天历史统计
+        # 加载当前系统提示词、预设问答和用户聊天历史统计
         private_prompt = AI.load_system_prompt(is_public=False)
         public_prompt = AI.load_system_prompt(is_public=True)
+        qa_list = AI.load_qa_prompt()
         private_history = AI.load_chat_history(user_identifier, is_public=False)
         public_history = AI.load_chat_history(user_identifier, is_public=True)
         private_count = len(private_history)
@@ -1570,6 +1666,7 @@ class AI:
         return render_template('ai_settings.html',
                              private_prompt=private_prompt,
                              public_prompt=public_prompt,
+                             qa_list=qa_list,
                              private_count=private_count,
                              public_count=public_count,
                              name=name,

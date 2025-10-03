@@ -170,6 +170,53 @@
             </form>
         </div>
 
+        <!-- 预设问答管理（仅公共AI使用） -->
+        <div class="setting-section">
+            <h3>预设问答管理</h3>
+            <div class="info-box">
+                <p><strong>说明：</strong> 这些预设问答将作为知识参考提供给公共AI助手使用，帮助AI更好地回答相关问题。</p>
+            </div>
+            
+            <!-- 添加新的预设问答 -->
+            <form method="POST">
+                <input type="hidden" name="action" value="add_qa">
+                <div class="form-group">
+                    <label for="qa_question">问题：</label>
+                    <input type="text" id="qa_question" name="qa_question" placeholder="输入常见问题..." style="width: 100%;">
+                </div>
+                <div class="form-group">
+                    <label for="qa_answer">答案：</label>
+                    <textarea id="qa_answer" name="qa_answer" placeholder="输入对应的答案..." style="width: 100%; min-height: 80px;"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">添加预设问答</button>
+            </form>
+            
+            <!-- 显示现有的预设问答 -->
+            <div style="margin-top: 20px;">
+                <h4>现有预设问答：</h4>
+                {% if qa_list %}
+                    {% for qa in qa_list %}
+                    <div class="qa-item" style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; border-radius: 5px;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="flex: 1;">
+                                <strong>问题：</strong> {{ qa.question }}<br>
+                                <strong>答案：</strong> {{ qa.answer }}
+                            </div>
+                            <form method="POST" style="margin-left: 10px;">
+                                <input type="hidden" name="action" value="delete_qa">
+                                <input type="hidden" name="qa_id" value="{{ qa.id }}">
+                                <button type="submit" class="btn btn-danger" 
+                                        onclick="return confirm('确定要删除这个预设问答吗？')">删除</button>
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>暂无预设问答。</p>
+                {% endif %}
+            </div>
+        </div>
+
 
         <!-- 聊天历史管理 -->
         <div class="setting-section">

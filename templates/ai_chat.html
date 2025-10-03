@@ -802,6 +802,15 @@
                 const message = this.elements.input.value.trim();
                 if (!message) return;
 
+                // 私人聊天频率限制检查
+                if (this.chatType === 'private') {
+                    const canSend = await this.checkPrivateChatLimit();
+                    if (!canSend) {
+                        alert('私人对话中，每分钟最多只能发送3条消息！');
+                        return;
+                    }
+                }
+
                 // 公共聊天频率限制检查
                 if (this.chatType === 'public' && !message.startsWith('@ai')) {
                     const canSend = await this.checkPublicChatLimit();
@@ -815,8 +824,10 @@
                 this.addMessage('user', message);
                 this.clearInput();
                 
-                // 如果是公共聊天且不是@ai消息，不调用AI
+                // 如果是公共聊天且不是@ai消息，不调用AI但保存消息
                 if (this.chatType === 'public' && !message.startsWith('@ai')) {
+                    // 直接保存消息，不调用AI
+                    await this.saveMessageOnly(message);
                     this.hideTypingIndicator();
                     this.elements.input.focus();
                     return;
@@ -834,6 +845,45 @@
                     this.hideTypingIndicator();
                     this.elements.input.focus();
                 }
+            }
+
+            async checkPrivateChatLimit() {
+                // 调用后端API检查私人聊天频率限制
+                try {
+                    const response = await fetch('{{ url_for("ai_chat") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: new URLSearchParams({
+                            'action': 'check_limit',
+                            'chat_type': 'private'
+                        })
+                    });
+                    const result = await response.json();
+                    return result.can_send;
+                } catch (error) {
+                    console.error('Limit check error:', error);
+                    return true; // 如果检查失败，允许发送
+                }
+            }
+
+            async saveMessageOnly(message) {
+                // 仅保存消息，不调用AI
+                const formData = new URLSearchParams({
+                    'action': 'save_message_only',
+                    'message': message,
+                    'chat_type': this.chatType
+                });
+
+                await fetch('{{ url_for("ai_chat") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: formData
+                });
             }
 
             async checkPublicChatLimit() {
