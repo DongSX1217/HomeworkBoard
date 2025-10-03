@@ -150,8 +150,8 @@ def log_input(content, name, student_id, ip_address, anonymous):
     input_entry = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "content": content,
-        "name": name if not anonymous else "匿名",
-        "student_id": student_id if not anonymous else "匿名",
+        "name": name,
+        "student_id": student_id,
         "ip_address": ip_address,
         "anonymous": anonymous
     }
@@ -1057,6 +1057,11 @@ class Fun:
         
         # 加载所有输入
         inputs = load_inputs()
+
+        for input in inputs:
+            if 'anonymous' in input and input['anonymous'] == True:
+                input['name'] = '匿名'
+                input['student_id'] = '匿名'
         
         # 按时间倒序排列
         inputs.sort(key=lambda x: x['timestamp'], reverse=True)
