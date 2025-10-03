@@ -3,6 +3,7 @@ from flask import Flask, render_template, request, flash, redirect, url_for, ses
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
 import http.client
 from datetime import datetime, timedelta
+from openai import OpenAI
 
 app = Flask(__name__) # 创建 Flask 应用
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
@@ -1120,6 +1121,22 @@ class Fun:
             "is_dict": isinstance(students_data, dict),
             "keys": list(students_data.keys()) if isinstance(students_data, dict) else "N/A"
         })
+    
+class AI:
+    def chat(model="qwen3-max",messages=[
+                {'role': 'system', 'content': 'You are a helpful assistant.'},
+                {'role': 'user', 'content': '你是谁？'}
+            ]):
+        client = OpenAI(
+        api_key=os.getenv("DASHSCOPE_API_KEY"),
+        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+    )
+        completion = client.chat.completions.create(
+            # 模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
+            model=model, 
+            messages=messages,
+        )
+        return completion.choices[0].message.content
 
 homework = Homework()
 label = Label()
