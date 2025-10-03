@@ -25,6 +25,7 @@ IP_FILE = os.path.join(DATA_DIR, 'ips.json')
 STUDENTS_FILE = os.path.join(DATA_DIR, 'students.json')
 LOGIN_LOG_FILE = os.path.join(DATA_DIR, 'login.log')
 INPUT_LOG_FILE = os.path.join(DATA_DIR, 'input.log')
+PASSWORD_FILE = os.path.join(DATA_DIR, 'password.json')
 
 default_labels = [
   {
@@ -209,6 +210,21 @@ def check_submit_limit(name, student_id):
         'within_24h': len(user_submissions_24h) >= 15  # 24小时内是否达到上限
     }
 
+def save_password_data():
+    """保存密码数据到文件"""
+    with open(PASSWORD_FILE, 'w', encoding='utf-8') as f:
+        json.dump(password_data, f, ensure_ascii=False, indent=4)
+
+def get_default_password():
+    """获取默认密码"""
+    return "0000"
+
+def validate_password(password):
+    """验证密码格式"""
+    if len(password) < 4 or len(password) > 16:
+        return False, "密码长度必须在4-16位之间"
+    return True, "密码格式正确"
+
 # 初始化数据
 submissions = load_submissions()
 
@@ -254,6 +270,22 @@ else:
 if not os.path.exists(INPUT_LOG_FILE):
     with open(INPUT_LOG_FILE, 'w', encoding='utf-8') as f:
         json.dump([], f, ensure_ascii=False, indent=4)
+
+# 初始化密码数据
+if os.path.exists(PASSWORD_FILE):
+    with open(PASSWORD_FILE, 'r', encoding='utf-8') as f:
+        try:
+            password_data = json.load(f)
+            # 确保password_data是字典类型
+            if not isinstance(password_data, dict):
+                password_data = {}
+        except json.JSONDecodeError:
+            password_data = {}
+else:
+    # 如果没有密码文件，创建一个空的
+    password_data = {}
+    with open(PASSWORD_FILE, 'w', encoding='utf-8') as f:
+        json.dump(password_data, f, ensure_ascii=False, indent=4)
 
 @app.route('/')
 def homepage():
@@ -972,8 +1004,9 @@ class Fun:
         if request.method == 'POST':
             name = request.form.get('name', '').strip()
             student_id = request.form.get('student_id', '').strip()
+            password = request.form.get('password', '').strip()
             
-            print(f"调试信息 - 输入姓名: '{name}', 学号: '{student_id}'")
+            print(f"调试信息 - 输入姓名: '{name}', 学号: '{student_id}', 密码: '{password}'")
             print(f"调试信息 - students_data类型: {type(students_data)}")
             print(f"调试信息 - students_data内容: {students_data}")
             
@@ -995,10 +1028,27 @@ class Fun:
                 print(f"调试信息 - 直接匹配: 期望学号='{expected_id}', 输入学号='{input_id}'")
                 
                 if input_id == expected_id:
-                    authenticated = True
-                    matched_name = name
-                    matched_id = expected_id
-                    print(f"调试信息 - 直接匹配成功")
+                    # 验证密码
+                    if student_id in password_data:
+                        # 使用存储的密码验证
+                        if password_data[student_id] == password:
+                            authenticated = True
+                            matched_name = name
+                            matched_id = expected_id
+                            print(f"调试信息 - 密码验证成功（自定义密码）")
+                        else:
+                            flash('密码不正确！', 'error')
+                            return render_template('fun_auth.html', name=name, student_id=student_id)
+                    else:
+                        # 使用默认密码验证
+                        if password == get_default_password():
+                            authenticated = True
+                            matched_name = name
+                            matched_id = expected_id
+                            print(f"调试信息 - 密码验证成功（默认密码）")
+                        else:
+                            flash('密码不正确！', 'error')
+                            return render_template('fun_auth.html', name=name, student_id=student_id)
             
             # 方法2: 如果直接匹配失败，尝试遍历所有项进行模糊匹配
             if not authenticated and students_data:
@@ -1014,11 +1064,29 @@ class Fun:
                     # 比较去除空格后的值
                     if (input_name_clean == stored_name_clean and 
                         input_id_clean == stored_id_clean):
-                        authenticated = True
-                        matched_name = stored_name_clean
-                        matched_id = stored_id_clean
-                        print(f"调试信息 - 模糊匹配成功: {matched_name}")
-                        break
+                        # 验证密码
+                        if stored_id_clean in password_data:
+                            # 使用存储的密码验证
+                            if password_data[stored_id_clean] == password:
+                                authenticated = True
+                                matched_name = stored_name_clean
+                                matched_id = stored_id_clean
+                                print(f"调试信息 - 模糊匹配成功: {matched_name}")
+                                break
+                            else:
+                                flash('密码不正确！', 'error')
+                                return render_template('fun_auth.html', name=name, student_id=student_id)
+                        else:
+                            # 使用默认密码验证
+                            if password == get_default_password():
+                                authenticated = True
+                                matched_name = stored_name_clean
+                                matched_id = stored_id_clean
+                                print(f"调试信息 - 模糊匹配成功: {matched_name}")
+                                break
+                            else:
+                                flash('密码不正确！', 'error')
+                                return render_template('fun_auth.html', name=name, student_id=student_id)
             
             if authenticated:
                 # 验证成功
@@ -1038,11 +1106,71 @@ class Fun:
             else:
                 # 验证失败
                 print(f"调试信息 - 验证失败")
-                flash('姓名或学号不正确，请重试！', 'error')
+                flash('姓名、学号或密码不正确，请重试！', 'error')
                 # 保留表单数据以便重新输入
                 return render_template('fun_auth.html', name=name, student_id=student_id)
         
         return render_template('fun_auth.html')
+    
+    @app.route('/902504/password', methods=['GET', 'POST'])
+    def fun_password():
+        """密码设置页面"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'set_password':
+                current_password = request.form.get('current_password', '').strip()
+                new_password = request.form.get('new_password', '').strip()
+                confirm_password = request.form.get('confirm_password', '').strip()
+                
+                # 验证当前密码
+                if student_id in password_data:
+                    # 使用自定义密码验证
+                    if password_data[student_id] != current_password:
+                        flash('当前密码不正确！', 'error')
+                        return render_template('fun_password.html', name=name, student_id=student_id)
+                else:
+                    # 使用默认密码验证
+                    if current_password != get_default_password():
+                        flash('当前密码不正确！', 'error')
+                        return render_template('fun_password.html', name=name, student_id=student_id)
+                
+                # 验证新密码
+                is_valid, message = validate_password(new_password)
+                if not is_valid:
+                    flash(message, 'error')
+                    return render_template('fun_password.html', name=name, student_id=student_id)
+                
+                # 确认密码匹配
+                if new_password != confirm_password:
+                    flash('新密码和确认密码不匹配！', 'error')
+                    return render_template('fun_password.html', name=name, student_id=student_id)
+                
+                # 保存新密码
+                password_data[student_id] = new_password
+                save_password_data()
+                
+                flash('密码设置成功！', 'success')
+                return redirect(url_for('fun_index'))
+            
+            elif action == 'reset_password':
+                # 重置密码（删除自定义密码，使用默认密码）
+                if student_id in password_data:
+                    del password_data[student_id]
+                    save_password_data()
+                    flash('密码已重置为默认密码！', 'success')
+                else:
+                    flash('您当前使用的是默认密码，无需重置！', 'info')
+                return redirect(url_for('fun_index'))
+        
+        return render_template('fun_password.html', name=name, student_id=student_id)
     
     @app.route('/902504/logout')
     def fun_logout():

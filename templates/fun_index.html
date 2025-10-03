@@ -140,6 +140,7 @@
         .menu-card.ai-chat { border-top: 4px solid var(--warning-color); }
         .menu-card.ai-settings { border-top: 4px solid var(--primary-color); }
         .menu-card.logout { border-top: 4px solid var(--danger-color); }
+        .menu-card.password { border-top: 4px solid #6f42c1; }
 
         .menu-link {
             text-decoration: none;
@@ -439,6 +440,15 @@
                     <h3>AI设置</h3>
                     <p>个性化配置AI助手</p>
                     <div class="btn">配置设置</div>
+                </a>
+            </div>
+
+            <div class="menu-card password">
+                <a href="{{ url_for('fun_password') }}" class="menu-link">
+                    <i class="fas fa-key"></i>
+                    <h3>密码设置</h3>
+                    <p>修改登录密码</p>
+                    <div class="btn">设置密码</div>
                 </a>
             </div>
 
