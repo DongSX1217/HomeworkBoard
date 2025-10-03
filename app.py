@@ -225,6 +225,27 @@ def validate_password(password):
         return False, "密码长度必须在4-16位之间"
     return True, "密码格式正确"
 
+def log_prompt_operation(operation, details, user_identifier, ip_address):
+    """记录提示词操作日志到文件"""
+    PROMPT_LOG_FILE = os.path.join(DATA_DIR, 'prompt.log')
+    
+    log_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "operation": operation,
+        "details": details,
+        "user_identifier": user_identifier,
+        "ip_address": ip_address
+    }
+    
+    # 确保日志目录存在
+    log_dir = os.path.dirname(PROMPT_LOG_FILE)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # 追加写入日志
+    with open(PROMPT_LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+
 # 初始化数据
 submissions = load_submissions()
 
@@ -1603,6 +1624,7 @@ class AI:
             return redirect(url_for('fun_auth'))
         
         user_identifier = f"{name}_{student_id}"
+        ip_address = get_client_ip()  # 获取客户端IP
         
         if request.method == 'POST':
             action = request.form.get('action')
@@ -1611,15 +1633,43 @@ class AI:
                 new_prompt = request.form.get('system_prompt', '').strip()
                 prompt_type = request.form.get('prompt_type', 'private')  # private 或 public
                 if new_prompt:
+                    old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
                     AI.save_system_prompt(new_prompt, is_public=(prompt_type == 'public'))
+                    
+                    # 记录提示词更新日志
+                    log_prompt_operation(
+                        operation=f"update_{prompt_type}_prompt",
+                        details={
+                            "old_prompt": old_prompt,
+                            "new_prompt": new_prompt,
+                            "prompt_type": prompt_type
+                        },
+                        user_identifier=user_identifier,
+                        ip_address=ip_address
+                    )
+                    
                     flash('系统提示词更新成功！', 'success')
                 else:
                     flash('提示词不能为空！', 'error')
             
             elif action == 'reset_prompt':
                 prompt_type = request.form.get('prompt_type', 'private')
+                old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
                 default_prompt = AI.get_default_system_prompt()
                 AI.save_system_prompt(default_prompt, is_public=(prompt_type == 'public'))
+                
+                # 记录提示词重置日志
+                log_prompt_operation(
+                    operation=f"reset_{prompt_type}_prompt",
+                    details={
+                        "old_prompt": old_prompt,
+                        "new_prompt": default_prompt,
+                        "prompt_type": prompt_type
+                    },
+                    user_identifier=user_identifier,
+                    ip_address=ip_address
+                )
+                
                 flash('系统提示词已重置为默认值！', 'success')
             
             elif action == 'clear_my_history':
@@ -1635,12 +1685,26 @@ class AI:
                 answer = request.form.get('qa_answer', '').strip()
                 if question and answer:
                     qa_list = AI.load_qa_prompt()
-                    qa_list.append({
+                    new_qa = {
                         'question': question,
                         'answer': answer,
                         'id': len(qa_list) + 1
-                    })
+                    }
+                    qa_list.append(new_qa)
                     AI.save_qa_prompt(qa_list)
+                    
+                    # 记录预设问答添加日志
+                    log_prompt_operation(
+                        operation="add_qa",
+                        details={
+                            "question": question,
+                            "answer": answer,
+                            "qa_id": new_qa['id']
+                        },
+                        user_identifier=user_identifier,
+                        ip_address=ip_address
+                    )
+                    
                     flash('预设问答添加成功！', 'success')
                 else:
                     flash('问题和答案都不能为空！', 'error')
@@ -1650,8 +1714,29 @@ class AI:
                 qa_id = int(request.form.get('qa_id', 0))
                 if qa_id > 0:
                     qa_list = AI.load_qa_prompt()
+                    # 找到要删除的QA记录详情
+                    deleted_qa = None
+                    for qa in qa_list:
+                        if qa.get('id') == qa_id:
+                            deleted_qa = qa
+                            break
+                    
                     qa_list = [qa for qa in qa_list if qa.get('id') != qa_id]
                     AI.save_qa_prompt(qa_list)
+                    
+                    # 记录预设问答删除日志
+                    if deleted_qa:
+                        log_prompt_operation(
+                            operation="delete_qa",
+                            details={
+                                "question": deleted_qa.get('question'),
+                                "answer": deleted_qa.get('answer'),
+                                "qa_id": qa_id
+                            },
+                            user_identifier=user_identifier,
+                            ip_address=ip_address
+                        )
+                    
                     flash('预设问答删除成功！', 'success')
         
         # 加载当前系统提示词、预设问答和用户聊天历史统计
@@ -1664,13 +1749,13 @@ class AI:
         public_count = len([msg for msg in public_history if msg.get('user_identifier') == user_identifier])
         
         return render_template('ai_settings.html',
-                             private_prompt=private_prompt,
-                             public_prompt=public_prompt,
-                             qa_list=qa_list,
-                             private_count=private_count,
-                             public_count=public_count,
-                             name=name,
-                             student_id=student_id)
+                            private_prompt=private_prompt,
+                            public_prompt=public_prompt,
+                            qa_list=qa_list,
+                            private_count=private_count,
+                            public_count=public_count,
+                            name=name,
+                            student_id=student_id)
 
 homework = Homework()
 label = Label()
