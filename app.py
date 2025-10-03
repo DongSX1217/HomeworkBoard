@@ -172,6 +172,42 @@ def load_inputs():
                 return []
     return []
 
+def check_submit_limit(name, student_id):
+    """检查用户提交限制"""
+    inputs = load_inputs()
+    
+    # 获取当前时间和24小时前的时间
+    now = datetime.now()
+    past_24_hours = now - timedelta(hours=24)
+    
+    # 统计用户提交次数
+    user_submissions_24h = []
+    user_submissions_30s = []
+    
+    for input_entry in inputs:
+        # 检查是否是同一用户
+        if input_entry.get('name') == name and input_entry.get('student_id') == student_id:
+            # 解析时间戳
+            try:
+                entry_time = datetime.strptime(input_entry['timestamp'], "%Y-%m-%d %H:%M:%S")
+                
+                # 统计24小时内的提交
+                if entry_time >= past_24_hours:
+                    user_submissions_24h.append(input_entry)
+                    
+                # 统计30秒内的提交
+                if entry_time >= now - timedelta(seconds=30):
+                    user_submissions_30s.append(input_entry)
+            except ValueError:
+                # 时间戳格式不正确，跳过该条目
+                continue
+    
+    # 返回检查结果
+    return {
+        'within_30s': len(user_submissions_30s) >= 1,  # 30秒内是否有提交
+        'within_24h': len(user_submissions_24h) >= 15  # 24小时内是否达到上限
+    }
+
 # 初始化数据
 submissions = load_submissions()
 
@@ -1030,8 +1066,15 @@ class Fun:
             content = request.form.get('content')
             anonymous = request.form.get('anonymous') == 'on'
             
+            # 检查提交频率限制
+            limit_check = check_submit_limit(name, student_id)
+            
+            if limit_check['within_30s']:
+                flash('提交过于频繁，请间隔至少30秒再提交！', 'error')
+            elif limit_check['within_24h']:
+                flash('您今天的提交次数已达上限（15次）！', 'error')
             # 验证内容
-            if not content or len(content.strip()) == 0:
+            elif not content or len(content.strip()) == 0:
                 flash('内容不能为空！', 'error')
             elif len(content) > 1600:
                 flash('内容不能超过1600字符！', 'error')
