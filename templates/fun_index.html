@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fun页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .welcome { background-color: #f0f8ff; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+        .menu { display: flex; gap: 10px; margin-bottom: 20px; }
+        .menu a { display: inline-block; padding: 10px 15px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; }
+        .menu a.logout { background-color: #f44336; }
+    </style>
+</head>
+<body>
+    <div class="welcome">
+        <h2>欢迎，{{ name }} ({{ student_id }})!</h2>
+        <p>请选择您要使用的功能：</p>
+    </div>
+    
+    <div class="menu">
+        <a href="{{ url_for('fun_submit') }}">提交内容</a>
+        <a href="{{ url_for('fun_view') }}">查看所有提交</a>
+        <a href="{{ url_for('fun_logout') }}" class="logout">退出登录</a>
+    </div>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</body>
+</html>

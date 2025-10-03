@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify, make_response
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
 import http.client
 from datetime import datetime, timedelta
@@ -8,8 +8,8 @@ app = Flask(__name__) # 创建 Flask 应用
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
 
 @app.context_processor
-def inject_subject_class():
-    return dict(Subject=Subject)
+def inject_subject_class(): # 注入Subject类到模板
+    return dict(Subject=Subject) # 返回一个包含Subject类的字典
 
 # 确保data目录存在
 DATA_DIR = 'data'
@@ -21,6 +21,9 @@ LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
 LOG_FILE = os.path.join(DATA_DIR, 'operation.log')
 SUBJECTS_FILE = os.path.join(DATA_DIR, 'subjects.json')
 IP_FILE = os.path.join(DATA_DIR, 'ips.json')
+STUDENTS_FILE = os.path.join(DATA_DIR, 'students.json')
+LOGIN_LOG_FILE = os.path.join(DATA_DIR, 'login.log')
+INPUT_LOG_FILE = os.path.join(DATA_DIR, 'input.log')
 
 default_labels = [
   {
@@ -113,6 +116,62 @@ def log_operation(operation, details, ip_address):
     with open(LOG_FILE, 'a', encoding='utf-8') as f:
         f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
 
+def log_login(name, student_id, ip_address):
+    """记录登录日志到文件"""
+    log_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "name": name,
+        "student_id": student_id,
+        "ip_address": ip_address
+    }
+    
+    # 确保日志目录存在
+    log_dir = os.path.dirname(LOGIN_LOG_FILE)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # 追加写入日志
+    with open(LOGIN_LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+
+def log_input(content, name, student_id, ip_address, anonymous):
+    """记录用户输入到文件"""
+    # 加载现有数据
+    if os.path.exists(INPUT_LOG_FILE):
+        with open(INPUT_LOG_FILE, 'r', encoding='utf-8') as f:
+            try:
+                inputs = json.load(f)
+            except json.JSONDecodeError:
+                inputs = []
+    else:
+        inputs = []
+    
+    # 添加新输入
+    input_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "content": content,
+        "name": name if not anonymous else "匿名",
+        "student_id": student_id if not anonymous else "匿名",
+        "ip_address": ip_address,
+        "anonymous": anonymous
+    }
+    
+    inputs.append(input_entry)
+    
+    # 保存数据
+    with open(INPUT_LOG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(inputs, f, ensure_ascii=False, indent=2)
+
+def load_inputs():
+    """从文件加载所有用户输入"""
+    if os.path.exists(INPUT_LOG_FILE):
+        with open(INPUT_LOG_FILE, 'r', encoding='utf-8') as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
+    return []
+
 # 初始化数据
 submissions = load_submissions()
 
@@ -122,6 +181,28 @@ if os.path.exists(IP_FILE):
             data_ip = json.load(f)
         except json.JSONDecodeError:
             pass
+
+# 初始化学生数据
+if os.path.exists(STUDENTS_FILE):
+    with open(STUDENTS_FILE, 'r', encoding='utf-8') as f:
+        try:
+            students_data = json.load(f)
+        except json.JSONDecodeError:
+            students_data = {}
+else:
+    # 如果没有学生数据文件，创建一个示例
+    students_data = {
+        "张三": "2023001",
+        "李四": "2023002"
+    }
+    with open(STUDENTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(students_data, f, ensure_ascii=False, indent=4)
+
+# 初始化输入数据文件
+if not os.path.exists(INPUT_LOG_FILE):
+    with open(INPUT_LOG_FILE, 'w', encoding='utf-8') as f:
+        json.dump([], f, ensure_ascii=False, indent=4)
+
 @app.route('/')
 def homepage():
     return render_template('home.html')
@@ -820,8 +901,104 @@ class Subject:
 
 class Fun:
     @app.route('/902504')
-    def index():
-        return "<br><h3>更好玩的页面</h3><p>开发中，敬请期待！</p>"
+    def fun_index():
+        """Fun类主页，需要身份验证"""
+        # 检查是否已通过身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            # 未验证，重定向到验证页面
+            return redirect(url_for('fun_auth'))
+        
+        # 验证通过，显示主页
+        return render_template('fun_index.html', name=name, student_id=student_id)
+    
+    @app.route('/902504/auth', methods=['GET', 'POST'])
+    def fun_auth():
+        """身份验证页面"""
+        if request.method == 'POST':
+            name = request.form.get('name')
+            student_id = request.form.get('student_id')
+            
+            # 验证用户信息
+            if name in students_data and students_data[name] == student_id:
+                # 验证成功
+                ip_address = get_client_ip()
+                
+                # 记录登录日志
+                log_login(name, student_id, ip_address)
+                
+                # 创建响应并设置cookie
+                response = make_response(redirect(url_for('fun_index')))
+                # 设置cookie，有效期30天
+                response.set_cookie('fun_name', name, max_age=30*24*60*60)
+                response.set_cookie('fun_student_id', student_id, max_age=30*24*60*60)
+                
+                flash('身份验证成功！', 'success')
+                return response
+            else:
+                # 验证失败
+                flash('姓名或学号不正确，请重试！', 'error')
+                return render_template('fun_auth.html')
+        
+        return render_template('fun_auth.html')
+    
+    @app.route('/902504/logout')
+    def fun_logout():
+        """退出登录"""
+        response = make_response(redirect(url_for('fun_auth')))
+        response.set_cookie('fun_name', '', expires=0)
+        response.set_cookie('fun_student_id', '', expires=0)
+        flash('已退出登录', 'success')
+        return response
+    
+    @app.route('/902504/submit', methods=['GET', 'POST'])
+    def fun_submit():
+        """提交表单页面"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        if request.method == 'POST':
+            content = request.form.get('content')
+            anonymous = request.form.get('anonymous') == 'on'
+            
+            # 验证内容
+            if not content or len(content.strip()) == 0:
+                flash('内容不能为空！', 'error')
+            elif len(content) > 1600:
+                flash('内容不能超过1600字符！', 'error')
+            else:
+                # 记录输入
+                ip_address = get_client_ip()
+                log_input(content, name, student_id, ip_address, anonymous)
+                
+                flash('提交成功！', 'success')
+                return redirect(url_for('fun_view'))
+        
+        return render_template('fun_submit.html', name=name, student_id=student_id)
+    
+    @app.route('/902504/view')
+    def fun_view():
+        """查看所有提交的页面"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        # 加载所有输入
+        inputs = load_inputs()
+        
+        # 按时间倒序排列
+        inputs.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return render_template('fun_view.html', inputs=inputs, name=name)
 
 homework = Homework()
 label = Label()
