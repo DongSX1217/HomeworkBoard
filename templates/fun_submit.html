@@ -14,6 +14,7 @@
         .char-count { text-align: right; color: #666; font-size: 0.9em; }
         .nav { margin-bottom: 20px; }
         .nav a { color: #4CAF50; text-decoration: none; }
+        .help-text { font-size: 0.9em; color: #666; margin-top: 5px; }
     </style>
 </head>
 <body>
@@ -36,6 +37,10 @@
             <label for="content">内容 (最多1600字符):</label>
             <textarea id="content" name="content" maxlength="1600" required></textarea>
             <div class="char-count"><span id="char-count">0</span>/1600</div>
+            <div class="help-text">
+                支持HTML标签，如：&lt;b&gt;加粗&lt;/b&gt;、&lt;i&gt;斜体&lt;/i&gt;、&lt;u&gt;下划线&lt;/u&gt;、
+                &lt;br&gt;换行、&lt;img src="图片链接" style="max-width:100%"&gt;插入图片等
+            </div>
         </div>
         
         <div class="form-group">
