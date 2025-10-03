@@ -247,9 +247,24 @@ position: absolute;
 
 /* 截止日期 */
 .deadline {
-    color: #e74c3c;
     font-weight: bold;
     font-size: 0.7em;
+}
+
+.deadline-overdue {
+    color: rgb(107, 11, 133);
+}
+
+.deadline-unset {
+    color: green;
+}
+
+.deadline-today {
+    color: #e74c3c;
+}
+
+.deadline-future {
+    color: #f39c12;
 }
 
 /* 编辑按钮样式 */

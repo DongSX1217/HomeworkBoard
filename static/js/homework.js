@@ -569,9 +569,42 @@ function createHomeworkItem(submission) {
         deadlineDiv.appendChild(deleteButton);
     }
     
-    const deadlineText = submission.deadline ? 
-        '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')' : 
-        '截止日期: 未设置';
+    // 根据截止日期设置不同颜色类
+    let deadlineText;
+    if (submission.deadline) {
+        const deadlineDate = new Date(submission.deadline);
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // 将时间部分设置为0，只比较日期
+        deadlineDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        tomorrow.setHours(0, 0, 0, 0);
+        
+        if (deadlineDate < today) {
+            // 截止日期已过，黑色显示
+            deadlineText = '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')';
+            deadlineDiv.classList.add('deadline-overdue');
+        } else if (deadlineDate.getTime() === today.getTime()) {
+            // 截止日期为今天，红色显示
+            deadlineText = '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')';
+            deadlineDiv.classList.add('deadline-today');
+        } else if (deadlineDate.getTime() === tomorrow.getTime()) {
+            // 截止日期为明天，黄色显示
+            deadlineText = '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')';
+            deadlineDiv.classList.add('deadline-future');
+        } else {
+            // 截止日期为后天或之后，黄色显示
+            deadlineText = '截止日期: ' + submission.deadline.substring(5) + ' (' + getWeekday(submission.deadline) + ')';
+            deadlineDiv.classList.add('deadline-future');
+        }
+    } else {
+        // 未设置截止日期，绿色显示
+        deadlineText = '截止日期: 未设置';
+        deadlineDiv.classList.add('deadline-unset');
+    }
+    
     const deadlineTextNode = document.createTextNode(deadlineText);
     deadlineDiv.appendChild(deadlineTextNode);
     datesContainer.appendChild(deadlineDiv);
