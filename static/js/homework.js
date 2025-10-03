@@ -145,79 +145,99 @@ function fetchHomeworkAndLabels() {
         });
 }
 
-// 计算最大列高度（基于屏幕高度和实际内容）
+// 计算最大列高度（更精确的版本）
 function calculateMaxColumnHeight() {
     const screenHeight = window.innerHeight;
     
-    // 获取页面中实际存在的固定元素高度
+    // 获取所有固定元素
     const headerElement = document.querySelector('h1');
     const topButtonsElement = document.querySelector('.top-buttons');
     const homeButtonElement = document.querySelector('.home-button');
     
-    // 使用 offsetHeight 获取实际渲染高度（包含padding和border）
-    const headerHeight = headerElement ? headerElement.offsetHeight : 0;
-    const topButtonsHeight = topButtonsElement ? topButtonsElement.offsetHeight : 0;
-    const homeButtonHeight = homeButtonElement ? homeButtonElement.offsetHeight : 0;
+    // 计算固定元素的总高度
+    let totalFixedHeight = 0;
     
-    // 获取元素的 margin（不包含在 offsetHeight 中）
-    const headerMargin = headerElement ? 
-        parseFloat(getComputedStyle(headerElement).marginTop) + 
-        parseFloat(getComputedStyle(headerElement).marginBottom) : 0;
+    // 标题高度（包括margin）
+    if (headerElement) {
+        const headerStyle = getComputedStyle(headerElement);
+        totalFixedHeight += headerElement.offsetHeight + 
+                           parseFloat(headerStyle.marginTop) + 
+                           parseFloat(headerStyle.marginBottom);
+    }
     
-    const topButtonsMargin = topButtonsElement ? 
-        parseFloat(getComputedStyle(topButtonsElement).marginTop) + 
-        parseFloat(getComputedStyle(topButtonsElement).marginBottom) : 0;
+    // 顶部按钮高度
+    if (topButtonsElement) {
+        const topButtonsStyle = getComputedStyle(topButtonsElement);
+        totalFixedHeight += topButtonsElement.offsetHeight + 
+                           parseFloat(topButtonsStyle.marginTop) + 
+                           parseFloat(topButtonsStyle.marginBottom);
+    }
     
-    const homeButtonMargin = homeButtonElement ? 
-        parseFloat(getComputedStyle(homeButtonElement).marginTop) + 
-        parseFloat(getComputedStyle(homeButtonElement).marginBottom) : 0;
+    // 主页按钮高度
+    if (homeButtonElement) {
+        const homeButtonStyle = getComputedStyle(homeButtonElement);
+        totalFixedHeight += homeButtonElement.offsetHeight + 
+                           parseFloat(homeButtonStyle.marginTop) + 
+                           parseFloat(homeButtonStyle.marginBottom);
+    }
     
-    // 容器内边距和额外间距
-    const containerPadding = 20;
-    const elementSpacing = 10;
+    // 减少容器边距和安全边距
+    const containerMargin = 15; // 减少容器边距
+    const safetyMargin = 15; // 减少安全边距
     
-    // 计算总占用高度
-    const totalFixedHeight = headerHeight + topButtonsHeight + homeButtonHeight + 
-                           headerMargin + topButtonsMargin + homeButtonMargin + 
-                           containerPadding + elementSpacing;
-    
-    // 返回可用高度（稍微保守一些，避免边缘情况）
-    return Math.max(100, screenHeight - totalFixedHeight - 10); // 额外减10px作为安全边距
+    // 返回可用高度（减少保守程度）
+    return Math.max(200, screenHeight - totalFixedHeight - containerMargin - safetyMargin);
 }
 
-// 计算作业项的实际估算高度（更精确的版本）
+// 计算作业项的实际估算高度（更准确的版本）
 function calculateItemHeight(submission) {
-    // 获取当前字体大小
     const bodyStyle = getComputedStyle(document.body);
     const currentFontSize = parseFloat(bodyStyle.fontSize);
     const baseFontSize = 16;
     const fontScale = currentFontSize / baseFontSize;
     
-    // 基础结构高度（根据字体大小调整）
-    const baseStructureHeight = Math.ceil(85 * fontScale); // 减少基础高度
+    // 基础结构高度（减少基础高度）
+    const baseStructureHeight = Math.ceil(75 * fontScale); // 从95减少到75
     
-    // 内容高度估算（更精确的行数计算）
+    // 内容高度估算（更准确的行数计算）
     const content = submission.content || '';
-    const charsPerLine = Math.max(12, Math.floor(20 / fontScale)); // 调整每行字符数
-    const lineHeight = Math.ceil(18 * fontScale); // 调整行高
-    const contentLines = Math.ceil(content.length / charsPerLine);
-    const contentHeight = Math.max(Math.ceil(16 * fontScale), contentLines * lineHeight);
+    const charsPerLine = Math.max(15, Math.floor(22 / fontScale)); // 增加每行字符数
+    const lineHeight = Math.ceil(18 * fontScale); // 减少行高
+    const contentLines = Math.max(1, Math.ceil(content.length / charsPerLine));
+    const contentHeight = Math.ceil(contentLines * lineHeight);
     
-    // 标签高度（如果有标签）
+    // 标签高度
     const labelCount = (submission.labels && submission.labels.length) || 
                       (submission.label_ids && submission.label_ids.length) || 0;
-    const labelHeight = labelCount > 0 ? Math.ceil(24 * fontScale) : 0;
+    const labelHeight = labelCount > 0 ? Math.ceil(22 * fontScale) : 0; // 减少标签高度
     
-    // 内边距和边框
-    const paddingAndBorder = Math.ceil(12 * fontScale);
+    // 内边距、边框和间距（减少这些值）
+    const paddingAndBorder = Math.ceil(15 * fontScale); // 从20减少到15
+    const itemSpacing = Math.ceil(5 * fontScale); // 从8减少到5
     
-    // 总高度（使用更保守的估算）
-    const totalHeight = baseStructureHeight + contentHeight + labelHeight + paddingAndBorder;
+    // 总高度（使用更准确的估算，减少安全边距）
+    const totalHeight = baseStructureHeight + contentHeight + labelHeight + 
+                        paddingAndBorder + itemSpacing;
     
     return Math.ceil(totalHeight);
 }
 
-// 顺序填充各列（改进版本）
+// 计算学科标题的高度（更准确的版本）
+function calculateSubjectTitleHeight() {
+    const bodyStyle = getComputedStyle(document.body);
+    const currentFontSize = parseFloat(bodyStyle.fontSize);
+    const baseFontSize = 16;
+    const fontScale = currentFontSize / baseFontSize;
+    
+    // 学科标题的基础高度（减少估算）
+    const baseTitleHeight = Math.ceil(35 * fontScale); // 从45减少到35
+    const titlePadding = Math.ceil(12 * fontScale); // 从18减少到12
+    const titleMargin = Math.ceil(8 * fontScale); // 从10减少到8
+    
+    return baseTitleHeight + titlePadding + titleMargin;
+}
+
+// 顺序填充各列（优化版本）
 function fillColumnsSequentially(items, columns, colCount) {
     if (items.length === 0) return;
     
@@ -241,7 +261,7 @@ function fillColumnsSequentially(items, columns, colCount) {
         const subjectItems = subjectGroups[subject];
         let subjectStartColumn = -1;
         
-        subjectItems.forEach(item => {
+        subjectItems.forEach((item, index) => {
             let targetColumn = findTargetColumn(columnHeights, item.estimatedHeight, maxColumnHeight, subjectStartColumn);
             
             // 如果找不到合适的列，使用最后一列（必须放置）
@@ -262,7 +282,8 @@ function fillColumnsSequentially(items, columns, colCount) {
                 item, 
                 columns[targetColumn], 
                 columnSubjects[targetColumn],
-                isContinuation
+                isContinuation,
+                index === 0 // 是否是学科的第一个项目
             );
             
             // 使用实际高度更新列高
@@ -271,7 +292,7 @@ function fillColumnsSequentially(items, columns, colCount) {
     });
 }
 
-// 找到目标列（改进版本）
+// 找到目标列（修复版本）
 function findTargetColumn(columnHeights, itemHeight, maxHeight, subjectStartColumn) {
     // 优先尝试从学科开始的列开始
     if (subjectStartColumn !== -1) {
@@ -289,12 +310,12 @@ function findTargetColumn(columnHeights, itemHeight, maxHeight, subjectStartColu
         }
     }
     
-    // 如果所有列都放不下，返回-1
-    return -1;
+    // 如果所有列都放不下，返回最后一列
+    return columnHeights.length - 1;
 }
 
 // 顺序添加作业项到指定列（返回实际高度）
-function addHomeworkItemToColumnSequentially(item, column, columnSubjects, subjectContinuing) {
+function addHomeworkItemToColumnSequentially(item, column, columnSubjects, subjectContinuing, isFirstItem) {
     const subject = item.subject;
     const submission = item.submission;
     
@@ -327,14 +348,23 @@ function addHomeworkItemToColumnSequentially(item, column, columnSubjects, subje
     const homeworkItem = createHomeworkItem(submission);
     columnSubjects[subject].element.appendChild(homeworkItem);
     
-    // 返回作业项的实际高度（包括margin）
-    return getElementHeight(homeworkItem);
+    // 如果是第一个项目，测量整个学科部分的高度
+    // 如果不是第一个项目，只测量作业项的高度
+    if (isFirstItem) {
+        // 对于第一个项目，测量整个学科部分以获取准确高度
+        return getElementHeight(columnSubjects[subject].section);
+    } else {
+        // 对于后续项目，只测量作业项的高度
+        return getElementHeight(homeworkItem);
+    }
 }
 
 // 获取元素的实际高度（包括margin）
 function getElementHeight(element) {
-    const style = getComputedStyle(element);
+    // 强制重排以确保测量准确
     const height = element.offsetHeight;
+    
+    const style = getComputedStyle(element);
     const marginTop = parseFloat(style.marginTop) || 0;
     const marginBottom = parseFloat(style.marginBottom) || 0;
     
