@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify, make_response
+from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify, make_response, Response
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
 import http.client
 from datetime import datetime, timedelta
@@ -1123,20 +1123,236 @@ class Fun:
         })
     
 class AI:
-    def chat(model="qwen3-max",messages=[
-                {'role': 'system', 'content': 'You are a helpful assistant.'},
-                {'role': 'user', 'content': '你是谁？'}
-            ]):
+    # 保存对话历史的文件路径
+    CHAT_HISTORY_FILE = os.path.join(DATA_DIR, 'chat_history.json')
+    # 保存系统提示词的文件路径
+    SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'system_prompt.txt')
+    
+    @staticmethod
+    def get_default_system_prompt():
+        """获取默认系统提示词"""
+        return "你是一个乐于助人的AI助手。请用友好、专业的语气回答用户的问题。"
+    
+    @staticmethod
+    def load_system_prompt():
+        """加载系统提示词"""
+        if os.path.exists(AI.SYSTEM_PROMPT_FILE):
+            with open(AI.SYSTEM_PROMPT_FILE, 'r', encoding='utf-8') as f:
+                return f.read().strip()
+        else:
+            default_prompt = AI.get_default_system_prompt()
+            AI.save_system_prompt(default_prompt)
+            return default_prompt
+    
+    @staticmethod
+    def save_system_prompt(prompt):
+        """保存系统提示词"""
+        with open(AI.SYSTEM_PROMPT_FILE, 'w', encoding='utf-8') as f:
+            f.write(prompt)
+    
+    @staticmethod
+    def load_chat_history(user_identifier, max_history=10):
+        """加载用户的聊天历史"""
+        if os.path.exists(AI.CHAT_HISTORY_FILE):
+            with open(AI.CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    all_history = json.load(f)
+                    return all_history.get(user_identifier, [])[-max_history:]
+                except json.JSONDecodeError:
+                    return []
+        return []
+    
+    @staticmethod
+    def save_chat_message(user_identifier, role, content):
+        """保存聊天消息"""
+        # 加载现有历史
+        if os.path.exists(AI.CHAT_HISTORY_FILE):
+            with open(AI.CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    all_history = json.load(f)
+                except json.JSONDecodeError:
+                    all_history = {}
+        else:
+            all_history = {}
+        
+        # 确保用户有历史记录
+        if user_identifier not in all_history:
+            all_history[user_identifier] = []
+        
+        # 添加新消息
+        message = {
+            'role': role,
+            'content': content,
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+        all_history[user_identifier].append(message)
+        
+        # 限制历史记录长度（保留最近50条）
+        if len(all_history[user_identifier]) > 50:
+            all_history[user_identifier] = all_history[user_identifier][-50:]
+        
+        # 保存回文件
+        with open(AI.CHAT_HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(all_history, f, ensure_ascii=False, indent=2)
+    
+    @staticmethod
+    def clear_chat_history(user_identifier):
+        """清空用户的聊天历史"""
+        if os.path.exists(AI.CHAT_HISTORY_FILE):
+            with open(AI.CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    all_history = json.load(f)
+                    if user_identifier in all_history:
+                        all_history[user_identifier] = []
+                    with open(AI.CHAT_HISTORY_FILE, 'w', encoding='utf-8') as fw:
+                        json.dump(all_history, fw, ensure_ascii=False, indent=2)
+                    return True
+                except json.JSONDecodeError:
+                    return False
+        return False
+
+    @staticmethod
+    def openai_stream(model="qwen3-max", messages=[]):
+        """流式调用OpenAI API"""
         client = OpenAI(
-        api_key=os.getenv("DASHSCOPE_API_KEY"),
-        base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-    )
+            api_key=os.getenv("DASHSCOPE_API_KEY"),
+            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        )
+        
         completion = client.chat.completions.create(
-            # 模型列表：https://help.aliyun.com/zh/model-studio/getting-started/models
+            model=model,
+            messages=messages,
+            stream=True
+        )
+        
+        for chunk in completion:
+            if chunk.choices[0].delta.content is not None:
+                yield chunk.choices[0].delta.content
+
+    @staticmethod
+    def openai(model="qwen3-max", messages=[]):
+        """非流式调用OpenAI API"""
+        client = OpenAI(
+            api_key=os.getenv("DASHSCOPE_API_KEY"),
+            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        )
+        completion = client.chat.completions.create(
             model=model, 
             messages=messages,
         )
         return completion.choices[0].message.content
+
+    @app.route('/902504/ai-chat', methods=['GET', 'POST'])
+    def ai_chat():
+        """AI聊天页面"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        user_identifier = f"{name}_{student_id}"
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'clear_history':
+                # 清空聊天历史
+                AI.clear_chat_history(user_identifier)
+                flash('聊天历史已清空！', 'success')
+                return redirect(url_for('ai_chat'))
+            
+            elif action == 'send_message':
+                user_message = request.form.get('message', '').strip()
+                if not user_message:
+                    flash('消息不能为空！', 'error')
+                    return redirect(url_for('ai_chat'))
+                
+                # 保存用户消息
+                AI.save_chat_message(user_identifier, 'user', user_message)
+                
+                # 准备对话历史
+                chat_history = AI.load_chat_history(user_identifier)
+                system_prompt = AI.load_system_prompt()
+                
+                # 构建消息列表
+                messages = [{'role': 'system', 'content': system_prompt}]
+                messages.extend(chat_history)
+                messages.append({'role': 'user', 'content': user_message})
+                
+                # 如果是AJAX请求，返回流式响应
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    def generate():
+                        full_response = ""
+                        for chunk in AI.openai_stream(messages=messages):
+                            full_response += chunk
+                            yield f"data: {json.dumps({'content': chunk})}\n\n"
+                        
+                        # 保存AI回复
+                        AI.save_chat_message(user_identifier, 'assistant', full_response)
+                        yield "data: [DONE]\n\n"
+                    
+                    return Response(generate(), mimetype='text/plain')
+                
+                # 非AJAX请求，使用普通模式
+                try:
+                    ai_response = AI.openai(messages=messages)
+                    AI.save_chat_message(user_identifier, 'assistant', ai_response)
+                except Exception as e:
+                    flash(f'AI服务暂时不可用: {str(e)}', 'error')
+        
+        # 加载聊天历史
+        chat_history = AI.load_chat_history(user_identifier)
+        return render_template('ai_chat.html', 
+                             chat_history=chat_history,
+                             name=name,
+                             student_id=student_id)
+
+    @app.route('/902504/ai-settings', methods=['GET', 'POST'])
+    def ai_settings():
+        """AI设置页面"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        user_identifier = f"{name}_{student_id}"
+        
+        if request.method == 'POST':
+            action = request.form.get('action')
+            
+            if action == 'update_prompt':
+                new_prompt = request.form.get('system_prompt', '').strip()
+                if new_prompt:
+                    AI.save_system_prompt(new_prompt)
+                    flash('系统提示词更新成功！', 'success')
+                else:
+                    flash('提示词不能为空！', 'error')
+            
+            elif action == 'reset_prompt':
+                default_prompt = AI.get_default_system_prompt()
+                AI.save_system_prompt(default_prompt)
+                flash('系统提示词已重置为默认值！', 'success')
+            
+            elif action == 'clear_my_history':
+                if AI.clear_chat_history(user_identifier):
+                    flash('您的聊天历史已清空！', 'success')
+                else:
+                    flash('清空聊天历史失败！', 'error')
+        
+        # 加载当前系统提示词和用户聊天历史统计
+        system_prompt = AI.load_system_prompt()
+        chat_history = AI.load_chat_history(user_identifier)
+        history_count = len(chat_history)
+        
+        return render_template('ai_settings.html',
+                             system_prompt=system_prompt,
+                             history_count=history_count,
+                             name=name,
+                             student_id=student_id)
 
 homework = Homework()
 label = Label()

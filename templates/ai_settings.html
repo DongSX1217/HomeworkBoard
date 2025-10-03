@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI设置 - 902504</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .settings-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .setting-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .setting-section h3 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            min-height: 120px;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn-primary {
+            background: #4CAF50;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .stat-item {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        .flash-messages {
+            margin-bottom: 15px;
+        }
+        .flash-message {
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        .flash-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <h1>⚙️ AI设置</h1>
+        <p>欢迎，{{ name }} ({{ student_id }})！</p>
+        
+        <div class="flash-messages">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <a href="{{ url_for('fun_index') }}" class="btn btn-secondary">← 返回主页</a>
+            <a href="{{ url_for('ai_chat') }}" class="btn btn-primary">前往聊天</a>
+        </div>
+
+        <!-- 系统提示词设置 -->
+        <div class="setting-section">
+            <h3>系统提示词设置</h3>
+            <div class="info-box">
+                <strong>提示：</strong> 系统提示词用于设定AI助手的基本行为和性格。修改后会影响所有后续对话。
+            </div>
+            
+            <form method="POST">
+                <input type="hidden" name="action" value="update_prompt">
+                <div class="form-group">
+                    <label for="system_prompt">系统提示词：</label>
+                    <textarea id="system_prompt" name="system_prompt" placeholder="请输入系统提示词...">{{ system_prompt }}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">保存提示词</button>
+                <button type="submit" class="btn btn-secondary" name="action" value="reset_prompt" 
+                        onclick="return confirm('确定要重置为默认提示词吗？')">重置为默认</button>
+            </form>
+        </div>
+
+        <!-- 聊天历史管理 -->
+        <div class="setting-section">
+            <h3>聊天历史管理</h3>
+            <div class="stats">
+                <div class="stat-item">
+                    <strong>当前对话数：</strong> {{ history_count }}
+                </div>
+            </div>
+            
+            <form method="POST">
+                <input type="hidden" name="action" value="clear_my_history">
+                <button type="submit" class="btn btn-danger" 
+                        onclick="return confirm('确定要清空您的所有聊天历史吗？此操作不可撤销！')">
+                    清空我的聊天历史
+                </button>
+            </form>
+        </div>
+
+        <!-- 使用说明 -->
+        <div class="setting-section">
+            <h3>使用说明</h3>
+            <div class="info-box">
+                <h4>功能说明：</h4>
+                <ul>
+                    <li><strong>系统提示词：</strong> 定义AI助手的基本角色和行为模式</li>
+                    <li><strong>聊天历史：</strong> 系统会自动保存最近的对话记录</li>
+                    <li><strong>流式输出：</strong> 聊天时支持实时流式输出，提升体验</li>
+                </ul>
+                
+                <h4>提示词编写技巧：</h4>
+                <ul>
+                    <li>明确指定AI的角色（如：你是一名专业的教师）</li>
+                    <li>设定回答的风格和语气（如：请用简洁明了的语言回答）</li>
+                    <li>定义回答的长度限制（如：回答请控制在200字以内）</li>
+                    <li>指定专业领域（如：专注于数学和物理问题的解答）</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
