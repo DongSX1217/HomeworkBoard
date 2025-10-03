@@ -8,6 +8,15 @@ let quickPublishEnabled = false;
 let subjectsData = [];
 let labelsData = [];
 
+// 窗口大小变化时重新布局
+let resizeTimeout;
+window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+        fetchHomeworkAndLabels();
+    }, 250);
+});
+
 // 页面加载完成后初始化
 window.onload = function() {
     loadSettings();
@@ -136,6 +145,211 @@ function fetchHomeworkAndLabels() {
         });
 }
 
+// 计算最大列高度（基于屏幕高度和实际内容）
+function calculateMaxColumnHeight() {
+    const screenHeight = window.innerHeight;
+    
+    // 获取页面中实际存在的固定元素高度
+    const headerElement = document.querySelector('h1');
+    const topButtonsElement = document.querySelector('.top-buttons');
+    const homeButtonElement = document.querySelector('.home-button');
+    
+    // 使用 offsetHeight 获取实际渲染高度（包含padding和border）
+    const headerHeight = headerElement ? headerElement.offsetHeight : 0;
+    const topButtonsHeight = topButtonsElement ? topButtonsElement.offsetHeight : 0;
+    const homeButtonHeight = homeButtonElement ? homeButtonElement.offsetHeight : 0;
+    
+    // 获取元素的 margin（不包含在 offsetHeight 中）
+    const headerMargin = headerElement ? 
+        parseFloat(getComputedStyle(headerElement).marginTop) + 
+        parseFloat(getComputedStyle(headerElement).marginBottom) : 0;
+    
+    const topButtonsMargin = topButtonsElement ? 
+        parseFloat(getComputedStyle(topButtonsElement).marginTop) + 
+        parseFloat(getComputedStyle(topButtonsElement).marginBottom) : 0;
+    
+    const homeButtonMargin = homeButtonElement ? 
+        parseFloat(getComputedStyle(homeButtonElement).marginTop) + 
+        parseFloat(getComputedStyle(homeButtonElement).marginBottom) : 0;
+    
+    // 容器内边距和额外间距
+    const containerPadding = 20;
+    const elementSpacing = 10;
+    
+    // 计算总占用高度
+    const totalFixedHeight = headerHeight + topButtonsHeight + homeButtonHeight + 
+                           headerMargin + topButtonsMargin + homeButtonMargin + 
+                           containerPadding + elementSpacing;
+    
+    // 返回可用高度（稍微保守一些，避免边缘情况）
+    return Math.max(100, screenHeight - totalFixedHeight - 10); // 额外减10px作为安全边距
+}
+
+// 计算作业项的实际估算高度（更精确的版本）
+function calculateItemHeight(submission) {
+    // 获取当前字体大小
+    const bodyStyle = getComputedStyle(document.body);
+    const currentFontSize = parseFloat(bodyStyle.fontSize);
+    const baseFontSize = 16;
+    const fontScale = currentFontSize / baseFontSize;
+    
+    // 基础结构高度（根据字体大小调整）
+    const baseStructureHeight = Math.ceil(85 * fontScale); // 减少基础高度
+    
+    // 内容高度估算（更精确的行数计算）
+    const content = submission.content || '';
+    const charsPerLine = Math.max(12, Math.floor(20 / fontScale)); // 调整每行字符数
+    const lineHeight = Math.ceil(18 * fontScale); // 调整行高
+    const contentLines = Math.ceil(content.length / charsPerLine);
+    const contentHeight = Math.max(Math.ceil(16 * fontScale), contentLines * lineHeight);
+    
+    // 标签高度（如果有标签）
+    const labelCount = (submission.labels && submission.labels.length) || 
+                      (submission.label_ids && submission.label_ids.length) || 0;
+    const labelHeight = labelCount > 0 ? Math.ceil(24 * fontScale) : 0;
+    
+    // 内边距和边框
+    const paddingAndBorder = Math.ceil(12 * fontScale);
+    
+    // 总高度（使用更保守的估算）
+    const totalHeight = baseStructureHeight + contentHeight + labelHeight + paddingAndBorder;
+    
+    return Math.ceil(totalHeight);
+}
+
+// 顺序填充各列（改进版本）
+function fillColumnsSequentially(items, columns, colCount) {
+    if (items.length === 0) return;
+    
+    const maxColumnHeight = calculateMaxColumnHeight();
+    const columnHeights = new Array(colCount).fill(0);
+    const columnSubjects = new Array(colCount).fill(0).map(() => ({}));
+    
+    // 按学科分组项目
+    const subjectGroups = {};
+    items.forEach(item => {
+        if (!subjectGroups[item.subject]) {
+            subjectGroups[item.subject] = [];
+        }
+        subjectGroups[item.subject].push(item);
+    });
+    
+    // 按学科顺序处理
+    const subjectOrder = Object.keys(subjectGroups);
+    
+    subjectOrder.forEach(subject => {
+        const subjectItems = subjectGroups[subject];
+        let subjectStartColumn = -1;
+        
+        subjectItems.forEach(item => {
+            let targetColumn = findTargetColumn(columnHeights, item.estimatedHeight, maxColumnHeight, subjectStartColumn);
+            
+            // 如果找不到合适的列，使用最后一列（必须放置）
+            if (targetColumn === -1) {
+                targetColumn = colCount - 1;
+            }
+            
+            // 记录学科开始的列
+            if (subjectStartColumn === -1) {
+                subjectStartColumn = targetColumn;
+            }
+            
+            // 判断是否是延续
+            const isContinuation = (targetColumn > subjectStartColumn);
+            
+            // 添加作业项并获取实际高度
+            const actualHeight = addHomeworkItemToColumnSequentially(
+                item, 
+                columns[targetColumn], 
+                columnSubjects[targetColumn],
+                isContinuation
+            );
+            
+            // 使用实际高度更新列高
+            columnHeights[targetColumn] += actualHeight;
+        });
+    });
+}
+
+// 找到目标列（改进版本）
+function findTargetColumn(columnHeights, itemHeight, maxHeight, subjectStartColumn) {
+    // 优先尝试从学科开始的列开始
+    if (subjectStartColumn !== -1) {
+        for (let i = subjectStartColumn; i < columnHeights.length; i++) {
+            if (columnHeights[i] + itemHeight <= maxHeight) {
+                return i;
+            }
+        }
+    }
+    
+    // 如果学科开始的列不合适，从头开始找
+    for (let i = 0; i < columnHeights.length; i++) {
+        if (columnHeights[i] + itemHeight <= maxHeight) {
+            return i;
+        }
+    }
+    
+    // 如果所有列都放不下，返回-1
+    return -1;
+}
+
+// 顺序添加作业项到指定列（返回实际高度）
+function addHomeworkItemToColumnSequentially(item, column, columnSubjects, subjectContinuing) {
+    const subject = item.subject;
+    const submission = item.submission;
+    
+    // 检查该列是否已有该学科
+    if (!columnSubjects[subject]) {
+        // 创建新的学科部分
+        const subjectSection = document.createElement('div');
+        subjectSection.className = 'subject-section';
+        if (subjectContinuing) {
+            subjectSection.classList.add('subject-continued');
+        }
+        
+        const subjectTitle = document.createElement('div');
+        subjectTitle.className = 'subject-title';
+        subjectTitle.textContent = subject + (subjectContinuing ? " (续)" : "");
+        subjectSection.appendChild(subjectTitle);
+        
+        const homeworkList = document.createElement('ul');
+        homeworkList.className = 'homework-list';
+        subjectSection.appendChild(homeworkList);
+        
+        column.appendChild(subjectSection);
+        columnSubjects[subject] = {
+            element: homeworkList,
+            section: subjectSection
+        };
+    }
+    
+    // 创建作业项
+    const homeworkItem = createHomeworkItem(submission);
+    columnSubjects[subject].element.appendChild(homeworkItem);
+    
+    // 返回作业项的实际高度（包括margin）
+    return getElementHeight(homeworkItem);
+}
+
+// 获取元素的实际高度（包括margin）
+function getElementHeight(element) {
+    const style = getComputedStyle(element);
+    const height = element.offsetHeight;
+    const marginTop = parseFloat(style.marginTop) || 0;
+    const marginBottom = parseFloat(style.marginBottom) || 0;
+    
+    return height + marginTop + marginBottom;
+}
+
+// 更新作业容器函数中的列数计算也做相应调整
+function getColumnCount() {
+    const width = window.innerWidth;
+    if (width <= 600) return 1;
+    if (width <= 900) return 2;
+    if (width <= 1200) return 3;
+    return 4;
+}
+
 // 更新作业容器（顺序填充各列，允许学科拆分）
 function updateHomeworkContainer(submissions, labels, subjectsOrder) {
     const container = document.getElementById('homeworkContainer'); // 作业容器
@@ -185,170 +399,6 @@ function updateHomeworkContainer(submissions, labels, subjectsOrder) {
     fillColumnsSequentially(allHomeworkItems, columns, colCount);
     applyHideExpired(); // 隐藏过期作业
 }
-
-// 动态分栏参数
-function getColumnCount() {
-    if (window.innerWidth <= 600) return 1;
-    if (window.innerWidth <= 900) return 2;
-    if (window.innerWidth <= 1200) return 3;
-    return 4;
-}
-
-// 顺序填充各列（先填满第一列，再填第二列，依此类推）
-function fillColumnsSequentially(items, columns, colCount) {
-    if (items.length === 0) return;
-    
-    const maxColumnHeight = calculateMaxColumnHeight();
-    const columnHeights = new Array(colCount).fill(0);
-    const columnSubjects = new Array(colCount).fill(0).map(() => ({}));
-    
-    // 按学科分组项目
-    const subjectGroups = {};
-    items.forEach(item => {
-        if (!subjectGroups[item.subject]) {
-            subjectGroups[item.subject] = [];
-        }
-        subjectGroups[item.subject].push(item);
-    });
-    
-    // 按学科顺序处理
-    const subjectOrder = Object.keys(subjectGroups);
-    let currentColumn = 0; // 修复：在学科之间共享currentColumn
-    
-    subjectOrder.forEach(subject => {
-        const subjectItems = subjectGroups[subject];
-        let subjectStartColumn = -1; // 记录该学科开始的列
-        
-        subjectItems.forEach(item => {
-            // 修复：正确检查是否需要换列
-            while (currentColumn < colCount - 1 && 
-                    columnHeights[currentColumn] > 0 && 
-                    columnHeights[currentColumn] + item.estimatedHeight > maxColumnHeight) {
-                currentColumn++;
-            }
-            
-            // 记录学科开始的列（首次添加时）
-            if (subjectStartColumn === -1) {
-                subjectStartColumn = currentColumn;
-            }
-            
-            // 判断是否是延续（当前列不是学科开始的列）
-            const isContinuation = (currentColumn > subjectStartColumn);
-            
-            // 添加作业项到当前列
-            addHomeworkItemToColumnSequentially(
-                item, 
-                columns[currentColumn], 
-                columnSubjects[currentColumn],
-                isContinuation
-            );
-            
-            columnHeights[currentColumn] += item.estimatedHeight;
-        });
-    });
-}
-
-// 顺序添加作业项到指定列
-function addHomeworkItemToColumnSequentially(item, column, columnSubjects, subjectContinuing) {
-    const subject = item.subject;
-    const submission = item.submission;
-    
-    // 检查该列是否已有该学科
-    if (!columnSubjects[subject]) {
-        // 创建新的学科部分
-        const subjectSection = document.createElement('div');
-        subjectSection.className = 'subject-section';
-        if (subjectContinuing) {
-            subjectSection.classList.add('subject-continued');
-        }
-        
-        const subjectTitle = document.createElement('div');
-        subjectTitle.className = 'subject-title';
-        subjectTitle.textContent = subject + (subjectContinuing ? " (续)" : "");
-        subjectSection.appendChild(subjectTitle);
-        
-        const homeworkList = document.createElement('ul');
-        homeworkList.className = 'homework-list';
-        subjectSection.appendChild(homeworkList);
-        
-        column.appendChild(subjectSection);
-        columnSubjects[subject] = homeworkList;
-    }
-    
-    // 创建作业项
-    const homeworkItem = createHomeworkItem(submission);
-    columnSubjects[subject].appendChild(homeworkItem);
-}
-
-// 计算最大列高度（基于屏幕高度）
-function calculateMaxColumnHeight() {
-    const screenHeight = window.innerHeight;
-    
-    // 获取各个元素的实际高度（考虑字体大小和缩放）
-    const headerElement = document.querySelector('h1');
-    const topButtonsElement = document.querySelector('.top-buttons');
-    const homeButtonElement = document.querySelector('.home-button');
-    
-    // 使用getComputedStyle获取实际渲染的高度
-    const headerHeight = headerElement ? headerElement.offsetHeight : 0;
-    const topButtonsHeight = topButtonsElement ? topButtonsElement.offsetHeight : 0;
-    const homeButtonHeight = homeButtonElement ? homeButtonElement.offsetHeight : 0;
-    
-    // 计算实际的margin和padding
-    let additionalSpacing = 40; // 默认边距
-    if (headerElement && topButtonsElement && homeButtonElement) {
-        // 获取实际的margin和padding值
-        const headerStyle = getComputedStyle(headerElement);
-        const topButtonsStyle = getComputedStyle(topButtonsElement);
-        const homeButtonStyle = getComputedStyle(homeButtonElement);
-        
-        // 计算实际的垂直间距（margin + padding）
-        const headerSpacing = parseFloat(headerStyle.marginTop) + parseFloat(headerStyle.marginBottom) + 
-                            parseFloat(headerStyle.paddingTop) + parseFloat(headerStyle.paddingBottom);
-        const topButtonsSpacing = parseFloat(topButtonsStyle.marginTop) + parseFloat(topButtonsStyle.marginBottom) + 
-                                parseFloat(topButtonsStyle.paddingTop) + parseFloat(topButtonsStyle.paddingBottom);
-        const homeButtonSpacing = parseFloat(homeButtonStyle.marginTop) + parseFloat(homeButtonStyle.marginBottom) + 
-                                parseFloat(homeButtonStyle.paddingTop) + parseFloat(homeButtonStyle.paddingBottom);
-        
-        additionalSpacing = Math.ceil(headerSpacing + topButtonsSpacing + homeButtonSpacing);
-    }
-    
-    const padding = 20; // 边距
-    // 增加可用高度以减少列拆分
-    return (screenHeight - headerHeight - topButtonsHeight - homeButtonHeight - additionalSpacing - padding) * 1.2;
-}
-
-// 计算作业项的大致高度
-function calculateItemHeight(submission) {
-    // 获取当前body的字体大小
-    const bodyStyle = getComputedStyle(document.body);
-    const currentFontSize = parseFloat(bodyStyle.fontSize);
-    const baseFontSize = 16; // 默认字体大小
-    
-    // 根据当前字体大小调整基础高度
-    const fontScale = currentFontSize / baseFontSize;
-    
-    // 基础高度（根据字体大小调整）
-    const baseHeight = Math.ceil(98 * fontScale);
-    
-    // 内容高度估算（根据字体大小和字符数计算）
-    const charsPerLine = Math.max(15, Math.floor(25 / fontScale)); // 字体越大，每行字符数越少
-    const lineHeight = Math.ceil(21 * fontScale); // 行高也根据字体大小调整
-    const contentHeight = Math.max(Math.ceil(20 * fontScale), Math.ceil(submission.content.length / charsPerLine) * lineHeight);
-    
-    // 标签高度（根据字体大小调整）
-    const labelHeight = submission.labels.length > 0 ? Math.ceil(28 * fontScale) : 0;
-    
-    // 考虑缩放因子
-    const zoomFactor = window.devicePixelRatio || 1;
-    
-    // 减少高度估算以减少列拆分
-    return Math.ceil((baseHeight + contentHeight + labelHeight) * zoomFactor * 0.85);
-}
-
-    // 创建作业项
-    const homeworkItem = createHomeworkItem(item.submission);
-    columnSubjects[subject].appendChild(homeworkItem);
 
 // 打开设置弹窗
 function openSettings() {
