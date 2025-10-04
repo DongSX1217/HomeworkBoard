@@ -847,12 +847,30 @@
             const confirmBtn = document.getElementById('modalConfirm');
             
             // 检查是否已经显示过弹窗
-            if (!localStorage.getItem('hasSeenModal')) {
+            if (!getCookie('hasSeenModal')) {
                 // 显示弹窗
                 setTimeout(() => {
                     modal.style.display = 'flex';
                     document.body.style.overflow = 'hidden'; // 防止背景滚动
                 }, 500);
+            } else {
+                // 如果已经有cookie，隐藏弹窗
+                modal.style.display = 'none';
+            }
+            
+            // 获取cookie函数
+            function getCookie(name) {
+                const value = "; " + document.cookie;
+                const parts = value.split("; " + name + "=");
+                if (parts.length == 2) return parts.pop().split(";").shift();
+            }
+            
+            // 设置cookie函数
+            function setCookie(name, value, days) {
+                const d = new Date();
+                d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+                const expires = "expires=" + d.toUTCString();
+                document.cookie = name + "=" + value + ";" + expires + ";path=/";
             }
             
             // 关闭弹窗
@@ -861,25 +879,36 @@
                 setTimeout(() => {
                     modal.style.display = 'none';
                     document.body.style.overflow = ''; // 恢复背景滚动
-                    // 记录用户已查看弹窗
-                    localStorage.setItem('hasSeenModal', 'true');
+                    // 记录用户已查看弹窗（临时cookie，浏览器关闭后失效）
+                    // setCookie('hasSeenModal', 'true', 0.1);
                 }, 300);
             }
             
-            // 关闭按钮事件
+            // 确认同意弹窗（设置长期cookie）
+            function confirmModal() {
+                modal.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = ''; // 恢复背景滚动
+                    // 记录用户已确认同意（设置长期cookie，365天）
+                    setCookie('hasSeenModal', 'true', 365);
+                }, 300);
+            }
+            
+            // 关闭按钮事件（临时隐藏）
             closeBtn.addEventListener('click', closeModal);
             
-            // 确认按钮事件
-            confirmBtn.addEventListener('click', closeModal);
+            // 确认按钮事件（长期隐藏）
+            confirmBtn.addEventListener('click', confirmModal);
             
-            // 点击遮罩层关闭
+            // 点击遮罩层关闭（临时隐藏）
             modal.addEventListener('click', function(e) {
                 if (e.target === modal) {
                     closeModal();
                 }
             });
             
-            // ESC键关闭
+            // ESC键关闭（临时隐藏）
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape' && modal.style.display === 'flex') {
                     closeModal();
