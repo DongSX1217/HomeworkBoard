@@ -769,14 +769,13 @@
                 const message = this.elements.input.value.trim();
                 if (!message) return;
 
-                // 添加用户消息
+                // 添加用户消息到界面
                 this.addMessage('user', message);
                 this.clearInput();
                 
-                // 如果是公共聊天且不是@ai消息，不调用AI但保存消息
+                // 如果是公共聊天且不是@ai消息，只保存消息不调用AI
                 if (this.chatType === 'public' && !message.startsWith('@ai')) {
-                    await this.saveMessageOnly(message);
-                    this.hideTypingIndicator();
+                    await this.saveMessage(message);
                     this.elements.input.focus();
                     return;
                 }
@@ -795,20 +794,29 @@
                 }
             }
 
-            async saveMessageOnly(message) {
+            // 保存消息
+            async saveMessage(message) {
                 const formData = new URLSearchParams({
-                    'action': 'save_message_only',
+                    'action': 'send_message',
                     'message': message,
                     'chat_type': this.chatType
                 });
 
-                await fetch('{{ url_for("ai_chat") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: formData
-                });
+                try {
+                    const response = await fetch('{{ url_for("ai_chat") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: formData
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('消息保存失败');
+                    }
+                } catch (error) {
+                    console.error('Save message error:', error);
+                }
             }
 
             async streamAIResponse(userMessage) {

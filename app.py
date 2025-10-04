@@ -1323,7 +1323,7 @@ class AI:
             json.dump(qa_list, f, ensure_ascii=False, indent=2)
     
     @staticmethod
-    def load_chat_history(user_identifier, max_history=10, is_public=False):
+    def load_chat_history(user_identifier, max_history=100, is_public=False):
         """加载用户的聊天历史"""
         history_file = AI.PUBLIC_CHAT_HISTORY_FILE if is_public else AI.CHAT_HISTORY_FILE
         if os.path.exists(history_file):
@@ -1417,7 +1417,7 @@ class AI:
     @staticmethod
     def check_private_chat_limit(user_identifier):
         """检查私人聊天发送频率限制（每分钟最多3条）"""
-        private_history = AI.load_chat_history(user_identifier, max_history=10, is_public=False)
+        private_history = AI.load_chat_history(user_identifier, max_history=50, is_public=False)
         
         # 获取当前时间和1分钟前的时间
         now = datetime.now()
@@ -1439,8 +1439,8 @@ class AI:
 
     @staticmethod
     def check_public_chat_limit(user_identifier):
-        """检查公共聊天发送频率限制"""
-        public_history = AI.load_chat_history(user_identifier, max_history=100, is_public=True)
+        """检查公共聊天发送频率限制（非AI消息每2分钟最多1条）"""
+        public_history = AI.load_chat_history(user_identifier, max_history=300, is_public=True)
         
         # 获取当前时间和2分钟前的时间
         now = datetime.now()
@@ -1463,7 +1463,7 @@ class AI:
         return len(user_messages_2min) >= 1  # 2分钟内是否已有非AI消息
 
     @staticmethod
-    def openai_stream(model="qwen3-max", messages=[]):
+    def openai_stream(model="deepseek-v3.2-exp", messages=[]):
         """流式调用OpenAI API"""
         client = OpenAI(
             api_key=os.getenv("DASHSCOPE_API_KEY"),
@@ -1473,7 +1473,8 @@ class AI:
         completion = client.chat.completions.create(
             model=model,
             messages=messages,
-            stream=True
+            stream=True,
+            extra_body={"enable_thinking": False},
         )
         
         for chunk in completion:
@@ -1481,7 +1482,7 @@ class AI:
                 yield chunk.choices[0].delta.content
 
     @staticmethod
-    def openai(model="qwen3-max", messages=[]):
+    def openai(model="deepseek-v3.2-exp", messages=[]):
         """非流式调用OpenAI API"""
         client = OpenAI(
             api_key=os.getenv("DASHSCOPE_API_KEY"),
@@ -1532,11 +1533,11 @@ class AI:
                 
                 # 公共聊天频率限制检查
                 if is_public:
+                    # 修复：非@ai消息的频率限制检查
                     if not user_message.startswith('@ai') and AI.check_public_chat_limit(user_identifier):
                         flash('公共聊天中，非AI消息每2分钟只能发送一条！', 'error')
                         return redirect(url_for('ai_chat', type=chat_type))
                 
-                # 保存用户消息（无论是否@ai都要保存）
                 AI.save_chat_message(user_identifier, 'user', user_message, is_public=is_public, name=name)
                 
                 # 如果是@ai消息或者是私人聊天，调用AI
@@ -1548,13 +1549,16 @@ class AI:
                     # 构建消息列表
                     messages = [{'role': 'system', 'content': system_prompt}]
                     
-                    # 如果是公共聊天且不是@ai消息，添加预设问答作为知识参考
-                    if is_public and not user_message.startswith('@ai'):
+                    # 修复：问答式prompt设置 - 正确添加到上下文
+                    if is_public:
                         qa_prompt = AI.load_qa_prompt()
-                        for qa in qa_prompt:
-                            if 'question' in qa and 'answer' in qa:
-                                messages.append({'role': 'user', 'content': qa['question']})
-                                messages.append({'role': 'assistant', 'content': qa['answer']})
+                        if qa_prompt:
+                            # 添加预设问答作为系统上下文
+                            qa_context = "以下是一些预设问答，请参考这些信息来回答问题：\n\n"
+                            for qa in qa_prompt:
+                                if 'question' in qa and 'answer' in qa:
+                                    qa_context += f"问：{qa['question']}\n答：{qa['answer']}\n\n"
+                            messages[0]['content'] += "\n\n" + qa_context
                     
                     # 添加上下文消息（包括非@ai的公共消息）
                     if is_public:
@@ -1587,7 +1591,7 @@ class AI:
                             
                             # 保存AI回复
                             AI.save_chat_message(user_identifier, 'assistant', full_response, 
-                                               is_public=is_public, name="AI助手")
+                                            is_public=is_public, name="AI助手")
                             yield "data: [DONE]\n\n"
                         
                         return Response(generate(), mimetype='text/plain')
@@ -1596,22 +1600,23 @@ class AI:
                     try:
                         ai_response = AI.openai(messages=messages)
                         AI.save_chat_message(user_identifier, 'assistant', ai_response, 
-                                           is_public=is_public, name="AI助手")
+                                        is_public=is_public, name="AI助手")
                     except Exception as e:
                         flash(f'AI服务暂时不可用: {str(e)}', 'error')
                 else:
                     # 对于公共聊天的非@ai消息，不调用AI，但已经保存了消息
                     flash('消息已发送！', 'success')
+                    return redirect(url_for('ai_chat', type=chat_type))
         
         # 加载聊天历史
         is_public = chat_type == 'public'
         chat_history = AI.load_chat_history(user_identifier, max_history=50, is_public=is_public)
         
         return render_template('ai_chat.html', 
-                             chat_history=chat_history,
-                             name=name,
-                             student_id=student_id,
-                             chat_type=chat_type)
+                            chat_history=chat_history,
+                            name=name,
+                            student_id=student_id,
+                            chat_type=chat_type)
 
     @app.route('/902504/ai-settings', methods=['GET', 'POST'])
     def ai_settings():
