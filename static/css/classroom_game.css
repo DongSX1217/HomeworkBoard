@@ -145,6 +145,9 @@ body {
 .teacher-looking .right-eye {
     transform: scaleY(0.3);
 }
+.teacher-looking .eye {
+    transform: scaleY(0.3);
+}
 
 .teacher-mouth {
     width: 30px;

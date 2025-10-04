@@ -84,14 +84,16 @@ class ClassroomGame {
     async fetchGameStatus() {
         try {
             const response = await fetch('/902504/classroom-game/status');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
             const data = await response.json();
             
-            if (response.ok) {
-                this.gameState = data;
-                this.updateUI();
-            }
+            this.gameState = data;
+            this.updateUI();
         } catch (error) {
             console.error('获取游戏状态失败:', error);
+            this.addLog('获取游戏状态失败，请检查网络连接', 'danger');
         }
     }
     
@@ -105,9 +107,13 @@ class ClassroomGame {
                 }
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
-            if (response.ok && data.success) {
+            if (data.success) {
                 this.isJoined = true;
                 this.addLog('已成功加入游戏', 'info');
                 this.fetchGameStatus();
@@ -143,36 +149,36 @@ class ClassroomGame {
                 body: JSON.stringify({ action })
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
-            if (response.ok) {
-                if (data.success) {
-                    this.addLog(data.message, 'success');
-                    
-                    // 设置冷却时间
-                    if (data.cooldown) {
-                        this.cooldowns[action] = Date.now() + data.cooldown * 1000;
-                        this.updateCooldownDisplay(action, data.cooldown);
-                    }
-                    
-                    // 更新分数
-                    if (data.score !== undefined) {
-                        document.getElementById('current-player-score').textContent = data.score;
-                    }
-                } else {
-                    if (data.caught) {
-                        this.addLog(data.message, 'danger');
-                        this.showGameResult(data.message);
-                    } else {
-                        this.addLog(data.message, 'warning');
-                    }
+            if (data.success) {
+                this.addLog(data.message, 'success');
+                
+                // 设置冷却时间
+                if (data.cooldown) {
+                    this.cooldowns[action] = Date.now() + data.cooldown * 1000;
+                    this.updateCooldownDisplay(action, data.cooldown);
                 }
                 
-                // 刷新游戏状态
-                this.fetchGameStatus();
+                // 更新分数
+                if (data.score !== undefined) {
+                    document.getElementById('current-player-score').textContent = data.score;
+                }
             } else {
-                this.addLog(`执行动作失败: ${data.message}`, 'danger');
+                if (data.caught) {
+                    this.addLog(data.message, 'danger');
+                    this.showGameResult(data.message);
+                } else {
+                    this.addLog(data.message, 'warning');
+                }
             }
+            
+            // 刷新游戏状态
+            this.fetchGameStatus();
         } catch (error) {
             console.error('执行动作失败:', error);
             this.addLog('执行动作失败，请重试', 'danger');
@@ -189,9 +195,13 @@ class ClassroomGame {
                 }
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
-            if (response.ok && data.success) {
+            if (data.success) {
                 this.addLog('游戏已重置', 'info');
                 this.cooldowns = {};
                 this.fetchGameStatus();
@@ -214,9 +224,13 @@ class ClassroomGame {
                 }
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const data = await response.json();
             
-            if (response.ok && data.success) {
+            if (data.success) {
                 this.isJoined = false;
                 this.addLog('已离开游戏', 'info');
                 this.fetchGameStatus();
@@ -241,14 +255,17 @@ class ClassroomGame {
         // 更新老师状态
         const teacher = document.getElementById('teacher');
         const teacherStatus = document.getElementById('teacher-status');
+        const teacherEyes = document.getElementById('teacher-eyes');
         
         if (this.gameState.teacher_looking) {
             teacher.classList.add('teacher-looking');
+            teacherEyes.classList.add('teacher-looking');
             teacherStatus.textContent = '老师正在回头看！';
             teacherStatus.style.color = '#e74c3c';
             teacherStatus.style.fontWeight = 'bold';
         } else {
             teacher.classList.remove('teacher-looking');
+            teacherEyes.classList.remove('teacher-looking');
             teacherStatus.textContent = '老师正在讲课...';
             teacherStatus.style.color = '#2d3436';
             teacherStatus.style.fontWeight = 'normal';
@@ -318,14 +335,14 @@ class ClassroomGame {
     
     // 更新冷却显示
     updateCooldownDisplay(action, seconds) {
-        const cooldownElement = document.getElementById(`cooldown-${action}`);
+        const cooldownElement = document.getElementById(`cooldown-${action.replace('_', '-')}`);
         if (cooldownElement) {
             if (seconds > 0) {
                 cooldownElement.textContent = `${seconds}s`;
                 cooldownElement.style.display = 'block';
                 
                 // 禁用按钮
-                const button = document.getElementById(`btn-${action}`);
+                const button = document.getElementById(`btn-${action.replace('_', '-')}`);
                 if (button) {
                     button.disabled = true;
                 }
@@ -334,7 +351,7 @@ class ClassroomGame {
                 cooldownElement.style.display = 'none';
                 
                 // 启用按钮
-                const button = document.getElementById(`btn-${action}`);
+                const button = document.getElementById(`btn-${action.replace('_', '-')}`);
                 if (button && this.gameState.game_active && this.isJoined) {
                     button.disabled = false;
                 }

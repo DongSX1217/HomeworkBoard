@@ -1867,11 +1867,12 @@ class ClassroomGame:
     @staticmethod
     def init_game():
         """初始化新游戏"""
+        current_time = time.time()
         state = {
             'game_active': True,
             'teacher_looking': False,
             'players': {},
-            'teacher_next_turn': time.time() + random.randint(
+            'teacher_next_turn': current_time + random.randint(
                 ClassroomGame.TEACHER_CONFIG['min_interval'],
                 ClassroomGame.TEACHER_CONFIG['max_interval']
             ),
@@ -1880,18 +1881,22 @@ class ClassroomGame:
         }
         ClassroomGame.save_game_state(state)
         return state
-    
+
     @staticmethod
     def add_player(player_id, player_name):
         """添加玩家到游戏"""
         state = ClassroomGame.load_game_state()
         
+        # 如果游戏未激活，初始化游戏
+        if not state.get('game_active'):
+            state = ClassroomGame.init_game()
+        
         if player_id not in state['players']:
             state['players'][player_id] = {
                 'name': player_name,
-                'cooldowns': {},  # 各动作的冷却结束时间
-                'score': 0,       # 成功次数
-                'alive': True     # 是否存活
+                'cooldowns': {},
+                'score': 0,
+                'alive': True
             }
             ClassroomGame.save_game_state(state)
         
@@ -2079,65 +2084,81 @@ class ClassroomGame:
             return redirect(url_for('fun_auth'))
         
         return render_template('classroom_game.html', 
-                             name=name, 
-                             student_id=student_id,
-                             actions=ClassroomGame.ACTIONS)
+                            name=name, 
+                            student_id=student_id,
+                            actions=ClassroomGame.ACTIONS)
     
     @app.route('/902504/classroom-game/status')
     def classroom_game_status():
         """获取游戏状态API"""
-        status = ClassroomGame.get_game_status()
-        return jsonify(status)
+        try:
+            status = ClassroomGame.get_game_status()
+            return jsonify(status)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
     
     @app.route('/902504/classroom-game/join', methods=['POST'])
     def classroom_game_join():
         """加入游戏"""
-        name = request.cookies.get('fun_name')
-        student_id = request.cookies.get('fun_student_id')
-        
-        if not name or not student_id:
-            return jsonify({'success': False, 'message': '未认证'})
-        
-        player_id = f"{name}_{student_id}"
-        ClassroomGame.add_player(player_id, name)
-        
-        return jsonify({'success': True, 'message': '加入游戏成功'})
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if not name or not student_id:
+                return jsonify({'success': False, 'message': '未认证'})
+            
+            player_id = f"{name}_{student_id}"
+            ClassroomGame.add_player(player_id, name)
+            
+            return jsonify({'success': True, 'message': '加入游戏成功'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
     
     @app.route('/902504/classroom-game/action', methods=['POST'])
     def classroom_game_action():
         """执行动作"""
-        name = request.cookies.get('fun_name')
-        student_id = request.cookies.get('fun_student_id')
-        
-        if not name or not student_id:
-            return jsonify({'success': False, 'message': '未认证'})
-        
-        player_id = f"{name}_{student_id}"
-        action_type = request.json.get('action')
-        
-        if not action_type:
-            return jsonify({'success': False, 'message': '缺少动作类型'})
-        
-        result = ClassroomGame.player_action(player_id, action_type)
-        return jsonify(result)
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if not name or not student_id:
+                return jsonify({'success': False, 'message': '未认证'})
+            
+            player_id = f"{name}_{student_id}"
+            data = request.get_json()
+            
+            if not data or 'action' not in data:
+                return jsonify({'success': False, 'message': '缺少动作类型'})
+            
+            action_type = data['action']
+            result = ClassroomGame.player_action(player_id, action_type)
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
     
     @app.route('/902504/classroom-game/reset', methods=['POST'])
     def classroom_game_reset():
         """重置游戏"""
-        ClassroomGame.reset_game()
-        return jsonify({'success': True, 'message': '游戏已重置'})
+        try:
+            ClassroomGame.reset_game()
+            return jsonify({'success': True, 'message': '游戏已重置'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
     
     @app.route('/902504/classroom-game/leave', methods=['POST'])
     def classroom_game_leave():
         """离开游戏"""
-        name = request.cookies.get('fun_name')
-        student_id = request.cookies.get('fun_student_id')
-        
-        if name and student_id:
-            player_id = f"{name}_{student_id}"
-            ClassroomGame.remove_player(player_id)
-        
-        return jsonify({'success': True, 'message': '已离开游戏'})
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if name and student_id:
+                player_id = f"{name}_{student_id}"
+                ClassroomGame.remove_player(player_id)
+            
+            return jsonify({'success': True, 'message': '已离开游戏'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
 
 
 homework = Homework()
