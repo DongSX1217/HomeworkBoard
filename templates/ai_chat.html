@@ -597,7 +597,8 @@
                             </span>
                             <small>{{ message.timestamp }}</small>
                         </div>
-                        <div class="message-text">
+                        <div class="message-text" data-markdown-content="{{ message.content|e }}">
+                            <!-- 内容将在客户端由JavaScript解析 -->
                             {{ message.content|safe }}
                         </div>
                     </div>
@@ -611,7 +612,8 @@
                             <span>{% if message.role == 'user' %}您{% else %}AI助手{% endif %}</span>
                             <small>{{ message.timestamp }}</small>
                         </div>
-                        <div class="message-text">
+                        <div class="message-text" data-markdown-content="{{ message.content|e }}">
+                            <!-- 内容将在客户端由JavaScript解析 -->
                             {{ message.content|safe }}
                         </div>
                     </div>
@@ -698,11 +700,39 @@
                 this.init();
             }
 
+            // 在初始化时添加调试
             init() {
+                console.log('marked.js available:', typeof marked !== 'undefined');
+                console.log('marked.parse type:', typeof marked.parse);
+                
                 this.bindEvents();
                 this.autoResizeTextarea();
+                this.parseExistingMessages();
                 this.scrollToBottom();
                 this.elements.input.focus();
+            }
+
+            // 新增方法：解析已存在的消息
+            async parseExistingMessages() {
+                const messageTexts = this.elements.messages.querySelectorAll('.message-text[data-markdown-content]');
+                
+                for (const element of messageTexts) {
+                    const markdownContent = element.getAttribute('data-markdown-content');
+                    if (markdownContent) {
+                        try {
+                            // 使用 marked 解析 markdown
+                            const htmlContent = await marked.parse(markdownContent);
+                            element.innerHTML = htmlContent;
+                            // 移除 data-markdown-content 属性，避免重复解析
+                            element.removeAttribute('data-markdown-content');
+                        } catch (error) {
+                            console.error('Markdown parsing error:', error);
+                            // 如果解析失败，直接显示原始内容
+                            element.innerHTML = markdownContent;
+                            element.removeAttribute('data-markdown-content');
+                        }
+                    }
+                }
             }
 
             bindEvents() {
@@ -774,7 +804,7 @@
                 if (!message) return;
 
                 // 添加用户消息到界面
-                this.addMessage('user', message);
+                await this.addMessage('user', message);
                 this.clearInput();
                 
                 // 如果是公共聊天且不是@ai消息，只保存消息不调用AI
@@ -791,7 +821,7 @@
                     await this.streamAIResponse(message);
                 } catch (error) {
                     console.error('Chat error:', error);
-                    this.addMessage('assistant', '抱歉，发生了错误：' + error.message);
+                    await this.addMessage('assistant', '抱歉，发生了错误：' + error.message);
                 } finally {
                     this.hideTypingIndicator();
                     this.elements.input.focus();
@@ -871,7 +901,7 @@
                                 const data = line.slice(6);
                                 
                                 if (data === '[DONE]') {
-                                    this.finalizeAssistantMessage(fullResponse);
+                                    await this.finalizeAssistantMessage(fullResponse);
                                     return;
                                 }
 
@@ -879,7 +909,7 @@
                                     const parsed = JSON.parse(data);
                                     if (parsed.content) {
                                         fullResponse += parsed.content;
-                                        this.updateAssistantMessage(fullResponse);
+                                        await this.updateAssistantMessage(fullResponse);
                                     }
                                 } catch (parseError) {
                                     console.warn('Parse error:', parseError, 'Data:', data);
@@ -927,22 +957,37 @@
                 };
             }
 
-            updateAssistantMessage(content) {
+            async updateAssistantMessage(content) {
                 if (this.currentAssistantMessage) {
-                    this.currentAssistantMessage.contentElement.innerHTML = marked.parse(content);
-                    this.scrollToBottom();
+                    try {
+                        const parsedContent = await marked.parse(content);
+                        this.currentAssistantMessage.contentElement.innerHTML = parsedContent;
+                        this.scrollToBottom();
+                    } catch (error) {
+                        console.error('Markdown parsing error:', error);
+                        this.currentAssistantMessage.contentElement.innerHTML = content;
+                        this.scrollToBottom();
+                    }
                 }
             }
 
-            finalizeAssistantMessage(content) {
+            async finalizeAssistantMessage(content) {
                 if (this.currentAssistantMessage) {
-                    this.currentAssistantMessage.contentElement.innerHTML = marked.parse(content);
-                    this.currentAssistantMessage = null;
-                    this.scrollToBottom();
+                    try {
+                        const parsedContent = await marked.parse(content);
+                        this.currentAssistantMessage.contentElement.innerHTML = parsedContent;
+                        this.currentAssistantMessage = null;
+                        this.scrollToBottom();
+                    } catch (error) {
+                        console.error('Markdown parsing error:', error);
+                        this.currentAssistantMessage.contentElement.innerHTML = content;
+                        this.currentAssistantMessage = null;
+                        this.scrollToBottom();
+                    }
                 }
             }
 
-            addMessage(role, content) {
+            async addMessage(role, content) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${role}`;
                 
@@ -950,6 +995,15 @@
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
+                
+                // 使用 marked 解析新消息的 markdown
+                let parsedContent;
+                try {
+                    parsedContent = await marked.parse(content);
+                } catch (error) {
+                    console.error('Markdown parsing error:', error);
+                    parsedContent = content; // 如果解析失败，使用原始内容
+                }
                 
                 if (this.chatType === 'public') {
                     messageDiv.innerHTML = `
@@ -959,7 +1013,7 @@
                                 <span>${role === 'user' ? '{{ name }}' : 'AI助手'}</span>
                                 <small>${timestamp}</small>
                             </div>
-                            <div class="message-text">${marked.parse(content)}</div>
+                            <div class="message-text">${parsedContent}</div>
                         </div>
                     `;
                 } else {
@@ -970,7 +1024,7 @@
                                 <span>${role === 'user' ? '您' : 'AI助手'}</span>
                                 <small>${timestamp}</small>
                             </div>
-                            <div class="message-text">${marked.parse(content)}</div>
+                            <div class="message-text">${parsedContent}</div>
                         </div>
                     `;
                 }
@@ -1001,8 +1055,20 @@
         }
 
         // 初始化聊天界面
-        document.addEventListener('DOMContentLoaded', () => {
-            new AIChat();
+        document.addEventListener('DOMContentLoaded', async () => {
+            // 确保 marked.js 已加载
+            if (typeof marked === 'undefined') {
+                console.error('marked.js is not loaded');
+                return;
+            }
+            
+            // 配置 marked 选项（可选）
+            marked.setOptions({
+                breaks: true, // 将 \n 转换为 <br>
+                gfm: true,    // 启用 GitHub Flavored Markdown
+            });
+            
+            const chat = new AIChat();
         });
     </script>
 </body>
