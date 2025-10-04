@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上课小动作 - 虚拟教室搞破坏</title>
+    <link rel="stylesheet" href="/static/css/classroom_game.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- 游戏标题和状态栏 -->
+        <header class="game-header">
+            <h1>上课小动作</h1>
+            <div class="game-status">
+                <div class="status-item">
+                    <span class="status-label">当前回合:</span>
+                    <span id="round-counter">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">在线玩家:</span>
+                    <span id="player-count">0</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">游戏状态:</span>
+                    <span id="game-state">等待开始</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- 主游戏区域 -->
+        <main class="game-main">
+            <!-- 教室区域 -->
+            <div class="classroom">
+                <!-- 老师区域 -->
+                <div class="teacher-area">
+                    <div class="teacher" id="teacher">
+                        <div class="teacher-body">
+                            <div class="teacher-head">
+                                <div class="teacher-face" id="teacher-face">
+                                    <div class="teacher-eyes" id="teacher-eyes">
+                                        <div class="eye left-eye"></div>
+                                        <div class="eye right-eye"></div>
+                                    </div>
+                                    <div class="teacher-mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="teacher-status" id="teacher-status">正在讲课...</div>
+                    </div>
+                </div>
+
+                <!-- 课桌区域 -->
+                <div class="desks-area">
+                    <div class="desks-row">
+                        <div class="desk" data-action="pass_note">
+                            <div class="desk-top"></div>
+                            <div class="desk-legs">
+                                <div class="leg"></div>
+                                <div class="leg"></div>
+                            </div>
+                            <div class="desk-label">传纸条</div>
+                        </div>
+                        <div class="desk" data-action="carve_desk">
+                            <div class="desk-top"></div>
+                            <div class="desk-legs">
+                                <div class="leg"></div>
+                                <div class="leg"></div>
+                            </div>
+                            <div class="desk-label">刻字</div>
+                        </div>
+                        <div class="desk" data-action="throw_paper">
+                            <div class="desk-top"></div>
+                            <div class="desk-legs">
+                                <div class="leg"></div>
+                                <div class="leg"></div>
+                            </div>
+                            <div class="desk-label">扔纸团</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 玩家区域 -->
+                <div class="players-area">
+                    <h3>玩家列表</h3>
+                    <div class="players-list" id="players-list">
+                        <!-- 玩家将通过JS动态添加 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="control-panel">
+                <div class="action-buttons">
+                    <h3>搞破坏行动</h3>
+                    <div class="button-group">
+                        <button class="action-btn" data-action="pass_note" id="btn-pass-note">
+                            <span class="btn-icon">📝</span>
+                            <span class="btn-text">传纸条</span>
+                            <span class="btn-cooldown" id="cooldown-pass-note"></span>
+                        </button>
+                        <button class="action-btn" data-action="carve_desk" id="btn-carve-desk">
+                            <span class="btn-icon">🔪</span>
+                            <span class="btn-text">刻字</span>
+                            <span class="btn-cooldown" id="cooldown-carve-desk"></span>
+                        </button>
+                        <button class="action-btn" data-action="throw_paper" id="btn-throw-paper">
+                            <span class="btn-icon">🗑️</span>
+                            <span class="btn-text">扔纸团</span>
+                            <span class="btn-cooldown" id="cooldown-throw-paper"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button id="join-game" class="control-btn primary">加入游戏</button>
+                    <button id="reset-game" class="control-btn secondary">重置游戏</button>
+                    <button id="leave-game" class="control-btn warning">离开游戏</button>
+                </div>
+
+                <div class="game-log">
+                    <h3>游戏日志</h3>
+                    <div class="log-container" id="game-log">
+                        <!-- 游戏日志将通过JS动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 游戏结果弹窗 -->
+        <div id="game-result-modal" class="modal">
+            <div class="modal-content">
+                <h2 id="result-title">游戏结束</h2>
+                <div id="result-message"></div>
+                <button id="close-result" class="control-btn primary">确定</button>
+            </div>
+        </div>
+
+        <!-- 底部信息 -->
+        <footer class="game-footer">
+            <p>当前玩家: <span id="current-player-name">未加入</span></p>
+            <p>得分: <span id="current-player-score">0</span></p>
+        </footer>
+    </div>
+
+    <script src="/static/js/classroom_game.js"></script>
+</body>
+</html>

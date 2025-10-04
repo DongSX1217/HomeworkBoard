@@ -1,6 +1,6 @@
 import flask
 from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify, make_response, Response
-import base64, time, json, re, os, uuid, threading, requests, smtplib, sys
+import base64, time, json, re, os, uuid, threading, requests, smtplib, sys, random
 import http.client
 from datetime import datetime, timedelta
 from openai import OpenAI
@@ -1816,9 +1816,334 @@ class AI:
                             name=name,
                             student_id=student_id)
 
+class ClassroomGame:
+    """虚拟教室搞破坏游戏"""
+    
+    # 游戏状态存储文件
+    GAME_STATE_FILE = os.path.join(DATA_DIR, 'classroom_game.json')
+    
+    # 游戏配置
+    ACTIONS = {
+        'pass_note': {'name': '传纸条', 'base_risk': 0.3, 'cooldown': 5},
+        'carve_desk': {'name': '刻字', 'base_risk': 0.2, 'cooldown': 8},
+        'throw_paper': {'name': '扔纸团', 'base_risk': 0.5, 'cooldown': 3}
+    }
+    
+    # 老师回头配置
+    TEACHER_CONFIG = {
+        'min_interval': 10,  # 最小回头间隔(秒)
+        'max_interval': 25,  # 最大回头间隔(秒)
+        'look_duration': 3   # 回头持续时间(秒)
+    }
+    
+    @staticmethod
+    def load_game_state():
+        """加载游戏状态"""
+        if os.path.exists(ClassroomGame.GAME_STATE_FILE):
+            with open(ClassroomGame.GAME_STATE_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    pass
+        
+        # 默认游戏状态
+        default_state = {
+            'game_active': False,
+            'teacher_looking': False,
+            'players': {},
+            'teacher_next_turn': None,
+            'current_round': 0,
+            'caught_player': None
+        }
+        ClassroomGame.save_game_state(default_state)
+        return default_state
+    
+    @staticmethod
+    def save_game_state(state):
+        """保存游戏状态"""
+        with open(ClassroomGame.GAME_STATE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+    
+    @staticmethod
+    def init_game():
+        """初始化新游戏"""
+        state = {
+            'game_active': True,
+            'teacher_looking': False,
+            'players': {},
+            'teacher_next_turn': time.time() + random.randint(
+                ClassroomGame.TEACHER_CONFIG['min_interval'],
+                ClassroomGame.TEACHER_CONFIG['max_interval']
+            ),
+            'current_round': 0,
+            'caught_player': None
+        }
+        ClassroomGame.save_game_state(state)
+        return state
+    
+    @staticmethod
+    def add_player(player_id, player_name):
+        """添加玩家到游戏"""
+        state = ClassroomGame.load_game_state()
+        
+        if player_id not in state['players']:
+            state['players'][player_id] = {
+                'name': player_name,
+                'cooldowns': {},  # 各动作的冷却结束时间
+                'score': 0,       # 成功次数
+                'alive': True     # 是否存活
+            }
+            ClassroomGame.save_game_state(state)
+        
+        return state
+    
+    @staticmethod
+    def remove_player(player_id):
+        """从游戏中移除玩家"""
+        state = ClassroomGame.load_game_state()
+        if player_id in state['players']:
+            del state['players'][player_id]
+            ClassroomGame.save_game_state(state)
+        return state
+    
+    @staticmethod
+    def update_teacher_state():
+        """更新老师状态（回头/回头结束）"""
+        state = ClassroomGame.load_game_state()
+        
+        if not state['game_active']:
+            return state
+        
+        current_time = time.time()
+        
+        # 检查是否需要老师回头
+        if not state['teacher_looking'] and current_time >= state['teacher_next_turn']:
+            state['teacher_looking'] = True
+            state['teacher_look_end'] = current_time + ClassroomGame.TEACHER_CONFIG['look_duration']
+            state['current_round'] += 1
+            
+        # 检查老师是否应该转回去
+        elif state['teacher_looking'] and current_time >= state['teacher_look_end']:
+            state['teacher_looking'] = False
+            state['teacher_next_turn'] = current_time + random.randint(
+                ClassroomGame.TEACHER_CONFIG['min_interval'],
+                ClassroomGame.TEACHER_CONFIG['max_interval']
+            )
+        
+        ClassroomGame.save_game_state(state)
+        return state
+    
+    @staticmethod
+    def player_action(player_id, action_type):
+        """处理玩家动作"""
+        state = ClassroomGame.load_game_state()
+        
+        # 基础检查
+        if not state['game_active']:
+            return {'success': False, 'message': '游戏未开始'}
+        
+        if player_id not in state['players']:
+            return {'success': False, 'message': '玩家未加入游戏'}
+        
+        if not state['players'][player_id]['alive']:
+            return {'success': False, 'message': '你已经被发现了！'}
+        
+        if action_type not in ClassroomGame.ACTIONS:
+            return {'success': False, 'message': '无效的动作类型'}
+        
+        player = state['players'][player_id]
+        current_time = time.time()
+        
+        # 检查冷却时间
+        if action_type in player['cooldowns'] and current_time < player['cooldowns'][action_type]:
+            remaining = int(player['cooldowns'][action_type] - current_time)
+            return {'success': False, 'message': f'冷却中，还剩{remaining}秒'}
+        
+        # 计算被发现风险
+        base_risk = ClassroomGame.ACTIONS[action_type]['base_risk']
+        if state['teacher_looking']:
+            risk = min(base_risk * 3, 0.9)  # 老师回头时风险大幅增加
+        else:
+            risk = base_risk
+        
+        # 添加随机波动
+        risk += random.uniform(-0.1, 0.1)
+        risk = max(0.05, min(0.95, risk))  # 限制在5%-95%之间
+        
+        # 判定是否被发现
+        if random.random() < risk:
+            # 玩家被发现
+            state['players'][player_id]['alive'] = False
+            state['game_active'] = False
+            state['caught_player'] = {
+                'id': player_id,
+                'name': player['name'],
+                'action': ClassroomGame.ACTIONS[action_type]['name']
+            }
+            
+            ClassroomGame.save_game_state(state)
+            
+            # 记录游戏日志
+            log_operation("课堂游戏-玩家被发现", {
+                "player_name": player['name'],
+                "action": action_type,
+                "risk_level": risk,
+                "round": state['current_round']
+            }, get_client_ip())
+            
+            return {
+                'success': False, 
+                'caught': True,
+                'message': f'糟糕！{player["name"]}在{ClassroomGame.ACTIONS[action_type]["name"]}时被老师发现了！',
+                'risk': risk
+            }
+        else:
+            # 动作成功
+            cooldown = ClassroomGame.ACTIONS[action_type]['cooldown']
+            player['cooldowns'][action_type] = current_time + cooldown
+            player['score'] += 1
+            
+            ClassroomGame.save_game_state(state)
+            
+            return {
+                'success': True,
+                'message': f'{player["name"]}成功完成了{ClassroomGame.ACTIONS[action_type]["name"]}！',
+                'cooldown': cooldown,
+                'score': player['score'],
+                'risk': risk
+            }
+    
+    @staticmethod
+    def reset_game():
+        """重置游戏"""
+        state = ClassroomGame.load_game_state()
+        
+        # 保留玩家信息但重置状态
+        for player_id in state['players']:
+            state['players'][player_id].update({
+                'cooldowns': {},
+                'alive': True
+            })
+        
+        state.update({
+            'game_active': True,
+            'teacher_looking': False,
+            'teacher_next_turn': time.time() + random.randint(
+                ClassroomGame.TEACHER_CONFIG['min_interval'],
+                ClassroomGame.TEACHER_CONFIG['max_interval']
+            ),
+            'current_round': 0,
+            'caught_player': None
+        })
+        
+        ClassroomGame.save_game_state(state)
+        return state
+    
+    @staticmethod
+    def get_game_status():
+        """获取游戏状态"""
+        state = ClassroomGame.update_teacher_state()  # 先更新状态
+        
+        # 准备返回给前端的数据
+        status = {
+            'game_active': state['game_active'],
+            'teacher_looking': state['teacher_looking'],
+            'current_round': state['current_round'],
+            'caught_player': state['caught_player'],
+            'players': [],
+            'teacher_look_end': state.get('teacher_look_end'),
+            'teacher_next_turn': state.get('teacher_next_turn')
+        }
+        
+        # 处理玩家信息
+        for player_id, player_data in state['players'].items():
+            player_info = {
+                'id': player_id,
+                'name': player_data['name'],
+                'score': player_data['score'],
+                'alive': player_data['alive']
+            }
+            status['players'].append(player_info)
+        
+        return status
+
+    # Flask路由
+    @app.route('/902504/classroom-game')
+    def classroom_game_index():
+        """课堂游戏主页"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        return render_template('classroom_game.html', 
+                             name=name, 
+                             student_id=student_id,
+                             actions=ClassroomGame.ACTIONS)
+    
+    @app.route('/902504/classroom-game/status')
+    def classroom_game_status():
+        """获取游戏状态API"""
+        status = ClassroomGame.get_game_status()
+        return jsonify(status)
+    
+    @app.route('/902504/classroom-game/join', methods=['POST'])
+    def classroom_game_join():
+        """加入游戏"""
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return jsonify({'success': False, 'message': '未认证'})
+        
+        player_id = f"{name}_{student_id}"
+        ClassroomGame.add_player(player_id, name)
+        
+        return jsonify({'success': True, 'message': '加入游戏成功'})
+    
+    @app.route('/902504/classroom-game/action', methods=['POST'])
+    def classroom_game_action():
+        """执行动作"""
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return jsonify({'success': False, 'message': '未认证'})
+        
+        player_id = f"{name}_{student_id}"
+        action_type = request.json.get('action')
+        
+        if not action_type:
+            return jsonify({'success': False, 'message': '缺少动作类型'})
+        
+        result = ClassroomGame.player_action(player_id, action_type)
+        return jsonify(result)
+    
+    @app.route('/902504/classroom-game/reset', methods=['POST'])
+    def classroom_game_reset():
+        """重置游戏"""
+        ClassroomGame.reset_game()
+        return jsonify({'success': True, 'message': '游戏已重置'})
+    
+    @app.route('/902504/classroom-game/leave', methods=['POST'])
+    def classroom_game_leave():
+        """离开游戏"""
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if name and student_id:
+            player_id = f"{name}_{student_id}"
+            ClassroomGame.remove_player(player_id)
+        
+        return jsonify({'success': True, 'message': '已离开游戏'})
+
+
 homework = Homework()
 label = Label()
 subject = Subject()
 fun = Fun()
+classroom_game = ClassroomGame()
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=2025)
