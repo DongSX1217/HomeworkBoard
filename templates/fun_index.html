@@ -87,7 +87,7 @@
 
         .menu-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 20px;
             margin-bottom: 10px;
         }
@@ -95,7 +95,7 @@
         .menu-card {
             background: white;
             border-radius: var(--border-radius);
-            padding: 25px;
+            padding: 14px;
             text-align: center;
             box-shadow: var(--box-shadow);
             transition: var(--transition);
@@ -105,7 +105,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            min-height: 180px;
+            min-height: 100px;
         }
 
         .menu-card:hover {
@@ -119,22 +119,23 @@
 
         .menu-card i {
             font-size: 2.5rem;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             color: var(--primary-color);
         }
 
         .menu-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
             color: var(--dark-color);
         }
 
         .menu-card p {
             color: #666;
             font-size: 0.95rem;
-            margin-bottom: 15px;
+            margin-bottom: 13px;
         }
 
+        .menu-card.home { border-top: 4px solid var(--info-color); }
         .menu-card.submit { border-top: 4px solid var(--success-color); }
         .menu-card.view { border-top: 4px solid var(--info-color); }
         .menu-card.ai-chat { border-top: 4px solid var(--warning-color); }
@@ -238,11 +239,11 @@
         /* 小屏幕设备 */
         @media (max-width: 768px) {
             body {
-                padding: 15px;
+                padding: 13px;
             }
 
             .header h1 {
-                font-size: 2rem;
+                font-size: 1.4rem;
             }
 
             .welcome-card {
@@ -254,13 +255,13 @@
             }
 
             .menu-grid {
-                grid-template-columns: 1fr;
-                gap: 15px;
+                grid-template-columns: 2fr;
+                gap: 10px;
             }
 
             .menu-card {
-                padding: 20px;
-                min-height: 160px;
+                padding: 15px;
+                min-height: 70px;
             }
 
             .menu-card i {
@@ -276,25 +277,25 @@
         /* 超小屏幕设备 */
         @media (max-width: 480px) {
             .header h1 {
-                font-size: 1.8rem;
+                font-size: 1.4rem;
             }
 
             .welcome-card {
-                padding: 15px;
+                padding: 10px;
             }
 
             .welcome-card .user-info {
-                font-size: 1rem;
-                padding: 8px;
+                font-size: 0.7rem;
+                padding: 5px;
             }
 
             .menu-card {
-                padding: 15px;
-                min-height: 140px;
+                padding: 5x;
+                min-height: 50px;
             }
 
             .menu-card i {
-                font-size: 1.8rem;
+                font-size: 1.6rem;
             }
 
             .menu-card h3 {
@@ -316,12 +317,12 @@
             }
             
             .welcome-card {
-                padding: 15px;
-                margin-bottom: 20px;
+                padding: 10px;
+                margin-bottom: 6px;
             }
             
             .menu-grid {
-                gap: 15px;
+                gap: 10px;
             }
             
             .menu-card {
@@ -407,6 +408,14 @@
         </div>
 
         <div class="menu-grid">
+            <div class="menu-card home">
+                <a href="{{ url_for('homepage') }}" class="menu-link">
+                    <i class="fa-solid fa-house"></i>
+                    <h3>主页</h3>
+                    <p>班级作业公告板主页</p>
+                    <div class="btn">回到主页</div>
+                </a>
+            </div>
             <div class="menu-card submit">
                 <a href="{{ url_for('fun_submit') }}" class="menu-link">
                     <i class="fas fa-paper-plane"></i>
