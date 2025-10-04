@@ -212,7 +212,7 @@
             align-items: center;
             justify-content: center;
             font-weight: 600;
-            font-size: 0.75rem;
+            font-size: 0.55rem;
             flex-shrink: 0;
             margin: 0 0.5rem;
         }
@@ -468,7 +468,7 @@
             .avatar {
                 width: 1.75rem;
                 height: 1.75rem;
-                font-size: 0.7rem;
+                font-size: 0.45rem;
                 margin: 0 0.375rem;
             }
             
@@ -634,7 +634,11 @@
         <div class="chat-input-container">
             {% if chat_type == 'public' %}
             <div class="public-chat-tips">
-                <small>💡 提示：输入 @ai 开头的内容可唤醒AI，普通消息每2分钟只能发送一条</small>
+                <small>💡 提醒：使用AI需要消息开头带由 @ai ，其他消息每2分钟只能发送一条；本站使用DeepSeek-V3.2-Exp大模型，内容由AI生成，不代表本站观点。</small>
+            </div>
+            {% else %}
+            <div class="public-chat-tips">
+                <small>💡 提醒：本站使用DeepSeek-V3.2-Exp大模型，内容由AI生成，不代表本站观点。</small>
             </div>
             {% endif %}
             <form id="chatForm">
