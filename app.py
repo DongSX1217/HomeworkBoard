@@ -1525,23 +1525,21 @@ class AI:
                     flash('消息不能为空！', 'error')
                     return redirect(url_for('ai_chat', type=chat_type))
                 
-                # 私人聊天频率限制检查
-                if not is_public:
-                    if AI.check_private_chat_limit(user_identifier):
-                        flash('私人对话中，每分钟最多只能发送3条消息！', 'error')
-                        return redirect(url_for('ai_chat', type=chat_type))
-                
-                # 公共聊天频率限制检查
-                if is_public:
-                    # 修复：非@ai消息的频率限制检查
-                    if not user_message.startswith('@ai') and AI.check_public_chat_limit(user_identifier):
-                        flash('公共聊天中，非AI消息每2分钟只能发送一条！', 'error')
-                        return redirect(url_for('ai_chat', type=chat_type))
-                
+                # 保存用户消息
                 AI.save_chat_message(user_identifier, 'user', user_message, is_public=is_public, name=name)
                 
-                # 如果是@ai消息或者是私人聊天，调用AI
-                if user_message.startswith('@ai') or not is_public:
+                # 修复：私人对话直接调用AI，不需要@ai前缀
+                if not is_public or user_message.startswith('@ai'):
+                    # 私人聊天频率限制检查
+                    if not is_public and AI.check_private_chat_limit(user_identifier):
+                        flash('私人对话中，每分钟最多只能发送3条消息！', 'error')
+                        return redirect(url_for('ai_chat', type=chat_type))
+                    
+                    # 公共聊天频率限制检查（仅对非@ai消息）
+                    if is_public and not user_message.startswith('@ai') and AI.check_public_chat_limit(user_identifier):
+                        flash('公共聊天中，非AI消息每2分钟只能发送一条！', 'error')
+                        return redirect(url_for('ai_chat', type=chat_type))
+                    
                     # 准备对话历史
                     chat_history = AI.load_chat_history(user_identifier, max_history=20, is_public=is_public)
                     system_prompt = AI.load_system_prompt(is_public=is_public)
@@ -1549,23 +1547,21 @@ class AI:
                     # 构建消息列表
                     messages = [{'role': 'system', 'content': system_prompt}]
                     
-                    # 修复：问答式prompt设置 - 正确添加到上下文
+                    # 添加问答式prompt（仅公共聊天）
                     if is_public:
                         qa_prompt = AI.load_qa_prompt()
                         if qa_prompt:
-                            # 添加预设问答作为系统上下文
                             qa_context = "以下是一些预设问答，请参考这些信息来回答问题：\n\n"
                             for qa in qa_prompt:
                                 if 'question' in qa and 'answer' in qa:
                                     qa_context += f"问：{qa['question']}\n答：{qa['answer']}\n\n"
                             messages[0]['content'] += "\n\n" + qa_context
                     
-                    # 添加上下文消息（包括非@ai的公共消息）
+                    # 添加上下文消息
                     if is_public:
-                        # 公共聊天包含最近的15条消息作为上下文，包括非AI消息
+                        # 公共聊天包含最近的15条消息作为上下文
                         recent_messages = chat_history[-15:]
                         for msg in recent_messages:
-                            # 在消息内容中显示用户名（如果是用户消息）
                             content = msg['content']
                             if msg['role'] == 'user' and msg.get('name'):
                                 content = f"{msg['name']}说：{content}"
@@ -1575,7 +1571,7 @@ class AI:
                         for msg in chat_history:
                             messages.append({'role': msg['role'], 'content': msg['content']})
                     
-                    # 添加当前用户消息（显示用户名）
+                    # 添加当前用户消息
                     current_user_content = user_message
                     if is_public:
                         current_user_content = f"{name}说：{user_message}"
