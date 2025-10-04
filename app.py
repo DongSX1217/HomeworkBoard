@@ -1465,21 +1465,27 @@ class AI:
     @staticmethod
     def openai_stream(model="deepseek-v3.2-exp", messages=[]):
         """流式调用OpenAI API"""
-        client = OpenAI(
-            api_key=os.getenv("DASHSCOPE_API_KEY"),
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        )
-        
-        completion = client.chat.completions.create(
-            model=model,
-            messages=messages,
-            stream=True,
-            extra_body={"enable_thinking": False},
-        )
-        
-        for chunk in completion:
-            if chunk.choices[0].delta.content is not None:
-                yield chunk.choices[0].delta.content
+        try:
+            client = OpenAI(
+                api_key=os.getenv("DASHSCOPE_API_KEY"),
+                base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            )
+            
+            completion = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=True,
+                extra_body={"enable_thinking": False},
+            )
+            
+            for chunk in completion:
+                if chunk.choices[0].delta.content is not None:
+                    yield chunk.choices[0].delta.content
+                    
+        except Exception as e:
+            # 捕获API调用异常，返回友好的错误信息
+            error_message = f"抱歉，AI服务暂时不可用。错误信息：{str(e)}"
+            yield error_message
 
     @staticmethod
     def openai(model="deepseek-v3.2-exp", messages=[]):
