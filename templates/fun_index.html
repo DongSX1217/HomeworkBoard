@@ -260,7 +260,7 @@
             }
 
             .menu-grid {
-                grid-template-columns: 2fr;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 10px;
             }
 
@@ -298,13 +298,19 @@
                 padding: 5px;
             }
 
+            .menu-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
             .menu-card {
-                padding: 5x;
+                padding: 8px;
                 min-height: 50px;
             }
 
             .menu-card i {
                 font-size: 1.6rem;
+                margin-top: 10px;
             }
 
             .menu-card h3 {
