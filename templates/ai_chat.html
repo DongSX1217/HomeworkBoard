@@ -697,10 +697,68 @@
                 this.currentStream = null;
                 this.currentAssistantMessage = null;
                 this.chatType = '{{ chat_type }}';
+                
+                // 配置 marked
+                this.configureMarked();
                 this.init();
             }
 
-            // 在初始化时添加调试
+            configureMarked() {
+                // 配置 marked 选项
+                if (typeof marked !== 'undefined') {
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true,
+                        headerIds: false,
+                        mangle: false
+                    });
+                }
+            }
+
+            // 安全的 markdown 解析方法
+            parseMarkdown(content) {
+                if (typeof marked === 'undefined') {
+                    console.warn('marked.js is not available');
+                    return content;
+                }
+                
+                try {
+                    // 尝试同步解析
+                    const result = marked.parse(content);
+                    
+                    // 检查是否是 Promise
+                    if (result instanceof Promise) {
+                        // 如果是 Promise，返回一个占位符，稍后更新
+                        console.log('marked.parse returned a Promise, using fallback');
+                        return content; // 暂时返回原始内容
+                    } else {
+                        return result;
+                    }
+                } catch (error) {
+                    console.error('Markdown parsing error:', error);
+                    return content;
+                }
+            }
+
+            // 异步 markdown 解析方法
+            async parseMarkdownAsync(content) {
+                if (typeof marked === 'undefined') {
+                    return content;
+                }
+                
+                try {
+                    const result = marked.parse(content);
+                    if (result instanceof Promise) {
+                        return await result;
+                    } else {
+                        return result;
+                    }
+                } catch (error) {
+                    console.error('Markdown parsing error:', error);
+                    return content;
+                }
+            }
+
             init() {
                 console.log('marked.js available:', typeof marked !== 'undefined');
                 console.log('marked.parse type:', typeof marked.parse);
@@ -712,27 +770,21 @@
                 this.elements.input.focus();
             }
 
-            // 新增方法：解析已存在的消息
-            async parseExistingMessages() {
+            // 解析已存在的消息 - 使用同步方法
+            parseExistingMessages() {
                 const messageTexts = this.elements.messages.querySelectorAll('.message-text[data-markdown-content]');
+                console.log('Found messages to parse:', messageTexts.length);
                 
-                for (const element of messageTexts) {
+                messageTexts.forEach(element => {
                     const markdownContent = element.getAttribute('data-markdown-content');
                     if (markdownContent) {
-                        try {
-                            // 使用 marked 解析 markdown
-                            const htmlContent = await marked.parse(markdownContent);
-                            element.innerHTML = htmlContent;
-                            // 移除 data-markdown-content 属性，避免重复解析
-                            element.removeAttribute('data-markdown-content');
-                        } catch (error) {
-                            console.error('Markdown parsing error:', error);
-                            // 如果解析失败，直接显示原始内容
-                            element.innerHTML = markdownContent;
-                            element.removeAttribute('data-markdown-content');
-                        }
+                        console.log('Parsing markdown:', markdownContent.substring(0, 50) + '...');
+                        const htmlContent = this.parseMarkdown(markdownContent);
+                        element.innerHTML = htmlContent;
+                        element.removeAttribute('data-markdown-content');
+                        console.log('Parsed result:', htmlContent.substring(0, 50) + '...');
                     }
-                }
+                });
             }
 
             bindEvents() {
@@ -804,7 +856,7 @@
                 if (!message) return;
 
                 // 添加用户消息到界面
-                await this.addMessage('user', message);
+                this.addMessage('user', message);
                 this.clearInput();
                 
                 // 如果是公共聊天且不是@ai消息，只保存消息不调用AI
@@ -821,7 +873,7 @@
                     await this.streamAIResponse(message);
                 } catch (error) {
                     console.error('Chat error:', error);
-                    await this.addMessage('assistant', '抱歉，发生了错误：' + error.message);
+                    this.addMessage('assistant', '抱歉，发生了错误：' + error.message);
                 } finally {
                     this.hideTypingIndicator();
                     this.elements.input.focus();
@@ -901,7 +953,7 @@
                                 const data = line.slice(6);
                                 
                                 if (data === '[DONE]') {
-                                    await this.finalizeAssistantMessage(fullResponse);
+                                    this.finalizeAssistantMessage(fullResponse);
                                     return;
                                 }
 
@@ -909,7 +961,7 @@
                                     const parsed = JSON.parse(data);
                                     if (parsed.content) {
                                         fullResponse += parsed.content;
-                                        await this.updateAssistantMessage(fullResponse);
+                                        this.updateAssistantMessage(fullResponse);
                                     }
                                 } catch (parseError) {
                                     console.warn('Parse error:', parseError, 'Data:', data);
@@ -957,37 +1009,24 @@
                 };
             }
 
-            async updateAssistantMessage(content) {
+            updateAssistantMessage(content) {
                 if (this.currentAssistantMessage) {
-                    try {
-                        const parsedContent = await marked.parse(content);
-                        this.currentAssistantMessage.contentElement.innerHTML = parsedContent;
-                        this.scrollToBottom();
-                    } catch (error) {
-                        console.error('Markdown parsing error:', error);
-                        this.currentAssistantMessage.contentElement.innerHTML = content;
-                        this.scrollToBottom();
-                    }
+                    const parsedContent = this.parseMarkdown(content);
+                    this.currentAssistantMessage.contentElement.innerHTML = parsedContent;
+                    this.scrollToBottom();
                 }
             }
 
-            async finalizeAssistantMessage(content) {
+            finalizeAssistantMessage(content) {
                 if (this.currentAssistantMessage) {
-                    try {
-                        const parsedContent = await marked.parse(content);
-                        this.currentAssistantMessage.contentElement.innerHTML = parsedContent;
-                        this.currentAssistantMessage = null;
-                        this.scrollToBottom();
-                    } catch (error) {
-                        console.error('Markdown parsing error:', error);
-                        this.currentAssistantMessage.contentElement.innerHTML = content;
-                        this.currentAssistantMessage = null;
-                        this.scrollToBottom();
-                    }
+                    const parsedContent = this.parseMarkdown(content);
+                    this.currentAssistantMessage.contentElement.innerHTML = parsedContent;
+                    this.currentAssistantMessage = null;
+                    this.scrollToBottom();
                 }
             }
 
-            async addMessage(role, content) {
+            addMessage(role, content) {
                 const messageDiv = document.createElement('div');
                 messageDiv.className = `message ${role}`;
                 
@@ -997,13 +1036,7 @@
                 });
                 
                 // 使用 marked 解析新消息的 markdown
-                let parsedContent;
-                try {
-                    parsedContent = await marked.parse(content);
-                } catch (error) {
-                    console.error('Markdown parsing error:', error);
-                    parsedContent = content; // 如果解析失败，使用原始内容
-                }
+                const parsedContent = this.parseMarkdown(content);
                 
                 if (this.chatType === 'public') {
                     messageDiv.innerHTML = `
@@ -1055,20 +1088,8 @@
         }
 
         // 初始化聊天界面
-        document.addEventListener('DOMContentLoaded', async () => {
-            // 确保 marked.js 已加载
-            if (typeof marked === 'undefined') {
-                console.error('marked.js is not loaded');
-                return;
-            }
-            
-            // 配置 marked 选项（可选）
-            marked.setOptions({
-                breaks: true, // 将 \n 转换为 <br>
-                gfm: true,    // 启用 GitHub Flavored Markdown
-            });
-            
-            const chat = new AIChat();
+        document.addEventListener('DOMContentLoaded', () => {
+            new AIChat();
         });
     </script>
 </body>
