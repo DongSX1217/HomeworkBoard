@@ -1413,6 +1413,24 @@ class AI:
                 except json.JSONDecodeError:
                     return False
         return False
+    
+    @staticmethod
+    def clear_public_chat_history(user_identifier):
+        """清空公共聊天历史（所有人的消息）"""
+        if os.path.exists(AI.PUBLIC_CHAT_HISTORY_FILE):
+            try:
+                # 记录清空前的历史内容（用于日志）
+                with open(AI.PUBLIC_CHAT_HISTORY_FILE, 'r', encoding='utf-8') as f:
+                    old_history = json.load(f)
+                
+                # 清空公共聊天历史文件
+                with open(AI.PUBLIC_CHAT_HISTORY_FILE, 'w', encoding='utf-8') as f:
+                    json.dump([], f, ensure_ascii=False, indent=2)
+                
+                return True, old_history
+            except json.JSONDecodeError:
+                return False, []
+        return False, []
 
     @staticmethod
     def check_private_chat_limit(user_identifier):
@@ -1519,8 +1537,27 @@ class AI:
             if action == 'clear_history':
                 # 清空聊天历史
                 is_public = request.form.get('chat_type') == 'public'
-                AI.clear_chat_history(user_identifier, is_public=is_public)
-                flash('聊天历史已清空！', 'success')
+                
+                if is_public:
+                    # 清空公共聊天历史（所有人的消息）
+                    success, old_history = AI.clear_public_chat_history(user_identifier)
+                    if success:
+                        # 记录清空公共聊天历史的操作日志
+                        log_operation("清空公共聊天历史", {
+                            "user_identifier": user_identifier,
+                            "cleared_messages_count": len(old_history),
+                            "old_messages_preview": [{"user": msg.get('name', '未知'), "content": msg.get('content', '')[:50]} for msg in old_history[:5]]  # 只记录前5条作为预览
+                        }, get_client_ip())
+                        flash('公共聊天历史已清空！', 'success')
+                    else:
+                        flash('清空公共聊天历史失败！', 'error')
+                else:
+                    # 清空私人聊天历史（原有逻辑）
+                    if AI.clear_chat_history(user_identifier, is_public=False):
+                        flash('您的私人聊天历史已清空！', 'success')
+                    else:
+                        flash('清空聊天历史失败！', 'error')
+                
                 return redirect(url_for('ai_chat', type=chat_type))
             
             elif action == 'send_message':
@@ -1681,10 +1718,25 @@ class AI:
             
             elif action == 'clear_my_history':
                 history_type = request.form.get('history_type', 'private')
-                if AI.clear_chat_history(user_identifier, is_public=(history_type == 'public')):
-                    flash('您的聊天历史已清空！', 'success')
+                if history_type == 'public':
+                    # 清空公共聊天历史（所有人的消息）
+                    success, old_history = AI.clear_public_chat_history(user_identifier)
+                    if success:
+                        # 记录清空公共聊天历史的操作日志
+                        log_operation("清空公共聊天历史", {
+                            "user_identifier": user_identifier,
+                            "cleared_messages_count": len(old_history),
+                            "old_messages_preview": [{"user": msg.get('name', '未知'), "content": msg.get('content', '')[:50]} for msg in old_history[:5]]  # 只记录前5条作为预览
+                        }, get_client_ip())
+                        flash('公共聊天历史已清空！', 'success')
+                    else:
+                        flash('清空公共聊天历史失败！', 'error')
                 else:
-                    flash('清空聊天历史失败！', 'error')
+                    # 清空私人聊天历史
+                    if AI.clear_chat_history(user_identifier, is_public=False):
+                        flash('您的私人聊天历史已清空！', 'success')
+                    else:
+                        flash('清空聊天历史失败！', 'error')
             
             elif action == 'add_qa':
                 # 添加预设问答
