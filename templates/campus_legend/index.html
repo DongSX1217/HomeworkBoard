@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园传说 - 探索游戏</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='campus_legend/css/style.css') }}">
+</head>
+<body>
+    <div id="game-container">
+        <!-- 头部信息 -->
+        <header id="game-header">
+            <h1>校园传说</h1>
+            <div id="player-info">
+                <span id="player-name">{{ name }}</span>
+                <span id="player-id">{{ student_id }}</span>
+            </div>
+            <div id="game-stats">
+                <span>玩家: <span id="online-count">0</span></span>
+                <span>已解谜: <span id="solved-count">0</span></span>
+            </div>
+        </header>
+
+        <!-- 主游戏区域 -->
+        <main id="game-main">
+            <!-- 位置信息 -->
+            <section id="location-section">
+                <h2 id="location-name">宿舍走廊</h2>
+                <div id="location-description">
+                    深夜的宿舍走廊，灯光忽明忽暗，远处传来奇怪的声响...
+                </div>
+            </section>
+
+            <!-- 事件区域 -->
+            <section id="event-section" class="hidden">
+                <h3>事件发生</h3>
+                <div id="event-description"></div>
+                <div id="choices-container"></div>
+            </section>
+
+            <!-- 合作事件提示 -->
+            <section id="cooperation-section" class="hidden">
+                <h3>合作事件</h3>
+                <div id="cooperation-message"></div>
+                <div id="participants-list"></div>
+            </section>
+
+            <!-- 移动控制 -->
+            <section id="movement-section">
+                <h3>探索地点</h3>
+                <div id="locations-container"></div>
+            </section>
+
+            <!-- 玩家列表 -->
+            <section id="players-section">
+                <h3>在线玩家</h3>
+                <div id="players-list"></div>
+            </section>
+        </main>
+
+        <!-- 聊天区域 -->
+        <section id="chat-section">
+            <h3>团队交流</h3>
+            <div id="chat-messages"></div>
+            <div id="chat-input-container">
+                <input type="text" id="chat-input" placeholder="输入消息...">
+                <button id="send-chat">发送</button>
+            </div>
+        </section>
+
+        <!-- 游戏控制 -->
+        <footer id="game-controls">
+            <button id="join-game" class="btn-primary">加入游戏</button>
+            <button id="leave-game" class="btn-secondary hidden">离开游戏</button>
+            <button id="reset-game" class="btn-warning">重置游戏</button>
+        </footer>
+
+        <!-- 消息提示 -->
+        <div id="message-toast" class="hidden"></div>
+    </div>
+
+    <!-- 加载Socket.IO -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='campus_legend/js/game.js') }}"></script>
+</body>
+</html>

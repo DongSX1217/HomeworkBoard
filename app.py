@@ -2161,10 +2161,459 @@ class ClassroomGame:
             return jsonify({'success': False, 'message': str(e)}), 500
 
 
+class CampusLegendGame:
+    """校园传说游戏类"""
+    
+    # 游戏状态存储文件
+    GAME_STATE_FILE = os.path.join(DATA_DIR, 'campus_legend_game.json')
+    
+    # 游戏配置
+    LOCATIONS = {
+        'dorm_hallway': {'name': '宿舍走廊', 'description': '深夜的宿舍走廊，灯光忽明忽暗，远处传来奇怪的声响...'},
+        'classroom': {'name': '教室', 'description': '空无一人的教室，黑板上还留着未擦去的公式...'},
+        'library': {'name': '图书馆', 'description': '书架间弥漫着陈旧纸张的气味，偶尔传来书页翻动的声音...'},
+        'playground': {'name': '操场', 'description': '空旷的操场在月光下显得格外寂静，秋千轻轻晃动...'},
+        'toilet': {'name': '厕所', 'description': '最后一个隔间总是传来滴水声，但水管明明是好的...'}
+    }
+    
+    # 预定义事件库
+    EVENTS = [
+        {
+            'id': 'footsteps',
+            'description': '你听到走廊尽头传来脚步声，越来越近...',
+            'choices': [
+                {'id': 'hide', 'text': '躲进旁边的厕所', 'result': '你成功躲过了脚步声，但听到了低语声...'},
+                {'id': 'confront', 'text': '面对脚步声的来源', 'result': '脚步声突然停止，你发现地上有一张纸条...'},
+                {'id': 'run', 'text': '快速跑开', 'result': '你跑得太急，不小心摔了一跤，膝盖擦伤了...'}
+            ],
+            'cooperation_required': False
+        },
+        {
+            'id': 'locked_door',
+            'description': '前方的大门被锁住了，门缝里透出微弱的光...',
+            'choices': [
+                {'id': 'find_key', 'text': '寻找钥匙', 'result': '你在旁边的花盆下找到了一把生锈的钥匙...'},
+                {'id': 'break_door', 'text': '尝试撞开门', 'result': '门纹丝不动，但你的肩膀很痛...'},
+                {'id': 'cooperate', 'text': '呼叫其他玩家帮忙', 'result': '需要至少2名玩家同时推门才能打开...'}
+            ],
+            'cooperation_required': True,
+            'min_players': 2,
+            'action': 'push_door'
+        },
+        {
+            'id': 'whispering',
+            'description': '你听到图书馆的书架间传来低声细语，好像在讨论着什么秘密...',
+            'choices': [
+                {'id': 'listen', 'text': '仔细聆听', 'result': '你听到了关于"七大不可思议"的线索...'},
+                {'id': 'approach', 'text': '悄悄靠近', 'result': '声音突然停止，你只看到一本书从书架上掉下来...'},
+                {'id': 'ignore', 'text': '无视声音继续探索', 'result': '你继续前进，但感觉有什么在跟着你...'}
+            ],
+            'cooperation_required': False
+        }
+    ]
+    
+    @staticmethod
+    def load_game_state():
+        """加载游戏状态"""
+        if os.path.exists(CampusLegendGame.GAME_STATE_FILE):
+            with open(CampusLegendGame.GAME_STATE_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    pass
+        
+        # 默认游戏状态
+        default_state = {
+            'game_active': False,
+            'current_location': 'dorm_hallway',
+            'players': {},
+            'current_event': None,
+            'cooperation_events': {},
+            'game_start_time': None,
+            'solved_puzzles': []
+        }
+        CampusLegendGame.save_game_state(default_state)
+        return default_state
+    
+    @staticmethod
+    def save_game_state(state):
+        """保存游戏状态"""
+        with open(CampusLegendGame.GAME_STATE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(state, f, ensure_ascii=False, indent=2)
+    
+    @staticmethod
+    def init_game():
+        """初始化新游戏"""
+        state = {
+            'game_active': True,
+            'current_location': 'dorm_hallway',
+            'players': {},
+            'current_event': None,
+            'cooperation_events': {},
+            'game_start_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'solved_puzzles': []
+        }
+        CampusLegendGame.save_game_state(state)
+        return state
+    
+    @staticmethod
+    def add_player(player_id, player_name):
+        """添加玩家到游戏"""
+        state = CampusLegendGame.load_game_state()
+        
+        # 如果游戏未激活，初始化游戏
+        if not state.get('game_active'):
+            state = CampusLegendGame.init_game()
+        
+        if player_id not in state['players']:
+            state['players'][player_id] = {
+                'name': player_name,
+                'location': 'dorm_hallway',
+                'joined_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                'status': 'exploring'
+            }
+            CampusLegendGame.save_game_state(state)
+        
+        return state
+    
+    @staticmethod
+    def remove_player(player_id):
+        """从游戏中移除玩家"""
+        state = CampusLegendGame.load_game_state()
+        if player_id in state['players']:
+            # 如果玩家正在参与合作事件，将其移除
+            for event_id, event_data in state['cooperation_events'].items():
+                if player_id in event_data.get('participants', []):
+                    event_data['participants'].remove(player_id)
+            
+            del state['players'][player_id]
+            CampusLegendGame.save_game_state(state)
+        return state
+    
+    @staticmethod
+    def get_random_event():
+        """获取随机事件"""
+        return random.choice(CampusLegendGame.EVENTS)
+    
+    @staticmethod
+    def trigger_event():
+        """触发新事件"""
+        state = CampusLegendGame.load_game_state()
+        
+        if not state['game_active']:
+            return None
+        
+        # 30%几率触发事件
+        if random.random() < 0.3:
+            event = CampusLegendGame.get_random_event()
+            state['current_event'] = event
+            CampusLegendGame.save_game_state(state)
+            return event
+        
+        return None
+    
+    @staticmethod
+    def handle_player_choice(player_id, choice_id):
+        """处理玩家选择"""
+        state = CampusLegendGame.load_game_state()
+        
+        if not state['game_active'] or not state['current_event']:
+            return {'success': False, 'message': '没有活跃事件'}
+        
+        current_event = state['current_event']
+        player = state['players'].get(player_id)
+        
+        if not player:
+            return {'success': False, 'message': '玩家未找到'}
+        
+        # 查找玩家选择的选项
+        selected_choice = None
+        for choice in current_event['choices']:
+            if choice['id'] == choice_id:
+                selected_choice = choice
+                break
+        
+        if not selected_choice:
+            return {'success': False, 'message': '无效的选择'}
+        
+        # 处理合作事件
+        if current_event.get('cooperation_required', False):
+            action = current_event.get('action')
+            min_players = current_event.get('min_players', 2)
+            
+            # 初始化合作事件
+            if action not in state['cooperation_events']:
+                state['cooperation_events'][action] = {
+                    'participants': [],
+                    'required_players': min_players,
+                    'event_id': current_event['id']
+                }
+            
+            # 添加玩家到合作事件
+            if player_id not in state['cooperation_events'][action]['participants']:
+                state['cooperation_events'][action]['participants'].append(player_id)
+            
+            participants = state['cooperation_events'][action]['participants']
+            required = state['cooperation_events'][action]['required_players']
+            
+            # 检查是否满足合作条件
+            if len(participants) >= required:
+                # 合作成功
+                result = {
+                    'success': True,
+                    'message': f'合作成功！{", ".join([state["players"][pid]["name"] for pid in participants])}共同完成了行动。{selected_choice["result"]}',
+                    'cooperation_success': True,
+                    'participants': participants
+                }
+                
+                # 清除合作事件和当前事件
+                del state['cooperation_events'][action]
+                state['current_event'] = None
+                
+                # 记录解开的谜题
+                state['solved_puzzles'].append({
+                    'puzzle_id': current_event['id'],
+                    'solved_by': participants,
+                    'solved_time': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            else:
+                # 等待更多玩家参与
+                result = {
+                    'success': True,
+                    'message': f'需要至少{required}名玩家合作。当前参与: {len(participants)}/{required}',
+                    'cooperation_success': False,
+                    'participants': participants,
+                    'required_players': required
+                }
+        else:
+            # 单人事件
+            result = {
+                'success': True,
+                'message': selected_choice['result'],
+                'cooperation_success': True
+            }
+            state['current_event'] = None
+        
+        CampusLegendGame.save_game_state(state)
+        return result
+    
+    @staticmethod
+    def move_player(player_id, new_location):
+        """移动玩家到新位置"""
+        state = CampusLegendGame.load_game_state()
+        
+        if not state['game_active']:
+            return {'success': False, 'message': '游戏未开始'}
+        
+        if player_id not in state['players']:
+            return {'success': False, 'message': '玩家未加入游戏'}
+        
+        if new_location not in CampusLegendGame.LOCATIONS:
+            return {'success': False, 'message': '无效的位置'}
+        
+        state['players'][player_id]['location'] = new_location
+        state['current_location'] = new_location
+        CampusLegendGame.save_game_state(state)
+        
+        return {
+            'success': True, 
+            'message': f'移动到了{CampusLegendGame.LOCATIONS[new_location]["name"]}',
+            'location': new_location,
+            'location_name': CampusLegendGame.LOCATIONS[new_location]['name'],
+            'description': CampusLegendGame.LOCATIONS[new_location]['description']
+        }
+    
+    @staticmethod
+    def get_game_status(player_id=None):
+        """获取游戏状态"""
+        state = CampusLegendGame.load_game_state()
+        
+        status = {
+            'game_active': state['game_active'],
+            'current_location': state['current_location'],
+            'location_name': CampusLegendGame.LOCATIONS[state['current_location']]['name'],
+            'location_description': CampusLegendGame.LOCATIONS[state['current_location']]['description'],
+            'current_event': state['current_event'],
+            'players': [],
+            'cooperation_events': state['cooperation_events'],
+            'solved_puzzles_count': len(state['solved_puzzles']),
+            'total_players': len(state['players'])
+        }
+        
+        # 处理玩家信息
+        for pid, player_data in state['players'].items():
+            player_info = {
+                'id': pid,
+                'name': player_data['name'],
+                'location': player_data['location'],
+                'location_name': CampusLegendGame.LOCATIONS[player_data['location']]['name'],
+                'status': player_data['status']
+            }
+            # 如果是当前玩家，添加更多信息
+            if pid == player_id:
+                player_info['is_current_player'] = True
+            status['players'].append(player_info)
+        
+        return status
+    
+    @staticmethod
+    def reset_game():
+        """重置游戏"""
+        state = CampusLegendGame.init_game()
+        return state
+
+    # Flask路由
+    @app.route('/902504/game/campus_legend')
+    def campus_legend_index():
+        """校园传说游戏主页"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        return render_template('campus_legend/index.html', 
+                            name=name, 
+                            student_id=student_id,
+                            locations=CampusLegendGame.LOCATIONS)
+    
+    @app.route('/902504/game/campus_legend/status')
+    def campus_legend_status():
+        """获取游戏状态API"""
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if not name or not student_id:
+                return jsonify({'success': False, 'message': '未认证'})
+            
+            player_id = f"{name}_{student_id}"
+            status = CampusLegendGame.get_game_status(player_id)
+            return jsonify(status)
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    @app.route('/902504/game/campus_legend/join', methods=['POST'])
+    def campus_legend_join():
+        """加入游戏"""
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if not name or not student_id:
+                return jsonify({'success': False, 'message': '未认证'})
+            
+            player_id = f"{name}_{student_id}"
+            CampusLegendGame.add_player(player_id, name)
+            
+            # 记录游戏日志
+            log_operation("校园传说-加入游戏", {
+                "player_name": name,
+                "player_id": player_id
+            }, get_client_ip())
+            
+            return jsonify({'success': True, 'message': '加入游戏成功'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+    
+    @app.route('/902504/game/campus_legend/move', methods=['POST'])
+    def campus_legend_move():
+        """移动玩家"""
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if not name or not student_id:
+                return jsonify({'success': False, 'message': '未认证'})
+            
+            player_id = f"{name}_{student_id}"
+            data = request.get_json()
+            
+            if not data or 'location' not in data:
+                return jsonify({'success': False, 'message': '缺少位置参数'})
+            
+            new_location = data['location']
+            result = CampusLegendGame.move_player(player_id, new_location)
+            
+            # 移动后尝试触发事件
+            if result['success']:
+                event = CampusLegendGame.trigger_event()
+                if event:
+                    result['new_event'] = event
+            
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+    
+    @app.route('/902504/game/campus_legend/action', methods=['POST'])
+    def campus_legend_action():
+        """执行动作/选择"""
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if not name or not student_id:
+                return jsonify({'success': False, 'message': '未认证'})
+            
+            player_id = f"{name}_{student_id}"
+            data = request.get_json()
+            
+            if not data or 'choice' not in data:
+                return jsonify({'success': False, 'message': '缺少选择参数'})
+            
+            choice_id = data['choice']
+            result = CampusLegendGame.handle_player_choice(player_id, choice_id)
+            
+            # 记录游戏操作日志
+            log_operation("校园传说-玩家选择", {
+                "player_name": name,
+                "player_id": player_id,
+                "choice_id": choice_id,
+                "result": result.get('message', '')
+            }, get_client_ip())
+            
+            return jsonify(result)
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+    
+    @app.route('/902504/game/campus_legend/reset', methods=['POST'])
+    def campus_legend_reset():
+        """重置游戏"""
+        try:
+            CampusLegendGame.reset_game()
+            
+            # 记录游戏重置日志
+            log_operation("校园传说-重置游戏", {
+                "reset_by": f"{request.cookies.get('fun_name')}_{request.cookies.get('fun_student_id')}"
+            }, get_client_ip())
+            
+            return jsonify({'success': True, 'message': '游戏已重置'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+    
+    @app.route('/902504/game/campus_legend/leave', methods=['POST'])
+    def campus_legend_leave():
+        """离开游戏"""
+        try:
+            name = request.cookies.get('fun_name')
+            student_id = request.cookies.get('fun_student_id')
+            
+            if name and student_id:
+                player_id = f"{name}_{student_id}"
+                CampusLegendGame.remove_player(player_id)
+            
+            return jsonify({'success': True, 'message': '已离开游戏'})
+        except Exception as e:
+            return jsonify({'success': False, 'message': str(e)}), 500
+
+
+
 homework = Homework()
 label = Label()
 subject = Subject()
 fun = Fun()
 classroom_game = ClassroomGame()
+campus_legend_game = CampusLegendGame()
 if __name__ == '__main__':
     app.run(host='0.0.0.0',debug=True,port=2025)
