@@ -121,7 +121,7 @@
                 <!-- 学科选择 -->
                 <div class="form-group">
                     <label for="quickSubject">学科：</label>
-                    <select id="quickSubject" class="form-control">
+                    <select id="quickSubject" class="form-control subject-select">
                         {% for subject in subjects %}
                         <option value="{{ subject.name }}">{{ subject.name }}</option>
                         {% endfor %}
@@ -170,6 +170,7 @@
                 <!-- 提交按钮 -->
                 <div class="form-buttons">
                     <button type="button" class="btn-cancel" onclick="closeQuickPublishModal()">取消</button>
+                    <button type="button" class="btn-open-second" onclick="openSecondModalFromFirst()">打开第二个窗口</button>
                     <button type="button" class="btn-submit" onclick="submitQuickPublish()">发布</button>
                 </div>
             </form>
@@ -186,7 +187,7 @@
                 <!-- 学科选择 -->
                 <div class="form-group">
                     <label for="quickSubject2">学科：</label>
-                    <select id="quickSubject2" class="form-control">
+                    <select id="quickSubject2" class="form-control subject-select">
                         {% for subject in subjects %}
                         <option value="{{ subject.name }}">{{ subject.name }}</option>
                         {% endfor %}
@@ -235,6 +236,7 @@
                 <!-- 提交按钮 -->
                 <div class="form-buttons">
                     <button type="button" class="btn-cancel" onclick="closeQuickPublishModal2()">取消</button>
+                    <button type="button" class="btn-open-first" onclick="openFirstModalFromSecond()">打开第一个窗口</button>
                     <button type="button" class="btn-submit" onclick="submitQuickPublish2()">发布</button>
                 </div>
             </form>

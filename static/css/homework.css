@@ -87,18 +87,6 @@ position: absolute;
     width: 300px;
 }
 
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.close:hover {
-    color: black;
-}
-
 .setting-group {
     margin-bottom: 15px;
 }
@@ -458,15 +446,6 @@ position: absolute;
     background-color: #f1b0b7;
 }
 
-/* 表单按钮 */
-.form-buttons {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-    flex-shrink: 0;
-}
-
 .btn-cancel, .btn-submit {
     padding: 12px 24px;
     border: none;
@@ -732,12 +711,12 @@ position: absolute;
 /* 标签复选框容器样式 */
 .labels-checkbox-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 6px;
     margin-top: 5px;
-    max-height: 150px;
+    max-height: 120px;
     overflow-y: auto;
-    padding: 8px;
+    padding: 6px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f8f9fa;
@@ -747,11 +726,12 @@ position: absolute;
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 5px;
-    border-radius: 4px;
+    padding: 4px;
+    border-radius: 3px;
     transition: background-color 0.2s ease;
     user-select: none;
     touch-action: manipulation;
+    font-size: 12px;
 }
 
 .label-checkbox-item:hover {
@@ -759,19 +739,22 @@ position: absolute;
 }
 
 .label-checkbox {
-    margin-right: 8px;
-    transform: scale(1.2);
+    margin-right: 6px;
+    transform: scale(1.1);
 }
 
 .label-checkbox-item .label-preview {
     display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.9em;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
     color: #fff;
-    min-width: 60px;
+    min-width: 50px;
     text-align: center;
     cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 确保浮动按钮始终在最上层 */
@@ -876,12 +859,6 @@ position: absolute;
     background: #a8a8a8;
 }
 
-/* 学科选择框样式优化 */
-.form-control {
-    min-height: 44px; /* 触屏友好 */
-    font-size: 16px; /* 防止iOS缩放 */
-}
-
 /* 弹窗关闭按钮优化 */
 .close {
     font-size: 28px;
@@ -897,4 +874,179 @@ position: absolute;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+}
+
+#quickPublishModal .modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 0;
+    z-index: 10001;
+}
+
+#quickPublishModal2 .modal-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+    margin: 0;
+    z-index: 10002;
+}
+
+/* 横屏下两个弹窗并排显示 */
+@media (min-width: 1024px) and (orientation: landscape) {
+    #quickPublishModal .modal-content {
+        left: 25%;
+        transform: translate(-50%, -50%);
+        width: 45%;
+        max-width: 450px;
+    }
+    
+    #quickPublishModal2 .modal-content {
+        left: 75%;
+        transform: translate(-50%, -50%);
+        width: 45%;
+        max-width: 450px;
+    }
+}
+
+/* 改善学科选择框 */
+.form-control {
+    min-height: 44px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: white;
+    appearance: menulist; /* 确保下拉箭头显示 */
+}
+
+/* 确保选择框在移动设备上正常工作 */
+select.form-control {
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    appearance: menulist;
+}
+
+/* 新的按钮样式 */
+.btn-open-second,
+.btn-open-first {
+    padding: 12px 16px;
+    border: 1px solid #007bff;
+    background-color: #007bff;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    min-height: 44px;
+}
+
+.btn-open-second:hover,
+.btn-open-first:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+/* 调整表单按钮布局 */
+.form-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 20px;
+    flex-shrink: 0;
+}
+
+/* 移动设备上的按钮布局 */
+@media (max-width: 768px) {
+    .form-buttons {
+        grid-template-columns: 1fr;
+    }
+    
+    .btn-open-second,
+    .btn-open-first {
+        order: 2; /* 将打开另一个窗口的按钮放在中间 */
+    }
+    
+    .btn-cancel {
+        order: 1;
+    }
+    
+    .btn-submit {
+        order: 3;
+    }
+}
+
+/* 确保模态窗口背景覆盖整个屏幕 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+/* 修复全屏模式下的弹窗显示 */
+.container.fullscreen ~ .modal {
+    z-index: 10000 !important;
+}
+
+.container.fullscreen ~ .modal .modal-content {
+    z-index: 10001 !important;
+}
+
+/* 改善滚动条样式 */
+.labels-checkbox-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.labels-checkbox-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+}
+
+.labels-checkbox-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 2px;
+}
+
+.labels-checkbox-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 确保弹窗关闭按钮可点击 */
+.close {
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    z-index: 10004;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+    background: none;
+    border: none;
+    color: #aaa;
+}
+
+.close:hover {
+    color: black;
 }

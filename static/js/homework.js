@@ -24,6 +24,7 @@ window.onload = function() {
     applyHideExpired();
     loadQuickPublishData();
     updateFloatButtonPosition();
+    initSubjectSelects(); // 初始化学科选择框
 };
 
 // 加载设置（从cookie）
@@ -760,7 +761,6 @@ function openQuickPublishModal() {
     
     const modal = document.getElementById("quickPublishModal");
     modal.style.display = "block";
-    modal.style.zIndex = "10001";
     
     // 重置表单
     document.getElementById("quickPublishForm").reset();
@@ -778,8 +778,14 @@ function openQuickPublishModal() {
     // 确保弹窗可见
     setTimeout(() => {
         modal.scrollTop = 0;
+        // 修复学科选择框
+        const subjectSelect = document.getElementById('quickSubject');
+        if (subjectSelect) {
+            subjectSelect.focus();
+            subjectSelect.blur(); // 确保可以正常选择
+        }
     }, 10);
-}
+}   
 
 // 关闭第一个快捷布置弹窗
 function closeQuickPublishModal() {
@@ -795,7 +801,6 @@ function openQuickPublishModal2() {
     
     const modal = document.getElementById("quickPublishModal2");
     modal.style.display = "block";
-    modal.style.zIndex = "10002";
     
     // 重置表单
     document.getElementById("quickPublishForm2").reset();
@@ -813,12 +818,69 @@ function openQuickPublishModal2() {
     // 确保弹窗可见
     setTimeout(() => {
         modal.scrollTop = 0;
+        // 修复学科选择框
+        const subjectSelect = document.getElementById('quickSubject2');
+        if (subjectSelect) {
+            subjectSelect.focus();
+            subjectSelect.blur(); // 确保可以正常选择
+        }
     }, 10);
 }
 
 // 关闭第二个快捷布置弹窗
 function closeQuickPublishModal2() {
     document.getElementById("quickPublishModal2").style.display = "none";
+}
+
+// 添加从第一个弹窗打开第二个弹窗的函数
+function openSecondModalFromFirst() {
+    closeQuickPublishModal();
+    setTimeout(() => {
+        openQuickPublishModal2();
+    }, 50);
+}
+
+// 添加从第二个弹窗打开第一个弹窗的函数
+function openFirstModalFromSecond() {
+    closeQuickPublishModal2();
+    setTimeout(() => {
+        openQuickPublishModal();
+    }, 50);
+}
+
+function initSubjectSelects() {
+    const subjectSelects = document.querySelectorAll('.subject-select');
+    subjectSelects.forEach(select => {
+        // 移除所有可能干扰的事件监听器
+        select.onmousedown = null;
+        select.ontouchstart = null;
+        select.onclick = null;
+        
+        // 重新添加简单的事件处理
+        select.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+            // 允许默认行为
+        });
+        
+        select.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+            // 允许默认行为
+        });
+        
+        // 添加点击事件确保可以打开下拉
+        select.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // 修复 iOS Safari 上的问题
+        select.addEventListener('focus', function() {
+            this.style.backgroundColor = '#fff';
+        });
+        
+        select.addEventListener('blur', function() {
+            this.style.backgroundColor = '';
+        });
+    });
 }
 
 // 初始化快捷发布表单
@@ -1058,6 +1120,43 @@ function submitQuickPublish2() {
         alert('发布失败，请检查网络连接后重试');
     });
 }
+
+// 添加事件监听器确保学科选择框正常工作
+document.addEventListener('DOMContentLoaded', function() {
+    // 为学科选择框添加额外的事件处理
+    const subjectSelects = document.querySelectorAll('#quickSubject, #quickSubject2');
+    subjectSelects.forEach(select => {
+        // 防止事件冒泡
+        select.addEventListener('mousedown', function(e) {
+            e.stopPropagation();
+        });
+        
+        select.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        });
+        
+        select.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+        
+        // 修复 iOS 上的选择问题
+        select.addEventListener('focus', function() {
+            this.style.backgroundColor = '#fff';
+        });
+        
+        select.addEventListener('blur', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+    
+    // 确保模态窗口点击不会关闭
+    const modals = document.querySelectorAll('#quickPublishModal .modal-content, #quickPublishModal2 .modal-content');
+    modals.forEach(modal => {
+        modal.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+    });
+});
 
 // 修改浮动按钮位置，确保始终可见
 function updateFloatButtonPosition() {
