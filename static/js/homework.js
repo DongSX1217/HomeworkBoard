@@ -145,7 +145,7 @@ function fetchHomeworkAndLabels() {
         });
 }
 
-// 计算最大列高度（更精确的版本）
+// 计算最大列高度（优化版本）
 function calculateMaxColumnHeight() {
     const screenHeight = window.innerHeight;
     
@@ -181,58 +181,59 @@ function calculateMaxColumnHeight() {
                            parseFloat(homeButtonStyle.marginBottom);
     }
     
-    // 减少容器边距和安全边距
-    const containerMargin = 15; // 减少容器边距
-    const safetyMargin = 15; // 减少安全边距
+    // 容器边距和安全边距
+    const containerMargin = 10; 
+    const safetyMargin = 2; 
     
-    // 返回可用高度（减少保守程度）
+    // 返回可用高度
     return Math.max(200, screenHeight - totalFixedHeight - containerMargin - safetyMargin);
 }
 
-// 计算作业项的实际估算高度（更准确的版本）
+// 计算作业项的实际估算高度（优化版本）
 function calculateItemHeight(submission) {
     const bodyStyle = getComputedStyle(document.body);
     const currentFontSize = parseFloat(bodyStyle.fontSize);
     const baseFontSize = 16;
     const fontScale = currentFontSize / baseFontSize;
     
-    // 基础结构高度（减少基础高度）
-    const baseStructureHeight = Math.ceil(75 * fontScale); // 从95减少到75
+    // 基础结构高度
+    const baseStructureHeight = Math.ceil(65 * fontScale);
     
-    // 内容高度估算（更准确的行数计算）
+    // 内容高度估算（优化行数计算）
     const content = submission.content || '';
-    const charsPerLine = Math.max(15, Math.floor(22 / fontScale)); // 增加每行字符数
-    const lineHeight = Math.ceil(18 * fontScale); // 减少行高
+    const charsPerLine = Math.max(16, Math.floor(24 / fontScale)); 
+    const lineHeight = Math.ceil(15 * fontScale); 
     const contentLines = Math.max(1, Math.ceil(content.length / charsPerLine));
     const contentHeight = Math.ceil(contentLines * lineHeight);
     
-    // 标签高度
+    // 标签高度（考虑多行标签）
     const labelCount = (submission.labels && submission.labels.length) || 
                       (submission.label_ids && submission.label_ids.length) || 0;
-    const labelHeight = labelCount > 0 ? Math.ceil(22 * fontScale) : 0; // 减少标签高度
+    const labelLines = Math.ceil(labelCount / 3); 
+    const labelHeight = labelCount > 0 ? Math.ceil(labelLines * 20 * fontScale) : 0; 
     
-    // 内边距、边框和间距（减少这些值）
-    const paddingAndBorder = Math.ceil(15 * fontScale); // 从20减少到15
-    const itemSpacing = Math.ceil(5 * fontScale); // 从8减少到5
+    // 内边距、边框和间距
+    const paddingAndBorder = Math.ceil(10 * fontScale); 
+    const itemSpacing = Math.ceil(4 * fontScale); 
     
-    // 总高度（使用更准确的估算，减少安全边距）
+    // 总高度（减少安全边距）
     const totalHeight = baseStructureHeight + contentHeight + labelHeight + 
                         paddingAndBorder + itemSpacing;
     
     return Math.ceil(totalHeight);
 }
 
-// 计算学科标题的高度（更准确的版本）
+// 计算学科标题的高度（优化版本）
 function calculateSubjectTitleHeight() {
     const bodyStyle = getComputedStyle(document.body);
     const currentFontSize = parseFloat(bodyStyle.fontSize);
     const baseFontSize = 16;
     const fontScale = currentFontSize / baseFontSize;
     
-    // 学科标题的基础高度（减少估算）
-    const baseTitleHeight = Math.ceil(35 * fontScale); // 从45减少到35
-    const titlePadding = Math.ceil(12 * fontScale); // 从18减少到12
-    const titleMargin = Math.ceil(8 * fontScale); // 从10减少到8
+    // 学科标题的基础高度（微调）
+    const baseTitleHeight = Math.ceil(30 * fontScale); 
+    const titlePadding = Math.ceil(10 * fontScale); 
+    const titleMargin = Math.ceil(5 * fontScale); 
     
     return baseTitleHeight + titlePadding + titleMargin;
 }
@@ -261,12 +262,28 @@ function fillColumnsSequentially(items, columns, colCount) {
         const subjectItems = subjectGroups[subject];
         let subjectStartColumn = -1;
         
+        // 为每个学科预先计算学科标题高度
+        const subjectTitleHeight = calculateSubjectTitleHeight();
+        
         subjectItems.forEach((item, index) => {
-            let targetColumn = findTargetColumn(columnHeights, item.estimatedHeight, maxColumnHeight, subjectStartColumn);
+            // 如果是学科的第一个项目，需要加上学科标题高度
+            const itemTotalHeight = index === 0 ? 
+                item.estimatedHeight + subjectTitleHeight : 
+                item.estimatedHeight;
+                
+            let targetColumn = findTargetColumn(columnHeights, itemTotalHeight, maxColumnHeight, subjectStartColumn);
             
-            // 如果找不到合适的列，使用最后一列（必须放置）
+            // 如果找不到合适的列，使用高度最小的列
             if (targetColumn === -1) {
-                targetColumn = colCount - 1;
+                let minHeightIndex = 0;
+                let minHeight = columnHeights[0];
+                for (let i = 1; i < colCount; i++) {
+                    if (columnHeights[i] < minHeight) {
+                        minHeight = columnHeights[i];
+                        minHeightIndex = i;
+                    }
+                }
+                targetColumn = minHeightIndex;
             }
             
             // 记录学科开始的列
@@ -292,12 +309,14 @@ function fillColumnsSequentially(items, columns, colCount) {
     });
 }
 
-// 找到目标列（修复版本）
+// 找到目标列（优化版本）
 function findTargetColumn(columnHeights, itemHeight, maxHeight, subjectStartColumn) {
     // 优先尝试从学科开始的列开始
     if (subjectStartColumn !== -1) {
         for (let i = subjectStartColumn; i < columnHeights.length; i++) {
-            if (columnHeights[i] + itemHeight <= maxHeight) {
+            // 增加容错空间：允许超出最大高度8%以内
+            const tolerance = maxHeight * 0.08;
+            if (columnHeights[i] + itemHeight <= maxHeight + tolerance) {
                 return i;
             }
         }
@@ -305,13 +324,22 @@ function findTargetColumn(columnHeights, itemHeight, maxHeight, subjectStartColu
     
     // 如果学科开始的列不合适，从头开始找
     for (let i = 0; i < columnHeights.length; i++) {
-        if (columnHeights[i] + itemHeight <= maxHeight) {
+        const tolerance = maxHeight * 0.05;
+        if (columnHeights[i] + itemHeight <= maxHeight + tolerance) {
             return i;
         }
     }
     
-    // 如果所有列都放不下，返回最后一列
-    return columnHeights.length - 1;
+    // 如果所有列都放不下，返回高度最小的列
+    let minHeightIndex = 0;
+    let minHeight = columnHeights[0];
+    for (let i = 1; i < columnHeights.length; i++) {
+        if (columnHeights[i] < minHeight) {
+            minHeight = columnHeights[i];
+            minHeightIndex = i;
+        }
+    }
+    return minHeightIndex;
 }
 
 // 顺序添加作业项到指定列（返回实际高度）
