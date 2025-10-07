@@ -1267,7 +1267,75 @@ class Fun:
         # 按时间倒序排列
         inputs.sort(key=lambda x: x['timestamp'], reverse=True)
         
-        return render_template('fun_view.html', inputs=inputs, name=name)
+        # 获取客户端IP地址
+        client_ip = get_client_ip()
+        
+        return render_template('fun_view.html', inputs=inputs, name=name, request=request, client_ip=client_ip)
+
+    @app.route('/902504/delete_input', methods=['POST'])
+    def fun_delete_input():
+        """删除提交内容"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        # 获取要删除的条目信息
+        timestamp = request.form.get('timestamp')
+        content = request.form.get('content')
+        
+        if not timestamp or not content:
+            flash('无效的请求', 'error')
+            return redirect(url_for('fun_view'))
+        
+        # 加载所有输入
+        inputs = load_inputs()
+        
+        # 获取客户端IP地址
+        client_ip = get_client_ip()
+        
+        # 查找并删除匹配的条目
+        original_length = len(inputs)
+        
+        # 检查权限：是否是发布者或管理员IP
+        new_inputs = []
+        deleted = False
+        for input_entry in inputs:
+            # 检查是否匹配要删除的条目
+            if (input_entry['timestamp'] == timestamp and 
+                input_entry['content'] == content):
+                # 检查权限：发布者或管理员
+                if (input_entry['ip_address'] == client_ip or 
+                    client_ip == '127.0.0.1' or 
+                    client_ip in data_ip.get('admin_ips', [])):
+                    deleted = True
+                    # 不添加到new_inputs中，实现删除
+                else:
+                    # 没有权限，保留条目
+                    new_inputs.append(input_entry)
+            else:
+                # 不是要删除的条目，保留
+                new_inputs.append(input_entry)
+        
+        # 如果没有删除任何条目，说明权限不足
+        if not deleted:
+            flash('删除失败，可能是权限不足', 'error')
+            return redirect(url_for('fun_view'))
+        
+        # 保存更新后的数据
+        with open(INPUT_LOG_FILE, 'w', encoding='utf-8') as f:
+            json.dump(new_inputs, f, ensure_ascii=False, indent=2)
+        
+        # 记录删除操作日志
+        log_operation("删除提交内容", {
+            "timestamp": timestamp,
+            "content": content
+        }, client_ip)
+        
+        flash('删除成功', 'success')
+        return redirect(url_for('fun_view'))
     
     @app.route('/902504/debug/students')
     def debug_students():

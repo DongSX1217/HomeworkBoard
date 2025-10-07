@@ -101,15 +101,17 @@
         .submission-name {
             font-weight: 600;
             color: var(--text-color);
+            font-size:1.2em;
         }
 
         .submission-time {
-            font-size: 0.9em;
+            font-size: 1em;
             color: var(--text-light);
         }
 
         .submission-content {
             line-height: 1.6;
+            font-size: 1.3 em;
             color: var(--text-color);
         }
 
@@ -121,6 +123,20 @@
 
         .empty-state p {
             margin-bottom: 15px;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+
+        .delete-btn:hover {
+            background-color: #d32f2f;
         }
 
         @media (max-width: 600px) {
@@ -163,6 +179,13 @@
                         <div class="submission-header">
                             <span class="submission-name">{{ input.name }}</span>
                             <span class="submission-time">{{ input.timestamp }}</span>
+                            {% if input.ip_address == request.remote_addr or request.remote_addr == '127.0.0.1' %}
+                            <form method="POST" action="{{ url_for('fun_delete_input') }}" style="display: inline;">
+                                <input type="hidden" name="timestamp" value="{{ input.timestamp }}">
+                                <input type="hidden" name="content" value="{{ input.content }}">
+                                <button type="submit" class="delete-btn" onclick="return confirm('确定要删除这条提交吗？')">删除</button>
+                            </form>
+                            {% endif %}
                         </div>
                         <div class="submission-content">{{ input.content | safe }}</div>
                     </div>
