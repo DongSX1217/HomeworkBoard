@@ -23,6 +23,7 @@ window.onload = function() {
     startAutoRefresh();
     applyHideExpired();
     loadQuickPublishData();
+    updateFloatButtonPosition();
 };
 
 // 加载设置（从cookie）
@@ -711,12 +712,8 @@ function showQuickPublishButton() {
         button.className = 'quick-publish-float-button';
         button.innerHTML = '<i class="fas fa-plus"></i>';
         button.onclick = function() {
-            // 循环打开两个弹窗
-            if (document.getElementById("quickPublishModal").style.display === "block") {
-                openQuickPublishModal2();
-            } else {
-                openQuickPublishModal();
-            }
+            // 只打开第一个弹窗
+            openQuickPublishModal();
         };
         document.body.appendChild(button);
     }
@@ -763,14 +760,20 @@ function openQuickPublishModal() {
     
     const modal = document.getElementById("quickPublishModal");
     modal.style.display = "block";
+    modal.style.zIndex = "10001";
     
     // 重置表单
     document.getElementById("quickPublishForm").reset();
     document.getElementById("quickDeadline").style.display = "none";
     
-    // 加载常用词和初始化
+    // 取消所有标签选择
+    const checkboxes = document.querySelectorAll('#quickLabelsContainer .label-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // 加载常用词
     loadCommonWordsGrid('commonWordsGrid');
-    initQuickPublishForm('quickPublishForm');
     
     // 确保弹窗可见
     setTimeout(() => {
@@ -792,14 +795,20 @@ function openQuickPublishModal2() {
     
     const modal = document.getElementById("quickPublishModal2");
     modal.style.display = "block";
+    modal.style.zIndex = "10002";
     
     // 重置表单
     document.getElementById("quickPublishForm2").reset();
     document.getElementById("quickDeadline2").style.display = "none";
     
-    // 加载常用词和初始化
+    // 取消所有标签选择
+    const checkboxes = document.querySelectorAll('#quickLabelsContainer2 .label-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    
+    // 加载常用词
     loadCommonWordsGrid('commonWordsGrid2');
-    initQuickPublishForm('quickPublishForm2');
     
     // 确保弹窗可见
     setTimeout(() => {
@@ -953,8 +962,13 @@ function submitQuickPublish() {
     const subject = document.getElementById('quickSubject').value;
     const content = document.getElementById('quickContent').value.trim();
     const deadline = document.getElementById('quickDeadline').value;
-    const labelSelect = document.getElementById('quickLabels');
-    const selectedLabels = Array.from(labelSelect.selectedOptions).map(option => option.value);
+    
+    // 获取选中的标签
+    const selectedLabels = [];
+    const checkboxes = document.querySelectorAll('#quickLabelsContainer .label-checkbox:checked');
+    checkboxes.forEach(checkbox => {
+        selectedLabels.push(checkbox.value);
+    });
     
     if (!content) {
         alert('请输入作业内容');
@@ -999,8 +1013,13 @@ function submitQuickPublish2() {
     const subject = document.getElementById('quickSubject2').value;
     const content = document.getElementById('quickContent2').value.trim();
     const deadline = document.getElementById('quickDeadline2').value;
-    const labelSelect = document.getElementById('quickLabels2');
-    const selectedLabels = Array.from(labelSelect.selectedOptions).map(option => option.value);
+    
+    // 获取选中的标签
+    const selectedLabels = [];
+    const checkboxes = document.querySelectorAll('#quickLabelsContainer2 .label-checkbox:checked');
+    checkboxes.forEach(checkbox => {
+        selectedLabels.push(checkbox.value);
+    });
     
     if (!content) {
         alert('请输入作业内容');
@@ -1038,6 +1057,15 @@ function submitQuickPublish2() {
         console.error('Error:', error);
         alert('发布失败，请检查网络连接后重试');
     });
+}
+
+// 修改浮动按钮位置，确保始终可见
+function updateFloatButtonPosition() {
+    const button = document.getElementById('quickPublishFloatButton');
+    if (button) {
+        // 确保按钮在所有弹窗之上
+        button.style.zIndex = '10003';
+    }
 }
 
 // 点击模态框外部关闭（更新版）

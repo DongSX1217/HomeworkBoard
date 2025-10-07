@@ -145,12 +145,14 @@
                 <!-- 标签选择 -->
                 <div class="form-group">
                     <label for="quickLabels">标签：</label>
-                    <select id="quickLabels" class="form-control" multiple size="4">
+                    <div class="labels-checkbox-container" id="quickLabelsContainer">
                         {% for label in labels %}
-                        <option value="{{ label.id }}">{{ label.name }}</option>
+                        <label class="label-checkbox-item">
+                            <input type="checkbox" value="{{ label.id }}" class="label-checkbox">
+                            <span class="label-preview" style="background-color: {{ label.color }}">{{ label.name }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
-                    <div class="select-hint">可多选（按住Ctrl点击）</div>
+                    </div>
                 </div>
                 
                 <!-- 截止日期快捷选择 -->
@@ -208,12 +210,14 @@
                 <!-- 标签选择 -->
                 <div class="form-group">
                     <label for="quickLabels2">标签：</label>
-                    <select id="quickLabels2" class="form-control" multiple size="4">
+                    <div class="labels-checkbox-container" id="quickLabelsContainer2">
                         {% for label in labels %}
-                        <option value="{{ label.id }}">{{ label.name }}</option>
+                        <label class="label-checkbox-item">
+                            <input type="checkbox" value="{{ label.id }}" class="label-checkbox">
+                            <span class="label-preview" style="background-color: {{ label.color }}">{{ label.name }}</span>
+                        </label>
                         {% endfor %}
-                    </select>
-                    <div class="select-hint">可多选（按住Ctrl点击）</div>
+                    </div>
                 </div>
                 
                 <!-- 截止日期快捷选择 -->
