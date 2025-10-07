@@ -320,6 +320,11 @@ def clockpage():
 def imagepage():
     return render_template('image.html')
 
+@app.route('/countdown')
+def countdownpage():
+    return render_template('countdown.html')
+
+
 @staticmethod # 静态方法，避免每次请求都创建实例
 @app.before_request
 def check_banned_ip():
