@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>响应式时钟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .clock-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 800px;
+            width: 100%;
+            gap: 30px;
+        }
+        
+        .clock-title {
+            font-size: 2.5rem;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .clock-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1;
+        }
+        
+        #clockCanvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .digital-clock {
+            font-size: 2.5rem;
+            font-weight: bold;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 2px;
+        }
+        
+        .date-display {
+            font-size: 1.5rem;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .clock-title {
+                font-size: 2rem;
+            }
+            
+            .digital-clock {
+                font-size: 1.8rem;
+            }
+            
+            .date-display {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .clock-title {
+                font-size: 1.8rem;
+            }
+            
+            .digital-clock {
+                font-size: 1.5rem;
+            }
+            
+            .date-display {
+                font-size: 1rem;
+            }
+        }
+        
+        /* 横屏优化 */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .clock-container {
+                flex-direction: row;
+                justify-content: space-around;
+                align-items: center;
+                max-width: 100%;
+            }
+            
+            .clock-wrapper {
+                max-width: 40vh;
+            }
+            
+            .clock-info {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .clock-title {
+                margin-bottom: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="clock-container">
+        <h1 class="clock-title">响应式时钟</h1>
+        <div class="clock-wrapper">
+            <canvas id="clockCanvas"></canvas>
+        </div>
+        <div class="clock-info">
+            <div class="digital-clock" id="digitalClock">00:00:00</div>
+            <div class="date-display" id="dateDisplay">2023年1月1日 星期日</div>
+        </div>
+    </div>
+
+    <script>
+        // 获取Canvas元素和上下文
+        const canvas = document.getElementById('clockCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // 获取数字时钟和日期显示元素
+        const digitalClock = document.getElementById('digitalClock');
+        const dateDisplay = document.getElementById('dateDisplay');
+        
+        // 设置Canvas尺寸
+        function setCanvasSize() {
+            const size = Math.min(canvas.parentElement.offsetWidth, canvas.parentElement.offsetHeight);
+            canvas.width = size;
+            canvas.height = size;
+        }
+        
+        // 绘制时钟
+        function drawClock() {
+            const now = new Date();
+            const hours = now.getHours();
+            const minutes = now.getMinutes();
+            const seconds = now.getSeconds();
+            const milliseconds = now.getMilliseconds();
+            
+            // 清除Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // 计算半径和中心点
+            const radius = canvas.width / 2;
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            
+            // 绘制表盘
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.9, 0, 2 * Math.PI);
+            const gradient = ctx.createRadialGradient(centerX, centerY, radius * 0.5, centerX, centerY, radius * 0.9);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.2)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.05)');
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // 绘制刻度
+            for (let i = 0; i < 60; i++) {
+                const angle = (i * 6) * Math.PI / 180;
+                const startRadius = i % 5 === 0 ? radius * 0.75 : radius * 0.8;
+                const endRadius = i % 5 === 0 ? radius * 0.85 : radius * 0.83;
+                
+                const x1 = centerX + startRadius * Math.sin(angle);
+                const y1 = centerY - startRadius * Math.cos(angle);
+                const x2 = centerX + endRadius * Math.sin(angle);
+                const y2 = centerY - endRadius * Math.cos(angle);
+                
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.strokeStyle = i % 5 === 0 ? 'white' : 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = i % 5 === 0 ? 3 : 1;
+                ctx.stroke();
+            }
+            
+            // 绘制数字
+            ctx.font = `bold ${radius * 0.1}px Arial`;
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i * 30) * Math.PI / 180;
+                const x = centerX + radius * 0.7 * Math.sin(angle);
+                const y = centerY - radius * 0.7 * Math.cos(angle);
+                ctx.fillText(i.toString(), x, y);
+            }
+            
+            // 计算指针角度
+            const secondAngle = (seconds + milliseconds / 1000) * 6 * Math.PI / 180;
+            const minuteAngle = (minutes + seconds / 60) * 6 * Math.PI / 180;
+            const hourAngle = (hours % 12 + minutes / 60) * 30 * Math.PI / 180;
+            
+            // 绘制时针
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + radius * 0.5 * Math.sin(hourAngle),
+                centerY - radius * 0.5 * Math.cos(hourAngle)
+            );
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = radius * 0.03;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // 绘制分针
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + radius * 0.65 * Math.sin(minuteAngle),
+                centerY - radius * 0.65 * Math.cos(minuteAngle)
+            );
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = radius * 0.02;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // 绘制秒针
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(
+                centerX + radius * 0.75 * Math.sin(secondAngle),
+                centerY - radius * 0.75 * Math.cos(secondAngle)
+            );
+            ctx.strokeStyle = '#ff4444';
+            ctx.lineWidth = radius * 0.01;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // 绘制中心点
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius * 0.03, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ff4444';
+            ctx.fill();
+            
+            // 更新数字时钟
+            updateDigitalClock(now);
+        }
+        
+        // 更新数字时钟和日期显示
+        function updateDigitalClock(now) {
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            digitalClock.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const day = now.getDay();
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            
+            dateDisplay.textContent = `${year}年${month}月${date}日 ${weekDays[day]}`;
+        }
+        
+        // 初始化
+        function init() {
+            setCanvasSize();
+            drawClock();
+            
+            // 每秒更新时钟
+            setInterval(drawClock, 100);
+            
+            // 窗口大小改变时调整Canvas尺寸
+            window.addEventListener('resize', setCanvasSize);
+        }
+        
+        // 启动时钟
+        init();
+    </script>
+</body>
+</html>

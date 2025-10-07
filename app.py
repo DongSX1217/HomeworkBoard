@@ -312,6 +312,10 @@ else:
 def homepage():
     return render_template('home.html')
 
+@app.route('/clock')
+def clockpage():
+    return render_template('clock.html')
+
 @staticmethod # 静态方法，避免每次请求都创建实例
 @app.before_request
 def check_banned_ip():
