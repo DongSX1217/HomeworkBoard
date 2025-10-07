@@ -331,6 +331,7 @@ position: absolute;
     align-items: center;
     justify-content: center;
     transition: all 0.3s ease;
+    touch-action: manipulation;
 }
 
 .quick-publish-float-button:hover {
@@ -342,12 +343,21 @@ position: absolute;
 .quick-publish-modal {
     width: 90%;
     max-width: 500px;
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
+    margin: 5% auto;
+    position: relative;
+}
+
+.quick-form {
+    display: flex;
+    flex-direction: column;
+    height: auto;
 }
 
 .quick-publish-modal .form-group {
     margin-bottom: 15px;
+    flex-shrink: 0;
 }
 
 .quick-publish-modal label {
@@ -362,12 +372,26 @@ position: absolute;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    font-size: 16px; /* 适合触屏操作 */
+    font-size: 16px;
+    box-sizing: border-box;
 }
 
 .quick-publish-modal textarea.form-control {
     resize: vertical;
     min-height: 80px;
+}
+
+/* 日期输入框样式 */
+.date-input {
+    margin-top: 8px;
+}
+
+/* 多选下拉框提示 */
+.select-hint {
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+    font-style: italic;
 }
 
 /* 常用词宫格 */
@@ -387,7 +411,8 @@ position: absolute;
     font-size: 14px;
     text-align: center;
     transition: all 0.2s ease;
-    touch-action: manipulation; /* 改善触屏体验 */
+    touch-action: manipulation;
+    min-height: 44px; /* 触屏友好 */
 }
 
 .word-grid-btn:hover {
@@ -417,6 +442,7 @@ position: absolute;
     font-size: 14px;
     text-align: center;
     transition: all 0.2s ease;
+    min-height: 44px; /* 触屏友好 */
 }
 
 .date-btn:hover {
@@ -438,6 +464,7 @@ position: absolute;
     gap: 10px;
     justify-content: flex-end;
     margin-top: 20px;
+    flex-shrink: 0;
 }
 
 .btn-cancel, .btn-submit {
@@ -447,6 +474,7 @@ position: absolute;
     cursor: pointer;
     font-size: 16px;
     transition: all 0.2s ease;
+    min-height: 44px; /* 触屏友好 */
 }
 
 .btn-cancel {
@@ -483,6 +511,32 @@ position: absolute;
     color: white;
 }
 
+/* 横屏下两个弹窗并排显示 */
+@media (min-width: 1024px) and (orientation: landscape) {
+    .quick-publish-left {
+        left: 5%;
+        transform: translateY(-50%);
+        top: 50%;
+        margin: 0;
+        position: fixed;
+    }
+    
+    .quick-publish-right {
+        right: 5%;
+        transform: translateY(-50%);
+        top: 50%;
+        margin: 0;
+        position: fixed;
+    }
+    
+    /* 当两个弹窗同时显示时调整位置 */
+    #quickPublishModal[style*="display: block"] ~ #quickPublishModal2[style*="display: block"] .quick-publish-left,
+    #quickPublishModal2[style*="display: block"] ~ #quickPublishModal[style*="display: block"] .quick-publish-right {
+        width: 45%;
+        max-width: 450px;
+    }
+}
+
 /* 触屏优化 */
 @media (max-width: 768px) {
     .quick-publish-float-button {
@@ -495,7 +549,8 @@ position: absolute;
     
     .quick-publish-modal {
         width: 95%;
-        margin: 5% auto;
+        margin: 2% auto;
+        max-height: 90vh;
     }
     
     .common-words-grid {
@@ -515,10 +570,10 @@ position: absolute;
     }
 }
 
-/* 确保弹窗在移动设备上显示正常 */
+/* 小屏幕设备优化 */
 @media (max-width: 480px) {
     .quick-publish-modal .modal-content {
-        margin: 10% auto;
+        margin: 1% auto;
         padding: 15px;
     }
     
@@ -530,7 +585,46 @@ position: absolute;
     .word-grid-btn {
         padding: 8px 4px;
         font-size: 12px;
+        min-height: 40px;
     }
+    
+    .form-control {
+        font-size: 16px; /* 防止iOS缩放 */
+    }
+}
+
+/* 确保模态窗口有滚动条 */
+.modal-content {
+    overflow-y: auto;
+    max-height: calc(100vh - 100px);
+}
+
+/* 改善滚动条样式 */
+.quick-publish-modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.quick-publish-modal::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.quick-publish-modal::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.quick-publish-modal::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* 确保全屏模式下的弹窗显示 */
+.container.fullscreen ~ .modal {
+    z-index: 10000 !important;
+}
+
+.container.fullscreen ~ .modal .modal-content {
+    z-index: 10001 !important;
 }
 
 /* 响应式设计 */

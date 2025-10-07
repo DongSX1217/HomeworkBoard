@@ -111,13 +111,13 @@
         </div>
     </div>
 
-    <!-- 在页面底部添加快捷布置作业弹窗 -->
+    <!-- 第一个快捷布置弹窗 -->
     <div id="quickPublishModal" class="modal">
-        <div class="modal-content quick-publish-modal">
+        <div class="modal-content quick-publish-modal quick-publish-left">
             <span class="close" onclick="closeQuickPublishModal()">&times;</span>
-            <h2>快捷布置作业</h2>
+            <h2>快捷布置作业 1</h2>
             
-            <form id="quickPublishForm">
+            <form id="quickPublishForm" class="quick-form">
                 <!-- 学科选择 -->
                 <div class="form-group">
                     <label for="quickSubject">学科：</label>
@@ -145,23 +145,24 @@
                 <!-- 标签选择 -->
                 <div class="form-group">
                     <label for="quickLabels">标签：</label>
-                    <select id="quickLabels" class="form-control" multiple>
+                    <select id="quickLabels" class="form-control" multiple size="4">
                         {% for label in labels %}
                         <option value="{{ label.id }}">{{ label.name }}</option>
                         {% endfor %}
                     </select>
+                    <div class="select-hint">可多选（按住Ctrl点击）</div>
                 </div>
                 
                 <!-- 截止日期快捷选择 -->
                 <div class="form-group">
-                    <label>截止日期：</label>
+                    <label for="quickDeadline">截止日期：</label>
                     <div class="date-quick-buttons">
                         <button type="button" class="date-btn" onclick="setQuickDate('today')">今日</button>
                         <button type="button" class="date-btn" onclick="setQuickDate('tomorrow')">明日</button>
-                        <button type="button" class="date-btn" onclick="setQuickDate('custom')">其他日期</button>
+                        <button type="button" class="date-btn" onclick="setQuickDate('custom')">其他</button>
                         <button type="button" class="date-btn clear" onclick="clearQuickDate()">清空</button>
                     </div>
-                    <input type="date" id="quickDeadline" class="form-control" style="display: none;">
+                    <input type="date" id="quickDeadline" class="form-control date-input">
                 </div>
                 
                 <!-- 提交按钮 -->
@@ -175,11 +176,11 @@
 
     <!-- 第二个快捷布置弹窗 -->
     <div id="quickPublishModal2" class="modal">
-        <div class="modal-content quick-publish-modal">
+        <div class="modal-content quick-publish-modal quick-publish-right">
             <span class="close" onclick="closeQuickPublishModal2()">&times;</span>
-            <h2>快捷布置作业 (2)</h2>
+            <h2>快捷布置作业 2</h2>
             
-            <form id="quickPublishForm2">
+            <form id="quickPublishForm2" class="quick-form">
                 <!-- 学科选择 -->
                 <div class="form-group">
                     <label for="quickSubject2">学科：</label>
@@ -207,23 +208,24 @@
                 <!-- 标签选择 -->
                 <div class="form-group">
                     <label for="quickLabels2">标签：</label>
-                    <select id="quickLabels2" class="form-control" multiple>
+                    <select id="quickLabels2" class="form-control" multiple size="4">
                         {% for label in labels %}
                         <option value="{{ label.id }}">{{ label.name }}</option>
                         {% endfor %}
                     </select>
+                    <div class="select-hint">可多选（按住Ctrl点击）</div>
                 </div>
                 
                 <!-- 截止日期快捷选择 -->
                 <div class="form-group">
-                    <label>截止日期：</label>
+                    <label for="quickDeadline2">截止日期：</label>
                     <div class="date-quick-buttons">
                         <button type="button" class="date-btn" onclick="setQuickDate2('today')">今日</button>
                         <button type="button" class="date-btn" onclick="setQuickDate2('tomorrow')">明日</button>
-                        <button type="button" class="date-btn" onclick="setQuickDate2('custom')">其他日期</button>
+                        <button type="button" class="date-btn" onclick="setQuickDate2('custom')">其他</button>
                         <button type="button" class="date-btn clear" onclick="clearQuickDate2()">清空</button>
                     </div>
-                    <input type="date" id="quickDeadline2" class="form-control" style="display: none;">
+                    <input type="date" id="quickDeadline2" class="form-control date-input">
                 </div>
                 
                 <!-- 提交按钮 -->

@@ -3,11 +3,6 @@ let intervalId;
 let isFullscreen = false;
 let globalLabels = []; // 全局标签缓存
 
-// 快捷布置作业相关变量
-let quickPublishEnabled = false;
-let subjectsData = [];
-let labelsData = [];
-
 // 窗口大小变化时重新布局
 let resizeTimeout;
 window.addEventListener('resize', function() {
@@ -565,14 +560,6 @@ function applyHideExpired() {
     });
 }
 
-// 点击模态框外部关闭
-window.onclick = function(event) {
-    const modal = document.getElementById("settingsModal");
-    if (event.target == modal) {
-        closeSettings();
-    }
-}
-
 // 获取日期对应的星期几
 function getWeekday(dateString) {
     if (!dateString) return '';
@@ -710,6 +697,11 @@ function createHomeworkItem(submission) {
     return homeworkItem;
 }
 
+// 快捷布置作业相关函数 - 重写版本
+let quickPublishEnabled = false;
+let subjectsData = [];
+let labelsData = [];
+
 // 显示快捷布置按钮
 function showQuickPublishButton() {
     let button = document.getElementById('quickPublishFloatButton');
@@ -718,7 +710,14 @@ function showQuickPublishButton() {
         button.id = 'quickPublishFloatButton';
         button.className = 'quick-publish-float-button';
         button.innerHTML = '<i class="fas fa-plus"></i>';
-        button.onclick = openQuickPublishModal;
+        button.onclick = function() {
+            // 循环打开两个弹窗
+            if (document.getElementById("quickPublishModal").style.display === "block") {
+                openQuickPublishModal2();
+            } else {
+                openQuickPublishModal();
+            }
+        };
         document.body.appendChild(button);
     }
     button.style.display = 'block';
@@ -739,6 +738,9 @@ function loadQuickPublishData() {
         .then(response => response.json())
         .then(subjects => {
             subjectsData = subjects;
+        })
+        .catch(error => {
+            console.error('加载学科数据失败:', error);
         });
     
     // 加载标签数据
@@ -746,6 +748,9 @@ function loadQuickPublishData() {
         .then(response => response.json())
         .then(data => {
             labelsData = data.labels || [];
+        })
+        .catch(error => {
+            console.error('加载标签数据失败:', error);
         });
 }
 
@@ -755,31 +760,73 @@ function openQuickPublishModal() {
     if (isFullscreen) {
         exitFullscreen();
     }
-    document.getElementById("quickPublishModal").style.display = "block";
+    
+    const modal = document.getElementById("quickPublishModal");
+    modal.style.display = "block";
+    
+    // 重置表单
+    document.getElementById("quickPublishForm").reset();
+    document.getElementById("quickDeadline").style.display = "none";
+    
+    // 加载常用词和初始化
     loadCommonWordsGrid('commonWordsGrid');
-    initMultiSelect('quickLabels');
+    initQuickPublishForm('quickPublishForm');
+    
+    // 确保弹窗可见
+    setTimeout(() => {
+        modal.scrollTop = 0;
+    }, 10);
 }
 
 // 关闭第一个快捷布置弹窗
 function closeQuickPublishModal() {
     document.getElementById("quickPublishModal").style.display = "none";
-    document.getElementById("quickPublishForm").reset();
 }
 
+// 打开第二个快捷布置弹窗
 function openQuickPublishModal2() {
     // 如果当前是全屏模式，先退出全屏
     if (isFullscreen) {
         exitFullscreen();
     }
-    document.getElementById("quickPublishModal2").style.display = "block";
+    
+    const modal = document.getElementById("quickPublishModal2");
+    modal.style.display = "block";
+    
+    // 重置表单
+    document.getElementById("quickPublishForm2").reset();
+    document.getElementById("quickDeadline2").style.display = "none";
+    
+    // 加载常用词和初始化
     loadCommonWordsGrid('commonWordsGrid2');
-    initMultiSelect('quickLabels2');
+    initQuickPublishForm('quickPublishForm2');
+    
+    // 确保弹窗可见
+    setTimeout(() => {
+        modal.scrollTop = 0;
+    }, 10);
 }
 
 // 关闭第二个快捷布置弹窗
 function closeQuickPublishModal2() {
     document.getElementById("quickPublishModal2").style.display = "none";
-    document.getElementById("quickPublishForm2").reset();
+}
+
+// 初始化快捷发布表单
+function initQuickPublishForm(formId) {
+    const form = document.getElementById(formId);
+    
+    // 为所有输入元素添加触屏优化
+    const inputs = form.querySelectorAll('input, select, textarea, button');
+    inputs.forEach(input => {
+        input.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        });
+        
+        input.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+        });
+    });
 }
 
 // 加载常用词宫格
@@ -787,59 +834,45 @@ function loadCommonWordsGrid(gridId) {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
     
-    // 获取通用常用词
+    // 备用常用词
+    const defaultWords = ['练习', '复习', '预习', '作业', '试卷', '背诵', '默写', '作文', '笔记'];
+    
+    // 尝试获取通用常用词
     fetch('/api/global_words')
-        .then(response => response.json())
+        .then(response => {
+            if (response.ok) return response.json();
+            throw new Error('Network response was not ok');
+        })
         .then(words => {
-            // 创建3x3宫格
-            for (let i = 0; i < Math.min(9, words.length); i++) {
-                const word = words[i];
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'word-grid-btn';
-                button.textContent = word;
-                button.onclick = function() {
-                    insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
-                };
-                grid.appendChild(button);
-            }
+            displayWords(words.length > 0 ? words : defaultWords, gridId);
         })
         .catch(() => {
-            // 备用方案：使用默认常用词
-            const defaultWords = ['练习', '复习', '预习', '作业', '试卷', '背诵', '默写', '作文', '笔记'];
-            defaultWords.forEach(word => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = 'word-grid-btn';
-                button.textContent = word;
-                button.onclick = function() {
-                    insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
-                };
-                grid.appendChild(button);
-            });
+            // 使用默认常用词
+            displayWords(defaultWords, gridId);
         });
-}
-
-// 初始化多选下拉框
-function initMultiSelect(selectId) {
-    const select = document.getElementById(selectId);
-    // 简单的多选实现
-    select.addEventListener('mousedown', function(e) {
-        e.preventDefault();
-        const option = e.target;
-        if (option.tagName === 'OPTION') {
-            option.selected = !option.selected;
-        }
-    });
     
-    // 触屏设备支持
-    select.addEventListener('touchstart', function(e) {
-        e.preventDefault();
-        const option = e.target;
-        if (option.tagName === 'OPTION') {
-            option.selected = !option.selected;
+    function displayWords(words, gridId) {
+        // 创建3x3宫格
+        for (let i = 0; i < Math.min(9, words.length); i++) {
+            const word = words[i];
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'word-grid-btn';
+            button.textContent = word;
+            button.onclick = function(e) {
+                e.preventDefault();
+                insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
+            };
+            
+            // 触屏支持
+            button.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
+            });
+            
+            grid.appendChild(button);
         }
-    });
+    }
 }
 
 // 插入词语到内容
@@ -852,6 +885,10 @@ function insertWordToQuickContent(word, contentId) {
     content.value = text.substring(0, start) + word + text.substring(end);
     content.focus();
     content.selectionStart = content.selectionEnd = start + word.length;
+    
+    // 触发输入事件以更新UI
+    const event = new Event('input', { bubbles: true });
+    content.dispatchEvent(event);
 }
 
 // 设置快捷日期
@@ -862,13 +899,13 @@ function setQuickDate(type) {
     switch(type) {
         case 'today':
             dateInput.value = today.toISOString().split('T')[0];
-            dateInput.style.display = 'none';
+            dateInput.style.display = 'block';
             break;
         case 'tomorrow':
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
             dateInput.value = tomorrow.toISOString().split('T')[0];
-            dateInput.style.display = 'none';
+            dateInput.style.display = 'block';
             break;
         case 'custom':
             dateInput.style.display = 'block';
@@ -885,13 +922,13 @@ function setQuickDate2(type) {
     switch(type) {
         case 'today':
             dateInput.value = today.toISOString().split('T')[0];
-            dateInput.style.display = 'none';
+            dateInput.style.display = 'block';
             break;
         case 'tomorrow':
             const tomorrow = new Date(today);
             tomorrow.setDate(tomorrow.getDate() + 1);
             dateInput.value = tomorrow.toISOString().split('T')[0];
-            dateInput.style.display = 'none';
+            dateInput.style.display = 'block';
             break;
         case 'custom':
             dateInput.style.display = 'block';
@@ -914,13 +951,14 @@ function clearQuickDate2() {
 // 提交快捷布置作业
 function submitQuickPublish() {
     const subject = document.getElementById('quickSubject').value;
-    const content = document.getElementById('quickContent').value;
+    const content = document.getElementById('quickContent').value.trim();
     const deadline = document.getElementById('quickDeadline').value;
     const labelSelect = document.getElementById('quickLabels');
     const selectedLabels = Array.from(labelSelect.selectedOptions).map(option => option.value);
     
-    if (!content.trim()) {
+    if (!content) {
         alert('请输入作业内容');
+        document.getElementById('quickContent').focus();
         return;
     }
     
@@ -928,7 +966,9 @@ function submitQuickPublish() {
     const formData = new FormData();
     formData.append('subject', subject);
     formData.append('content', content);
-    formData.append('deadline', deadline);
+    if (deadline) {
+        formData.append('deadline', deadline);
+    }
     selectedLabels.forEach(labelId => {
         formData.append('label_ids', labelId);
     });
@@ -945,25 +985,26 @@ function submitQuickPublish() {
             // 刷新作业列表
             fetchHomeworkAndLabels();
         } else {
-            alert('发布失败：' + data.message);
+            alert('发布失败：' + (data.message || '未知错误'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('发布失败，请重试');
+        alert('发布失败，请检查网络连接后重试');
     });
 }
 
 // 提交第二个弹窗的作业
 function submitQuickPublish2() {
     const subject = document.getElementById('quickSubject2').value;
-    const content = document.getElementById('quickContent2').value;
+    const content = document.getElementById('quickContent2').value.trim();
     const deadline = document.getElementById('quickDeadline2').value;
     const labelSelect = document.getElementById('quickLabels2');
     const selectedLabels = Array.from(labelSelect.selectedOptions).map(option => option.value);
     
-    if (!content.trim()) {
+    if (!content) {
         alert('请输入作业内容');
+        document.getElementById('quickContent2').focus();
         return;
     }
     
@@ -971,7 +1012,9 @@ function submitQuickPublish2() {
     const formData = new FormData();
     formData.append('subject', subject);
     formData.append('content', content);
-    formData.append('deadline', deadline);
+    if (deadline) {
+        formData.append('deadline', deadline);
+    }
     selectedLabels.forEach(labelId => {
         formData.append('label_ids', labelId);
     });
@@ -988,11 +1031,45 @@ function submitQuickPublish2() {
             // 刷新作业列表
             fetchHomeworkAndLabels();
         } else {
-            alert('发布失败：' + data.message);
+            alert('发布失败：' + (data.message || '未知错误'));
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('发布失败，请重试');
+        alert('发布失败，请检查网络连接后重试');
     });
 }
+
+// 点击模态框外部关闭（更新版）
+window.onclick = function(event) {
+    const settingsModal = document.getElementById("settingsModal");
+    const quickPublishModal = document.getElementById("quickPublishModal");
+    const quickPublishModal2 = document.getElementById("quickPublishModal2");
+    
+    if (event.target == settingsModal) {
+        closeSettings();
+    }
+    if (event.target == quickPublishModal) {
+        closeQuickPublishModal();
+    }
+    if (event.target == quickPublishModal2) {
+        closeQuickPublishModal2();
+    }
+}
+
+// 触屏设备的外部点击关闭支持
+document.addEventListener('touchstart', function(event) {
+    const settingsModal = document.getElementById("settingsModal");
+    const quickPublishModal = document.getElementById("quickPublishModal");
+    const quickPublishModal2 = document.getElementById("quickPublishModal2");
+    
+    if (event.target === settingsModal) {
+        closeSettings();
+    }
+    if (event.target === quickPublishModal) {
+        closeQuickPublishModal();
+    }
+    if (event.target === quickPublishModal2) {
+        closeQuickPublishModal2();
+    }
+});
