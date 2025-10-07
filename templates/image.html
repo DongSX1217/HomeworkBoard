@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            font-weight: 300;
+            font-size: 2.5rem;
+            color: #2c3e50;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .image-container {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin: 0 auto;
+            max-width: 95%;
+            transition: transform 0.3s ease;
+        }
+        
+        .image-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .responsive-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+        
+        .image-info {
+            margin-top: 25px;
+            font-style: italic;
+            color: #7f8c8d;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .orientation-hint {
+            margin-top: 30px;
+            font-size: 0.9rem;
+            color: #95a5a6;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .image-info {
+                font-size: 1rem;
+            }
+            
+            .orientation-hint {
+                display: block;
+            }
+        }
+        
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                margin-bottom: 15px;
+                font-size: 1.5rem;
+            }
+            
+            .image-container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>课表</h1>
+        
+        <div class="image-container">
+            <!-- 这里可以替换为您自己的图片URL -->
+            <img src="/static/课表/1007.png" 
+                 alt="课表" class="responsive-image">
+        </div>
+        
+        <p class="image-info">目前在展示的为10月9日（周四）—10月11日（周六）的课表。课表内容以已知信息展示，仅供参考，可能不是最新安排，请以实际安排为准。</p>
+        
+        <p class="orientation-hint">提示：横屏或竖屏均可查看图片</p>
+    </div>
+
+    <script>
+        // 简单的交互效果：点击图片可以放大/缩小
+        document.addEventListener('DOMContentLoaded', function() {
+            const image = document.querySelector('.responsive-image');
+            
+            image.addEventListener('click', function() {
+                if (image.style.transform === 'scale(1.5)') {
+                    image.style.transform = 'scale(1)';
+                    image.style.cursor = 'zoom-in';
+                } else {
+                    image.style.transform = 'scale(1.5)';
+                    image.style.cursor = 'zoom-out';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -316,6 +316,10 @@ def homepage():
 def clockpage():
     return render_template('clock.html')
 
+@app.route('/image')
+def imagepage():
+    return render_template('image.html')
+
 @staticmethod # 静态方法，避免每次请求都创建实例
 @app.before_request
 def check_banned_ip():
