@@ -17,6 +17,11 @@ window.addEventListener('resize', function() {
     }, 250);
 });
 
+// 监听全屏变化事件
+document.addEventListener('fullscreenchange', handleFullscreenChange);
+document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // Safari
+document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
+
 // 页面加载完成后初始化
 window.onload = function() {
     loadSettings();
@@ -442,7 +447,27 @@ function updateHomeworkContainer(submissions, labels, subjectsOrder) {
 
 // 打开设置弹窗
 function openSettings() {
+    // 如果当前是全屏模式，先退出全屏
+    if (isFullscreen) {
+        exitFullscreen();
+    }
     document.getElementById("settingsModal").style.display = "block";
+}
+
+// 退出全屏的函数
+function exitFullscreen() {
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    }
+    
+    const container = document.querySelector('.container');
+    container.classList.remove('fullscreen');
+    document.querySelector('.top-buttons button:nth-child(3)').textContent = '全屏';
+    isFullscreen = false;
 }
 
 // 关闭设置弹窗
@@ -453,13 +478,70 @@ function closeSettings() {
 // 切换全屏模式
 function toggleFullscreen() {
     const container = document.querySelector('.container');
-    isFullscreen = !isFullscreen;
-    if (isFullscreen) {
+    
+    // 如果模态窗口打开，先关闭
+    const settingsModal = document.getElementById("settingsModal");
+    const quickPublishModal = document.getElementById("quickPublishModal");
+    const quickPublishModal2 = document.getElementById("quickPublishModal2");
+    
+    if (settingsModal.style.display === "block") {
+        closeSettings();
+    }
+    if (quickPublishModal.style.display === "block") {
+        closeQuickPublishModal();
+    }
+    if (quickPublishModal2.style.display === "block") {
+        closeQuickPublishModal2();
+    }
+    
+    if (!document.fullscreenElement) {
+        // 进入全屏
+        if (container.requestFullscreen) {
+            container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen(); // Safari
+        } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen(); // IE/Edge
+        }
+        
         container.classList.add('fullscreen');
         document.querySelector('.top-buttons button:nth-child(3)').textContent = '退出全屏';
+        isFullscreen = true;
+        
+        // 全屏后重新布局
+        setTimeout(() => {
+            fetchHomeworkAndLabels();
+        }, 300);
     } else {
+        // 退出全屏
+        exitFullscreen();
+        
+        // 退出全屏后重新布局
+        setTimeout(() => {
+            fetchHomeworkAndLabels();
+        }, 300);
+    }
+}
+
+function handleFullscreenChange() {
+    const container = document.querySelector('.container');
+    const fullscreenButton = document.querySelector('.top-buttons button:nth-child(3)');
+    
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        // 退出全屏
         container.classList.remove('fullscreen');
-        document.querySelector('.top-buttons button:nth-child(3)').textContent = '全屏';
+        fullscreenButton.textContent = '全屏';
+        isFullscreen = false;
+        
+        // 退出全屏后重新布局
+        setTimeout(() => {
+            fetchHomeworkAndLabels();
+        }, 300);
+    } else {
+        // 进入全屏
+        container.classList.add('fullscreen');
+        fullscreenButton.textContent = '退出全屏';
+        isFullscreen = true;
     }
 }
 
@@ -669,6 +751,10 @@ function loadQuickPublishData() {
 
 // 打开第一个快捷布置弹窗
 function openQuickPublishModal() {
+    // 如果当前是全屏模式，先退出全屏
+    if (isFullscreen) {
+        exitFullscreen();
+    }
     document.getElementById("quickPublishModal").style.display = "block";
     loadCommonWordsGrid('commonWordsGrid');
     initMultiSelect('quickLabels');
@@ -680,8 +766,11 @@ function closeQuickPublishModal() {
     document.getElementById("quickPublishForm").reset();
 }
 
-// 打开第二个快捷布置弹窗
 function openQuickPublishModal2() {
+    // 如果当前是全屏模式，先退出全屏
+    if (isFullscreen) {
+        exitFullscreen();
+    }
     document.getElementById("quickPublishModal2").style.display = "block";
     loadCommonWordsGrid('commonWordsGrid2');
     initMultiSelect('quickLabels2');

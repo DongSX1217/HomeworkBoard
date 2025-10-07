@@ -562,10 +562,75 @@ position: absolute;
 
 /* 全屏模式下的优化 */
 .fullscreen .container {
-    height: 100vh;
+    background-color: #f5f5f5 !important; /* 强制设置背景色 */
+}
+
+/* 确保全屏元素背景色正确 */
+.container:fullscreen {
+    background-color: #f5f5f5 !important;
+}
+
+.container:-webkit-full-screen {
+    background-color: #f5f5f5 !important; /* Safari */
+}
+
+.container:-ms-fullscreen {
+    background-color: #f5f5f5 !important; /* IE/Edge */
+}
+
+/* 全屏时的标题样式 */
+.fullscreen h1 {
+    margin: 7px 0;
+    font-size: 1.5em;
+}
+
+/* 全屏时的按钮位置调整 */
+.fullscreen .top-buttons {
+    top: 15px;
+    right: 15px;
+}
+
+.fullscreen .home-button {
+    top: 15px;
+    left: 15px;
+}
+
+/* 确保全屏模式下的滚动条正常 */
+.fullscreen .container {
     overflow-y: auto;
 }
 
+/* 全屏时的列布局优化 */
 .fullscreen .columns {
-    height: calc(100vh - 120px);
+    gap: 20px;
+}
+
+.fullscreen .column {
+    min-width: 0;
+}
+
+/* 确保模态窗口在全屏模式下也能正常显示 */
+#settingsModal,
+#quickPublishModal,
+#quickPublishModal2 {
+    position: fixed !important;
+    z-index: 10000 !important;
+}
+
+/* 全屏模式下的模态窗口背景 */
+.container.fullscreen ~ #settingsModal,
+.container.fullscreen ~ #quickPublishModal,
+.container.fullscreen ~ #quickPublishModal2 {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 10000 !important;
+}
+
+/* 模态窗口内容区域 */
+.modal-content {
+    position: relative !important;
+    z-index: 10001 !important;
 }
