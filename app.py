@@ -2683,8 +2683,6 @@ class CampusLegendGame:
         except Exception as e:
             return jsonify({'success': False, 'message': str(e)}), 500
 
-
-
 homework = Homework()
 label = Label()
 subject = Subject()

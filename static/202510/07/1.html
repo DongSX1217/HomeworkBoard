@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章阅读页面</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f9f9f9;
+            transition: all 0.3s ease;
+        }
+        
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .dark-mode header {
+            border-bottom-color: #444;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .dark-mode h1 {
+            color: #f0f0f0;
+        }
+        
+        .meta {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .dark-mode .meta {
+            color: #aaa;
+        }
+        
+        .content {
+            font-size: 1.1rem;
+            margin-bottom: 40px;
+        }
+        
+        .content p {
+            margin-bottom: 20px;
+            text-align: justify;
+        }
+        
+        .content h2 {
+            margin: 30px 0 15px;
+            color: #3498db;
+        }
+        
+        .dark-mode .content h2 {
+            color: #5dade2;
+        }
+        
+        blockquote {
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+            margin: 20px 0;
+            font-style: italic;
+            color: #555;
+        }
+        
+        .dark-mode blockquote {
+            border-left-color: #5dade2;
+            color: #bbb;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+            color: #7f8c8d;
+        }
+        
+        .dark-mode footer {
+            border-top-color: #444;
+            color: #aaa;
+        }
+        
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .dark-mode .theme-toggle {
+            background: #5dade2;
+            color: #1a1a1a;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content {
+                font-size: 1rem;
+            }
+            
+            .theme-toggle {
+                top: 10px;
+                right: 10px;
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">切换主题</button>
+    
+    <div class="container">
+        <header>
+            <h1>关于“防范青少年药物滥用”禁毒作品征集的补充通知 </h1>
+            <div class="meta">日期：2025年10月7日</div>
+        </header>
+        
+        <article class="content">
+            <p>各位班长：</p><br>
+            <p>为确保“防范青少年药物滥用，助力无毒品危害自由贸易港建设”禁毒作品征集活动有序推进，现将作品提交、报名表填写及后续公益展出的关键事宜补充通知如下：</p>
+            <p>1.除班主任将作品电子版发送德育处邮箱之外，每个班级还可以提交纸质作品，由学生会组织公益展出，并为作者颁发志愿证明（以绘画作品为例，单个优秀电子设计作品加志愿时长2小时，单个精品手绘作品加志愿时长4小时。其它作品经评审后酌情添加）。</p>
+            <p>2.10月8日晚自习期间，学生会干部会到各班下发《公益展出作品登记表》，请班长收集本班作品，并写好登记表。</p>
+            <p>3.纸质版作品提交时间：10月9日晚自习19:00，学生干部将前往各班收集收集纸质作品和登记表。</p>
+            <p>4.注意事项：<br>
+            (1)书法、绘画、手抄报等纸质作品需保持画面整洁，无褶皱、污渍；征文需要工整书写或打印。<br>
+            (2)作品需要注明作者班级及姓名。<br>
+            (3)本次活动纸质版作品将在各年级公告栏进行公益展出，展出期间请同学们爱护作品。<br>
+            欢迎同学们积极参加活动，让禁毒理念通过创意作品广泛传播。</p>
+            <br>
+            <p>人大附中三亚学校 校学生会 秘书处<br>
+            2025年10月6日</p>
+            <h3 id="附原通知内容">附：原通知内容 </h3>
+            <p>禁毒作品征集活动<br>
+            <strong>主题：</strong>“防范青少年药物滥用，助力无毒品危害自由贸易港建设”<br>
+            <strong>形式：</strong>书法、绘画、征文、手抄报、短视频（1分钟内）等，题材不限。<br>
+            <strong>要求：</strong><br>
+            数量要求：每个班级至少择优提交2个作品，多者不限。<br>
+            提交截止日期：2024年10月9日前将作品电子版发送德育处邮箱。</p>
+        </article>
+        
+        <footer>
+            <p>转自班级群</p>
+        </footer>
+    </div>
+    
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-mode');
+            const button = document.querySelector('.theme-toggle');
+            if (document.body.classList.contains('dark-mode')) {
+                button.textContent = '浅色模式';
+            } else {
+                button.textContent = '深色模式';
+            }
+        }
+        
+        // 根据系统偏好设置初始主题
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.body.classList.add('dark-mode');
+            document.querySelector('.theme-toggle').textContent = '浅色模式';
+        }
+    </script>
+</body>
+</html>
