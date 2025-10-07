@@ -29,10 +29,7 @@
                         {% for submission in subject_submissions %}
                         <li class="homework-item" data-deadline="{{ submission.deadline }}">
                             <div class="content-wrapper">
-                                <span class="content">{{ submission.content | replace('\r\n', '
-') | replace('\n', '
-') | replace('\r', '
-') }}</span>
+                                <span class="content">{{ submission.content | replace('\r\n', '<br>') | replace('\n', '<br>') | replace('\r', '<br>') | safe }}</span>
                                 <span class="labels">
                                     {% set submission_label_ids = submission.label_ids if submission.label_ids is defined else [] %}
                                     {% if submission_label_ids %}

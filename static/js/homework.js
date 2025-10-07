@@ -590,7 +590,7 @@ function createHomeworkItem(submission) {
 
     const contentSpan = document.createElement('span');
     contentSpan.className = 'content';
-    contentSpan.textContent = submission.content;
+    contentSpan.innerHTML = submission.content.replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
     contentWrapper.appendChild(contentSpan);
 
     const labelsSpan = document.createElement('span');
