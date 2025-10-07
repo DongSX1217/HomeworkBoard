@@ -1307,7 +1307,7 @@ class Fun:
             if (input_entry['timestamp'] == timestamp and 
                 input_entry['content'] == content):
                 # 检查权限：发布者或管理员
-                if (input_entry['ip_address'] == client_ip or 
+                if (input_entry['student_id'] == student_id or 
                     client_ip == '127.0.0.1' or 
                     client_ip in data_ip.get('admin_ips', [])):
                     deleted = True
