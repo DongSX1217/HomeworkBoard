@@ -67,18 +67,6 @@ position: absolute;
     background-color: #0b7dda;
 }
 
-/* 设置弹窗样式 */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
 .modal-content {
     background-color: #fff;
     margin: 15% auto;
@@ -209,21 +197,29 @@ position: absolute;
     display: inline-block;
     padding: 3px 5px;
     margin: 2px;
-    border-radius: 4.8px; /* 圆角 */
+    border-radius: 4.8px;
     font-size: 0.8em;
     color: #fff;
     background-color: #3498db;
+    font-weight: bold; /* 添加字体加粗 */
+    text-shadow: none; /* 移除文字阴影 */
+    opacity: 1; /* 确保不透明 */
+    border: 1px solid rgba(0,0,0,0.1); /* 添加边框增强清晰度 */
 }
 
 .label-preview {
     display: inline-block;
     padding: 3px 5px;
     margin: 2px;
-    border-radius: 4.8px; /* 圆角 */
+    border-radius: 4.8px;
     font-size: 0.9em;
     color: #fff;
     min-width: 60px;
     text-align: center;
+    font-weight: bold; /* 添加字体加粗 */
+    text-shadow: none; /* 移除文字阴影 */
+    opacity: 1; /* 确保不透明 */
+    border: 1px solid rgba(0,0,0,0.1); /* 添加边框增强清晰度 */
 }
 
 /* 截止日期和时间戳容器 */
@@ -472,6 +468,21 @@ position: absolute;
 
 .btn-submit:hover {
     background-color: #218838;
+}
+
+/* 改善学科选择框的显示 */
+.subject-select {
+    min-height: 44px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+    background-color: white;
+    appearance: menulist;
+    -webkit-appearance: menulist;
+    -moz-appearance: menulist;
+    z-index: 10010; /* 提高z-index确保在最上层 */
+    position: relative;
 }
 
 /* 多选下拉框样式 */
@@ -798,17 +809,7 @@ position: absolute;
         max-height: 90vh;
     }
     
-    #quickPublishModal .modal-content {
-        left: 5%;
-        width: 45%;
-        max-width: 500px;
-    }
-    
-    #quickPublishModal2 .modal-content {
-        right: 5%;
-        width: 45%;
-        max-width: 500px;
-    }
+
 }
 
 /* 改善弹窗在移动设备上的显示 */
@@ -876,6 +877,7 @@ position: absolute;
     touch-action: manipulation;
 }
 
+/* 确保两个弹窗可以同时显示 */
 #quickPublishModal .modal-content {
     position: fixed;
     top: 50%;
@@ -916,6 +918,14 @@ position: absolute;
         transform: translate(-50%, -50%);
         width: 45%;
         max-width: 450px;
+    }
+}
+
+/* 改善选择框在移动设备上的体验 */
+@media (max-width: 768px) {
+    .subject-select {
+        font-size: 16px; /* 防止iOS缩放 */
+        padding: 12px;
     }
 }
 
@@ -996,7 +1006,6 @@ select.form-control {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(2px);
 }
 
 /* 修复全屏模式下的弹窗显示 */
@@ -1049,4 +1058,12 @@ select.form-control {
 
 .close:hover {
     color: black;
+}
+
+/* 确保选择框选项清晰 */
+.subject-select option {
+    font-size: 16px;
+    padding: 8px;
+    background: white;
+    color: #333;
 }

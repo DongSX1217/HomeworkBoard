@@ -18,6 +18,7 @@ document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // 
 document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
 
 // 页面加载完成后初始化
+// 页面加载完成后初始化
 window.onload = function() {
     loadSettings();
     startAutoRefresh();
@@ -25,6 +26,14 @@ window.onload = function() {
     loadQuickPublishData();
     updateFloatButtonPosition();
     initSubjectSelects(); // 初始化学科选择框
+    
+    // 添加全局点击事件处理，确保选择框可以正常工作
+    document.addEventListener('click', function(e) {
+        // 如果点击的是选择框，不阻止默认行为
+        if (e.target.classList.contains('subject-select')) {
+            return;
+        }
+    });
 };
 
 // 加载设置（从cookie）
@@ -778,14 +787,9 @@ function openQuickPublishModal() {
     // 确保弹窗可见
     setTimeout(() => {
         modal.scrollTop = 0;
-        // 修复学科选择框
-        const subjectSelect = document.getElementById('quickSubject');
-        if (subjectSelect) {
-            subjectSelect.focus();
-            subjectSelect.blur(); // 确保可以正常选择
-        }
+        initSubjectSelects(); // 重新初始化选择框
     }, 10);
-}   
+}
 
 // 关闭第一个快捷布置弹窗
 function closeQuickPublishModal() {
@@ -818,12 +822,7 @@ function openQuickPublishModal2() {
     // 确保弹窗可见
     setTimeout(() => {
         modal.scrollTop = 0;
-        // 修复学科选择框
-        const subjectSelect = document.getElementById('quickSubject2');
-        if (subjectSelect) {
-            subjectSelect.focus();
-            subjectSelect.blur(); // 确保可以正常选择
-        }
+        initSubjectSelects(); // 重新初始化选择框
     }, 10);
 }
 
@@ -834,18 +833,14 @@ function closeQuickPublishModal2() {
 
 // 添加从第一个弹窗打开第二个弹窗的函数
 function openSecondModalFromFirst() {
-    closeQuickPublishModal();
-    setTimeout(() => {
-        openQuickPublishModal2();
-    }, 50);
+    // 不再关闭第一个弹窗，直接打开第二个
+    openQuickPublishModal2();
 }
 
 // 添加从第二个弹窗打开第一个弹窗的函数
 function openFirstModalFromSecond() {
-    closeQuickPublishModal2();
-    setTimeout(() => {
-        openQuickPublishModal();
-    }, 50);
+    // 不再关闭第二个弹窗，直接打开第一个
+    openQuickPublishModal();
 }
 
 function initSubjectSelects() {
@@ -1172,6 +1167,12 @@ window.onclick = function(event) {
     const settingsModal = document.getElementById("settingsModal");
     const quickPublishModal = document.getElementById("quickPublishModal");
     const quickPublishModal2 = document.getElementById("quickPublishModal2");
+    
+    // 如果点击的是选择框，不关闭弹窗
+    if (event.target.classList.contains('subject-select') || 
+        event.target.closest('.subject-select')) {
+        return;
+    }
     
     if (event.target == settingsModal) {
         closeSettings();
