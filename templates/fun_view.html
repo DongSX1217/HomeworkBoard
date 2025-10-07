@@ -179,13 +179,11 @@
                         <div class="submission-header">
                             <span class="submission-name">{{ input.name }}</span>
                             <span class="submission-time">{{ input.timestamp }}</span>
-                            {% if input.ip_address == request.remote_addr or request.remote_addr == '127.0.0.1' %}
                             <form method="POST" action="{{ url_for('fun_delete_input') }}" style="display: inline;">
                                 <input type="hidden" name="timestamp" value="{{ input.timestamp }}">
                                 <input type="hidden" name="content" value="{{ input.content }}">
                                 <button type="submit" class="delete-btn" onclick="return confirm('确定要删除这条提交吗？')">删除</button>
                             </form>
-                            {% endif %}
                         </div>
                         <div class="submission-content">{{ input.content | safe }}</div>
                     </div>
