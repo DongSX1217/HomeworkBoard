@@ -273,18 +273,8 @@ function fillColumnsSequentially(items, columns, colCount) {
                 
             let targetColumn = findTargetColumn(columnHeights, itemTotalHeight, maxColumnHeight, subjectStartColumn);
             
-            // 如果找不到合适的列，使用高度最小的列
-            if (targetColumn === -1) {
-                let minHeightIndex = 0;
-                let minHeight = columnHeights[0];
-                for (let i = 1; i < colCount; i++) {
-                    if (columnHeights[i] < minHeight) {
-                        minHeight = columnHeights[i];
-                        minHeightIndex = i;
-                    }
-                }
-                targetColumn = minHeightIndex;
-            }
+            // 如果找不到合适的列，使用最后一列（修改这里）
+            // 现在findTargetColumn函数已经返回最后一列，所以这里不需要额外处理
             
             // 记录学科开始的列
             if (subjectStartColumn === -1) {
@@ -330,16 +320,8 @@ function findTargetColumn(columnHeights, itemHeight, maxHeight, subjectStartColu
         }
     }
     
-    // 如果所有列都放不下，返回高度最小的列
-    let minHeightIndex = 0;
-    let minHeight = columnHeights[0];
-    for (let i = 1; i < columnHeights.length; i++) {
-        if (columnHeights[i] < minHeight) {
-            minHeight = columnHeights[i];
-            minHeightIndex = i;
-        }
-    }
-    return minHeightIndex;
+    // 如果所有列都放不下，返回最后一列（修改这里）
+    return columnHeights.length - 1;
 }
 
 // 顺序添加作业项到指定列（返回实际高度）
