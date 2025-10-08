@@ -72,13 +72,12 @@
                 <input type="number" id="refreshInterval" min="10" max="3600" value="60">
             </div>
             <div class="setting-group">
-                <label for="fontSize">字体大小：</label>
-                <select id="fontSize">
-                    <option value="15">小</option>
-                    <option value="20" selected>中</option>
-                    <option value="26">大</option>
-                    <option value="34">超大</option>
-                </select>
+                <label for="fontSize">字体大小（px）：</label>
+                <div class="font-size-control">
+                    <button type="button" class="font-size-btn" onclick="adjustFontSize(-1)">-</button>
+                    <input type="number" id="fontSize" min="10" max="50" value="20">
+                    <button type="button" class="font-size-btn" onclick="adjustFontSize(1)">+</button>
+                </div>
             </div>
             <div class="setting-group">
                 <div class="checkbox-group">

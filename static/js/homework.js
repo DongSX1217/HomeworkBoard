@@ -43,12 +43,15 @@ function loadSettings() {
         refreshInterval = parseInt(savedInterval);
         document.getElementById("refreshInterval").value = refreshInterval;
     } else {
-        refreshInterval = 60;
+        refreshInterval = 600;
     }
     const savedFontSize = getCookie("fontSize");
     if (savedFontSize) {
         document.body.style.fontSize = savedFontSize + 'px';
         document.getElementById("fontSize").value = savedFontSize;
+    } else {
+        // 设置默认字体大小为20px
+        document.getElementById("fontSize").value = 20;
     }
     const hideExpired = getCookie("hideExpired");
     if (hideExpired === "true") {
@@ -74,18 +77,23 @@ function loadSettings() {
 // 保存设置（到cookie）
 function saveSettings() {
     const newInterval = document.getElementById("refreshInterval").value;
-    if (newInterval >= 10 && newInterval <= 3600) {
+    if (newInterval >= 20 && newInterval <= 3600) {
         refreshInterval = parseInt(newInterval);
         setCookie("refreshInterval", refreshInterval, 30);
         if (intervalId) clearInterval(intervalId);
         startAutoRefresh();
     } else {
-        alert('刷新间隔必须在10-3600秒之间');
+        alert('刷新间隔必须在20~3600秒之间');
         return;
     }
     const fontSize = document.getElementById("fontSize").value;
-    document.body.style.fontSize = fontSize + 'px';
-    setCookie("fontSize", fontSize, 30);
+    if (fontSize >= 5 && fontSize <= 50) {
+        document.body.style.fontSize = fontSize + 'px';
+        setCookie("fontSize", fontSize, 30);
+    } else {
+        alert('字体大小必须在5~50像素之间');
+        return;
+    }
     const hideExpired = document.getElementById("hideExpired").checked;
     setCookie("hideExpired", hideExpired, 30);
     const EditButton = document.getElementById("EditButton").checked;
@@ -123,6 +131,20 @@ function getCookie(name) {
         if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
     }
     return null;
+}
+
+// 调整字体大小
+function adjustFontSize(change) {
+    const fontSizeInput = document.getElementById("fontSize");
+    let currentSize = parseInt(fontSizeInput.value) || 20;
+    currentSize += change;
+    
+    // 限制字体大小在合理范围内
+    if (currentSize < 5) currentSize = 5;
+    if (currentSize > 50) currentSize = 50;
+    
+    fontSizeInput.value = currentSize;
+    document.body.style.fontSize = currentSize + 'px';
 }
 
 // 开始自动刷新
