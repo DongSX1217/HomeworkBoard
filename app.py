@@ -313,15 +313,19 @@ def homepage():
     return render_template('home.html')
 
 @app.route('/clock')
-def clockpage():
+def clock_page():
     return render_template('clock.html')
 
 @app.route('/image')
-def imagepage():
+def image_page():
     return render_template('image.html')
 
+@app.route('/class_schedule')
+def class_schedule_page():
+    return render_template('class_schedule.html')
+
 @app.route('/countdown')
-def countdownpage():
+def countdown_page():
     return render_template('countdown.html')
 
 
