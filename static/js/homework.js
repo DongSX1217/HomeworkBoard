@@ -34,6 +34,9 @@ window.onload = function() {
             return;
         }
     });
+
+    // 添加窗口大小变化监听
+    window.addEventListener('resize', handleWindowResize);
 };
 
 // 加载设置（从cookie）
@@ -815,7 +818,7 @@ function openQuickPublishModal() {
     setTimeout(() => {
         modal.scrollTop = 0;
         initSubjectSelects();
-        initSubjectChangeListeners(); // 确保事件监听器已初始化
+        initSubjectChangeListeners();
     }, 10);
 }
 
@@ -852,7 +855,7 @@ function openQuickPublishModal2() {
     setTimeout(() => {
         modal.scrollTop = 0;
         initSubjectSelects();
-        initSubjectChangeListeners(); // 确保事件监听器已初始化
+        initSubjectChangeListeners();
     }, 10);
 }
 
@@ -863,14 +866,30 @@ function closeQuickPublishModal2() {
 
 // 添加从第一个弹窗打开第二个弹窗的函数
 function openSecondModalFromFirst() {
-    // 不再关闭第一个弹窗，直接打开第二个
-    openQuickPublishModal2();
+    // 在移动设备上，关闭第一个再打开第二个
+    if (window.innerWidth <= 1023) {
+        closeQuickPublishModal();
+        setTimeout(() => {
+            openQuickPublishModal2();
+        }, 300);
+    } else {
+        // 在横屏设备上，直接打开第二个
+        openQuickPublishModal2();
+    }
 }
 
 // 添加从第二个弹窗打开第一个弹窗的函数
 function openFirstModalFromSecond() {
-    // 不再关闭第二个弹窗，直接打开第一个
-    openQuickPublishModal();
+    // 在移动设备上，关闭第二个再打开第一个
+    if (window.innerWidth <= 1023) {
+        closeQuickPublishModal2();
+        setTimeout(() => {
+            openQuickPublishModal();
+        }, 300);
+    } else {
+        // 在横屏设备上，直接打开第一个
+        openQuickPublishModal();
+    }
 }
 
 function initSubjectSelects() {
@@ -1435,6 +1454,11 @@ document.addEventListener('touchstart', function(event) {
     const quickPublishModal = document.getElementById("quickPublishModal");
     const quickPublishModal2 = document.getElementById("quickPublishModal2");
     
+    // 检查是否点击了模态框内容区域，如果是则不要关闭
+    if (event.target.closest('.modal-content')) {
+        return;
+    }
+    
     if (event.target === settingsModal) {
         closeSettings();
     }
@@ -1445,3 +1469,14 @@ document.addEventListener('touchstart', function(event) {
         closeQuickPublishModal2();
     }
 });
+
+// 处理窗口大小变化
+function handleWindowResize() {
+    const modal1 = document.getElementById("quickPublishModal");
+    const modal2 = document.getElementById("quickPublishModal2");
+    
+    // 如果从横屏切换到竖屏且两个窗口都打开，关闭第二个窗口
+    if (window.innerWidth <= 1023 && modal1.style.display === "block" && modal2.style.display === "block") {
+        closeQuickPublishModal2();
+    }
+}

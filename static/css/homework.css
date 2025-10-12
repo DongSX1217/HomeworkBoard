@@ -492,24 +492,23 @@ h1 {
 .words-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
+    gap: 2px;
 }
 
 .word-grid-btn {
-    padding: 4px 2px;
+    padding: 2px 1px;
     border: 1px solid #e0e0e0;
     background-color: #fff;
     border-radius: 2px;
     cursor: pointer;
-    font-size: 9px;
+    font-size: 8px;
     text-align: center;
     transition: all 0.15s ease;
     touch-action: manipulation;
-    min-height: 22px;
+    min-height: 20px;
     line-height: 1.2;
     word-break: break-word; /* 允许长词换行 */
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: normal; /* 允许换行 */
     display: flex;
     align-items: center;
@@ -712,13 +711,14 @@ h1 {
     
     .words-grid {
         grid-template-columns: repeat(4, 1fr);
-        gap: 2px;
+        gap: 1px;
     }
-    
+
     .word-grid-btn {
-        padding: 3px 1px;
-        font-size: 8px;
-        min-height: 20px;
+        font-size: 7px;
+        min-height: 16px;
+        padding: 1px 0.5px;
+        line-height: 1.1;
     }
     
     .section-title {
@@ -766,9 +766,10 @@ h1 {
     }
     
     .word-grid-btn {
-        font-size: 7px;
-        min-height: 18px;
-        padding: 2px 1px;
+        font-size: 6px;
+        min-height: 14px;
+        padding: 1px 0.5px;
+        line-height: 1.0;
     }
     
     .form-control {
@@ -1000,41 +1001,52 @@ h1 {
 
 /* 横屏下两个弹窗并排显示 */
 @media (min-width: 1024px) and (orientation: landscape) {
-    .quick-publish-modal {
+    #quickPublishModal .modal-content.quick-publish-left {
+        left: 25%;
+        transform: translate(-50%, -50%);
+        width: 45%;
+        max-width: 450px;
         position: fixed;
         top: 50%;
-        transform: translateY(-50%);
         margin: 0;
-        max-height: 90vh;
+    }
+    
+    #quickPublishModal2 .modal-content.quick-publish-right {
+        left: 75%;
+        transform: translate(-50%, -50%);
+        width: 45%;
+        max-width: 450px;
+        position: fixed;
+        top: 50%;
+        margin: 0;
+    }
+    
+    /* 当两个弹窗同时显示时，调整位置避免重叠 */
+    #quickPublishModal[style*="display: block"] ~ #quickPublishModal2[style*="display: block"] .quick-publish-left,
+    #quickPublishModal2[style*="display: block"] ~ #quickPublishModal[style*="display: block"] .quick-publish-right {
+        width: 40%;
+        max-width: 400px;
     }
 }
 
-/* 改善弹窗在移动设备上的显示 */
+/* 确保模态窗口背景不会相互覆盖 */
+.modal {
+    background-color: rgba(0, 0, 0, 0.4); /* 降低透明度，使多个模态框叠加时不会太暗 */
+}
+
+/* 移动设备上确保两个弹窗不会同时显示 */
 @media (max-width: 1023px) {
-    .quick-publish-modal {
-        width: 95%;
-        max-width: 500px;
-        margin: 2% auto;
-    }
-    
-    /* 在移动设备上，弹窗叠加显示，但确保浮动按钮可见 */
-    #quickPublishModal,
-    #quickPublishModal2 {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: rgba(0,0,0,0.5);
-    }
-    
-    .quick-publish-modal .modal-content {
-        position: absolute;
-        top: 50%;
+    #quickPublishModal2 .modal-content,
+    #quickPublishModal .modal-content {
         left: 50%;
         transform: translate(-50%, -50%);
-        max-height: 80vh;
-        overflow-y: auto;
+        width: 95%;
+        max-width: 500px;
+    }
+    
+    /* 在移动设备上，当第二个弹窗打开时，自动关闭第一个 */
+    #quickPublishModal2[style*="display: block"] ~ #quickPublishModal {
+        display: none !important;
     }
 }
 
@@ -1260,21 +1272,21 @@ select.form-control {
 
 /* 长词显示优化 */
 .long-word {
-    font-size: 8px;
-    line-height: 1.1;
-    padding: 2px 1px;
+    font-size: 7.6px;
+    line-height: 1.0;
+    padding: 1px 0.5px;
 }
 
 /* 常用词按钮自适应高度 */
 .word-grid-btn.adaptive-height {
     min-height: auto;
     height: auto;
-    padding: 3px 1px;
+    padding: 1px 0.5px;
 }
 
 /* 针对特别长的词 */
 .word-grid-btn.very-long {
-    font-size: 7px;
+    font-size: 6px;
     line-height: 1;
-    padding: 2px 1px;
+    padding: 1px 0.5px;
 }
