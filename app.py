@@ -4,8 +4,73 @@ import base64, time, json, re, os, uuid, threading, requests, smtplib, sys, rand
 import http.client
 from datetime import datetime, timedelta
 from openai import OpenAI
+import logging
+import traceback
+
+# 导入配置
+try:
+    from config import config, Config
+except ImportError:
+    # 如果配置文件不存在，使用默认配置
+    class Config:
+        SECRET_KEY = 'test_key'
+        DATA_DIR = 'data'
+        DEBUG = False
+        LOG_DIR = os.path.join(DATA_DIR, 'logs')
+        ERROR_LOG_FILE = os.path.join(LOG_DIR, 'error.log')
+        
+        @staticmethod
+        def init_app(app):
+            if not os.path.exists(Config.DATA_DIR):
+                os.makedirs(Config.DATA_DIR)
+            if not os.path.exists(Config.LOG_DIR):
+                os.makedirs(Config.LOG_DIR)
+    
+    config = {'default': Config}
 
 app = Flask(__name__) # 创建 Flask 应用
+
+# 配置应用
+config_type = os.environ.get('FLASK_CONFIG', 'default')
+app.config.from_object(config[config_type])
+
+# 初始化配置
+Config.init_app(app)
+
+# 设置日志记录器
+if not app.config.get('DEBUG', False):
+    # 在非调试模式下，记录错误日志到文件
+    error_logger = logging.getLogger('error_logger')
+    error_logger.setLevel(logging.ERROR)
+    
+    # 创建文件处理器
+    file_handler = logging.FileHandler(Config.ERROR_LOG_FILE, encoding='utf-8')
+    file_handler.setLevel(logging.ERROR)
+    
+    # 创建日志格式
+    formatter = logging.Formatter(
+        '%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    )
+    file_handler.setFormatter(formatter)
+    
+    # 添加处理器到日志记录器
+    error_logger.addHandler(file_handler)
+else:
+    error_logger = None
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # 记录错误日志
+    if error_logger and not app.config.get('DEBUG', False):
+        error_logger.error(f"Error: {str(e)}\nTraceback: {traceback.format_exc()}")
+    
+    # 在调试模式下，仍然显示默认的错误页面
+    if app.config.get('DEBUG', False):
+        raise e
+    
+    # 在生产环境中，渲染自定义错误页面
+    return render_template('error.html', error=str(e)), 500
+
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
 
 @app.context_processor
@@ -2965,4 +3030,4 @@ fun = Fun()
 classroom_game = ClassroomGame()
 campus_legend_game = CampusLegendGame()
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=False,port=2025)
+    app.run(host='0.0.0.0', debug=app.config.get('DEBUG', False), port=2025)

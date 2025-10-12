@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>系统错误</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #d9534f;
+            text-align: center;
+        }
+        .error-details {
+            background-color: #f9f2f4;
+            border: 1px solid #d9534f;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        a {
+            color: #337ab7;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>网站发生错误</h1>
+        <p>很抱歉，网站发生了意外错误，请您向开发者报告，给您带来的不便敬请谅解！</p>
+        
+        {% if error %}
+        <div class="error-details">{{ error }}</div>
+        {% endif %}
+        
+        <div class="back-link">
+            <a href="/">返回首页</a>
+        </div>
+    </div>
+</body>
+</html>
