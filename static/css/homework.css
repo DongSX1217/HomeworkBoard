@@ -551,6 +551,15 @@ position: absolute;
     -moz-appearance: menulist;
     z-index: 10010; /* 提高z-index确保在最上层 */
     position: relative;
+    cursor: pointer; /* 确保显示为可点击 */
+}
+
+.subject-select option {
+    font-size: 16px;
+    padding: 8px;
+    background: white;
+    color: #333;
+    border: none;
 }
 
 /* 多选下拉框样式 */
@@ -1013,6 +1022,7 @@ select.form-control {
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
     appearance: menulist;
+    background-image: none; /* 防止自定义样式干扰 */
 }
 
 /* 新的按钮样式 */
@@ -1128,10 +1138,9 @@ select.form-control {
     color: black;
 }
 
-/* 确保选择框选项清晰 */
-.subject-select option {
-    font-size: 16px;
-    padding: 8px;
-    background: white;
-    color: #333;
+/* 确保选择框在模态窗口中正常工作 */
+.quick-publish-modal .form-control:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
 }

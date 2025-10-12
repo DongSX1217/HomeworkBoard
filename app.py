@@ -593,12 +593,13 @@ class Homework:
         self.labels = labels
         self.deadline = deadline
         self.timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        '''
+    '''
     @app.route('/homework')
     def view_homework():
         # 每次访问时都重新加载数据，确保获取最新数据
         submissions = load_submissions()
         labels = Label.load_labels()
+        subjects = Subject.load_subjects()  # 添加这行
         
         # 按学科分组作业
         grouped_submissions = {}
@@ -608,7 +609,7 @@ class Homework:
                 grouped_submissions[subject] = []
             grouped_submissions[subject].append(submission)
         
-        return render_template('homework.html', submissions=grouped_submissions, labels=labels)
+        return render_template('homework.html', submissions=grouped_submissions, labels=labels, subjects=subjects)  # 添加 subjects
     
     @app.route('/api/homework')
     def api_homework():

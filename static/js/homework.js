@@ -18,7 +18,6 @@ document.addEventListener('webkitfullscreenchange', handleFullscreenChange); // 
 document.addEventListener('msfullscreenchange', handleFullscreenChange); // IE/Edge
 
 // 页面加载完成后初始化
-// 页面加载完成后初始化
 window.onload = function() {
     loadSettings();
     startAutoRefresh();
@@ -806,7 +805,7 @@ function openQuickPublishModal() {
     // 加载常用词
     loadCommonWordsGrid('commonWordsGrid');
     
-    // 确保弹窗可见
+    // 确保弹窗可见并重新初始化选择框
     setTimeout(() => {
         modal.scrollTop = 0;
         initSubjectSelects(); // 重新初始化选择框
@@ -841,7 +840,7 @@ function openQuickPublishModal2() {
     // 加载常用词
     loadCommonWordsGrid('commonWordsGrid2');
     
-    // 确保弹窗可见
+    // 确保弹窗可见并重新初始化选择框
     setTimeout(() => {
         modal.scrollTop = 0;
         initSubjectSelects(); // 重新初始化选择框
@@ -868,33 +867,29 @@ function openFirstModalFromSecond() {
 function initSubjectSelects() {
     const subjectSelects = document.querySelectorAll('.subject-select');
     subjectSelects.forEach(select => {
-        // 移除所有可能干扰的事件监听器
-        select.onmousedown = null;
-        select.ontouchstart = null;
-        select.onclick = null;
+        // 完全移除可能干扰的事件监听器
+        const newSelect = select.cloneNode(true);
+        select.parentNode.replaceChild(newSelect, select);
         
-        // 重新添加简单的事件处理
-        select.addEventListener('mousedown', function(e) {
+        // 重新添加简单的事件处理 - 只阻止模态窗口关闭，不阻止选择框行为
+        newSelect.addEventListener('mousedown', function(e) {
             e.stopPropagation();
-            // 允许默认行为
         });
         
-        select.addEventListener('touchstart', function(e) {
+        newSelect.addEventListener('touchstart', function(e) {
             e.stopPropagation();
-            // 允许默认行为
         });
         
-        // 添加点击事件确保可以打开下拉
-        select.addEventListener('click', function(e) {
+        newSelect.addEventListener('click', function(e) {
             e.stopPropagation();
         });
         
         // 修复 iOS Safari 上的问题
-        select.addEventListener('focus', function() {
+        newSelect.addEventListener('focus', function() {
             this.style.backgroundColor = '#fff';
         });
         
-        select.addEventListener('blur', function() {
+        newSelect.addEventListener('blur', function() {
             this.style.backgroundColor = '';
         });
     });
@@ -1190,8 +1185,9 @@ window.onclick = function(event) {
     const quickPublishModal = document.getElementById("quickPublishModal");
     const quickPublishModal2 = document.getElementById("quickPublishModal2");
     
-    // 如果点击的是选择框，不关闭弹窗
+    // 如果点击的是选择框或其选项，不关闭弹窗
     if (event.target.classList.contains('subject-select') || 
+        event.target.tagName === 'OPTION' ||
         event.target.closest('.subject-select')) {
         return;
     }
