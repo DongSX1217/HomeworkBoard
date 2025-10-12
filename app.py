@@ -643,6 +643,9 @@ class Homework:
         subjects = Subject.load_subjects()
         
         if request.method == 'POST':
+            # 检查是否是 AJAX 请求
+            is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+            
             # 检查是否是返回修改操作
             return_to_edit = request.form.get('return_to_edit')
             if return_to_edit:
@@ -669,9 +672,10 @@ class Homework:
                 errors.append("请选择学科")
             if not content or len(content.strip()) < 5:
                 errors.append("内容至少需要5个字符")
-            # 移除了必须填写截止日期的要求
             
             if errors:
+                if is_ajax:
+                    return jsonify({'success': False, 'message': ' '.join(errors)})
                 for error in errors:
                     flash(error, 'error')
             else:
@@ -692,7 +696,7 @@ class Homework:
                         selected_label_ids.append(unknown_label["id"])
                 
                 # 如果未确认，则显示确认页面
-                if not confirm:
+                if not confirm and not is_ajax:
                     confirm_data = {
                         'subject': subject,
                         'content': content,
@@ -705,11 +709,11 @@ class Homework:
                     session['publish_label_ids'] = [int(x) for x in label_ids]
                     session['publish_deadline'] = deadline
                     return render_template('homework_publish.html', 
-                                         now=datetime.now(), 
-                                         tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
-                                         labels=labels,
-                                         subjects=subjects,
-                                         confirm_data=confirm_data)
+                                        now=datetime.now(), 
+                                        tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                                        labels=labels,
+                                        subjects=subjects,
+                                        confirm_data=confirm_data)
                 
                 # 确认后执行添加操作
                 # 加载最新的数据
@@ -729,11 +733,10 @@ class Homework:
                 save_submissions(submissions)
                 
                 # 清除session中的发布数据
-                '''
                 session.pop('publish_subject', None)
                 session.pop('publish_content', None)
                 session.pop('publish_label_ids', None)
-                session.pop('publish_deadline', None)'''
+                session.pop('publish_deadline', None)
                 
                 # 记录日志
                 log_operation("添加作业", {
@@ -742,6 +745,9 @@ class Homework:
                     "labels": selected_labels,
                     "deadline": deadline if deadline else '无截止日期'
                 }, get_client_ip())
+                
+                if is_ajax:
+                    return jsonify({'success': True, 'message': '作业布置成功！'})
                 
                 flash('作业布置成功！', 'success')
                 return redirect(url_for('view_submissions'))
@@ -756,10 +762,10 @@ class Homework:
         labels = Label.load_labels()
         subjects = Subject.load_subjects()
         return render_template('homework_publish.html', 
-                             now=datetime.now(), 
-                             tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
-                             labels=labels,
-                             subjects=subjects)
+                            now=datetime.now(), 
+                            tomorrow=(datetime.now() + timedelta(days=1)).strftime('%Y-%m-%d'),
+                            labels=labels,
+                            subjects=subjects)
 
     @app.route('/homework/edit/<int:homework_id>', methods=['GET', 'POST'])
     def edit_homework(homework_id):

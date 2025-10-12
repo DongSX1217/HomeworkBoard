@@ -1044,13 +1044,18 @@ function submitQuickPublish() {
         selectedLabels.push(checkbox.value);
     });
     
+    if (!subject) {
+        alert('请选择学科');
+        return;
+    }
+    
     if (!content) {
         alert('请输入作业内容');
         document.getElementById('quickContent').focus();
         return;
     }
     
-    // 提交数据
+    // 构建表单数据
     const formData = new FormData();
     formData.append('subject', subject);
     formData.append('content', content);
@@ -1061,13 +1066,43 @@ function submitQuickPublish() {
         formData.append('label_ids', labelId);
     });
     
+    // 添加确认标记，跳过确认页面直接提交
+    formData.append('confirm', 'true');
+    
+    console.log('提交数据:', {
+        subject: subject,
+        content: content,
+        deadline: deadline,
+        labels: selectedLabels
+    });
+    
+    // 提交数据 - 使用标准的表单提交方式
     fetch('/homework/publish', {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest' // 添加 AJAX 标识
+        }
     })
-    .then(response => response.json())
+    .then(response => {
+        // 检查响应类型
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // 如果不是 JSON，可能是重定向或 HTML
+            if (response.redirected) {
+                return { success: true, redirected: true };
+            }
+            return response.text().then(text => {
+                console.log('响应文本:', text);
+                throw new Error('服务器返回了非JSON响应');
+            });
+        }
+    })
     .then(data => {
-        if (data.success) {
+        console.log('响应数据:', data);
+        if (data.success || data.redirected) {
             alert('作业发布成功！');
             closeQuickPublishModal();
             // 刷新作业列表
@@ -1077,8 +1112,15 @@ function submitQuickPublish() {
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('发布失败，请检查网络连接后重试');
+        console.error('提交错误:', error);
+        // 如果是重定向导致的错误，也认为是成功
+        if (error.message.includes('redirect')) {
+            alert('作业发布成功！');
+            closeQuickPublishModal();
+            fetchHomeworkAndLabels();
+        } else {
+            alert('发布失败，请检查网络连接后重试。错误信息: ' + error.message);
+        }
     });
 }
 
@@ -1095,13 +1137,18 @@ function submitQuickPublish2() {
         selectedLabels.push(checkbox.value);
     });
     
+    if (!subject) {
+        alert('请选择学科');
+        return;
+    }
+    
     if (!content) {
         alert('请输入作业内容');
         document.getElementById('quickContent2').focus();
         return;
     }
     
-    // 提交数据
+    // 构建表单数据
     const formData = new FormData();
     formData.append('subject', subject);
     formData.append('content', content);
@@ -1112,24 +1159,57 @@ function submitQuickPublish2() {
         formData.append('label_ids', labelId);
     });
     
+    // 添加确认标记，跳过确认页面直接提交
+    formData.append('confirm', 'true');
+    
+    console.log('提交数据2:', {
+        subject: subject,
+        content: content,
+        deadline: deadline,
+        labels: selectedLabels
+    });
+    
+    // 提交数据
     fetch('/homework/publish', {
         method: 'POST',
-        body: formData
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
-    .then(response => response.json())
+    .then(response => {
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            if (response.redirected) {
+                return { success: true, redirected: true };
+            }
+            return response.text().then(text => {
+                console.log('响应文本2:', text);
+                throw new Error('服务器返回了非JSON响应');
+            });
+        }
+    })
     .then(data => {
-        if (data.success) {
+        console.log('响应数据2:', data);
+        if (data.success || data.redirected) {
             alert('作业发布成功！');
             closeQuickPublishModal2();
-            // 刷新作业列表
             fetchHomeworkAndLabels();
         } else {
             alert('发布失败：' + (data.message || '未知错误'));
         }
     })
     .catch(error => {
-        console.error('Error:', error);
-        alert('发布失败，请检查网络连接后重试');
+        console.error('提交错误2:', error);
+        if (error.message.includes('redirect')) {
+            alert('作业发布成功！');
+            closeQuickPublishModal2();
+            fetchHomeworkAndLabels();
+        } else {
+            alert('发布失败，请检查网络连接后重试。错误信息: ' + error.message);
+        }
     });
 }
 
