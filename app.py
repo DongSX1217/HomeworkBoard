@@ -2908,4 +2908,4 @@ fun = Fun()
 classroom_game = ClassroomGame()
 campus_legend_game = CampusLegendGame()
 if __name__ == '__main__':
-    app.run(host='0.0.0.0',debug=True,port=2025)
+    app.run(host='0.0.0.0',debug=False,port=2025)
