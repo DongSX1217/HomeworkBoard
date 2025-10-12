@@ -25,6 +25,7 @@ window.onload = function() {
     loadQuickPublishData();
     updateFloatButtonPosition();
     initSubjectSelects(); // 初始化学科选择框
+    initSubjectChangeListeners(); // 初始化学科变更监听
     
     // 添加全局点击事件处理，确保选择框可以正常工作
     document.addEventListener('click', function(e) {
@@ -802,13 +803,14 @@ function openQuickPublishModal() {
         checkbox.checked = false;
     });
     
-    // 加载常用词
-    loadCommonWordsGrid('commonWordsGrid');
+    // 加载当前学科的常用词
+    const currentSubject = document.getElementById('quickSubject').value;
+    loadCommonWordsGrid('commonWordsGrid', currentSubject);
     
     // 确保弹窗可见并重新初始化选择框
     setTimeout(() => {
         modal.scrollTop = 0;
-        initSubjectSelects(); // 重新初始化选择框
+        initSubjectSelects();
     }, 10);
 }
 
@@ -837,13 +839,14 @@ function openQuickPublishModal2() {
         checkbox.checked = false;
     });
     
-    // 加载常用词
-    loadCommonWordsGrid('commonWordsGrid2');
+    // 加载当前学科的常用词
+    const currentSubject = document.getElementById('quickSubject2').value;
+    loadCommonWordsGrid('commonWordsGrid2', currentSubject);
     
     // 确保弹窗可见并重新初始化选择框
     setTimeout(() => {
         modal.scrollTop = 0;
-        initSubjectSelects(); // 重新初始化选择框
+        initSubjectSelects();
     }, 10);
 }
 
@@ -913,48 +916,106 @@ function initQuickPublishForm(formId) {
 }
 
 // 加载常用词宫格
-function loadCommonWordsGrid(gridId) {
+function loadCommonWordsGrid(gridId, subjectName) {
+    const grid = document.getElementById(gridId);
+    grid.innerHTML = '<div class="no-words-hint">加载中...</div>';
+    
+    // 获取科目常用词和通用常用词
+    Promise.all([
+        getSubjectCommonWords(subjectName),
+        getGlobalCommonWords()
+    ]).then(([subjectWords, globalWords]) => {
+        displayWordsGrid(subjectWords, globalWords, gridId);
+    }).catch((error) => {
+        console.error('加载常用词失败:', error);
+        // 使用默认常用词
+        const defaultWords = ['练习', '复习', '预习', '作业', '试卷', '背诵', '默写', '作文', '笔记'];
+        displayWordsGrid(defaultWords, [], gridId);
+    });
+}
+
+// 获取科目常用词
+function getSubjectCommonWords(subjectName) {
+    return fetch('/api/subjects')
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.json();
+        })
+        .then(subjects => {
+            const subject = subjects.find(s => s.name === subjectName);
+            return subject ? (subject.common_words || []) : [];
+        })
+        .catch(() => []);
+}
+
+// 获取通用常用词
+function getGlobalCommonWords() {
+    return fetch('/api/global_words')
+        .then(response => {
+            if (!response.ok) throw new Error('Network error');
+            return response.json();
+        })
+        .catch(() => []);
+}
+
+// 显示常用词宫格
+function displayWordsGrid(subjectWords, globalWords, gridId) {
     const grid = document.getElementById(gridId);
     grid.innerHTML = '';
     
-    // 备用常用词
-    const defaultWords = ['练习', '复习', '预习', '作业', '试卷', '背诵', '默写', '作文', '笔记'];
+    // 去重并合并词库
+    const allWords = [...new Set([...subjectWords, ...globalWords])];
     
-    // 尝试获取通用常用词
-    fetch('/api/global_words')
-        .then(response => {
-            if (response.ok) return response.json();
-            throw new Error('Network response was not ok');
-        })
-        .then(words => {
-            displayWords(words.length > 0 ? words : defaultWords, gridId);
-        })
-        .catch(() => {
-            // 使用默认常用词
-            displayWords(defaultWords, gridId);
+    if (allWords.length === 0) {
+        grid.innerHTML = '<div class="no-words-hint">暂无常用词，可在设置中添加</div>';
+        return;
+    }
+    
+    // 显示所有词语，不限制数量
+    allWords.forEach(word => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'word-grid-btn';
+        button.title = word; // 添加悬停提示
+        button.textContent = word.length > 4 ? word.substring(0, 4) + '...' : word;
+        
+        // 点击事件
+        button.onclick = function(e) {
+            e.preventDefault();
+            insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
+        };
+        
+        // 触屏优化
+        button.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
         });
+        
+        grid.appendChild(button);
+    });
     
-    function displayWords(words, gridId) {
-        // 创建3x3宫格
-        for (let i = 0; i < Math.min(9, words.length); i++) {
-            const word = words[i];
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'word-grid-btn';
-            button.textContent = word;
-            button.onclick = function(e) {
-                e.preventDefault();
-                insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
-            };
-            
-            // 触屏支持
-            button.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                insertWordToQuickContent(word, gridId === 'commonWordsGrid2' ? 'quickContent2' : 'quickContent');
-            });
-            
-            grid.appendChild(button);
-        }
+    // 显示词库统计信息
+    const wordCount = document.createElement('div');
+    wordCount.className = 'more-words-hint';
+    wordCount.textContent = `共 ${allWords.length} 个常用词`;
+    grid.appendChild(wordCount);
+}
+
+// 为学科选择框添加常用词更新事件
+function initSubjectChangeListeners() {
+    const subjectSelect1 = document.getElementById('quickSubject');
+    const subjectSelect2 = document.getElementById('quickSubject2');
+    
+    if (subjectSelect1) {
+        subjectSelect1.addEventListener('change', function() {
+            loadCommonWordsGrid('commonWordsGrid', this.value);
+        });
+    }
+    
+    if (subjectSelect2) {
+        subjectSelect2.addEventListener('change', function() {
+            loadCommonWordsGrid('commonWordsGrid2', this.value);
+        });
     }
 }
 

@@ -449,32 +449,41 @@ position: absolute;
 /* 常用词宫格 */
 .common-words-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
     margin-top: 5px;
+    /* 移除固定高度和溢出隐藏，让内容自然扩展 */
+    min-height: 60px;
 }
 
 .word-grid-btn {
-    padding: 10px 5px;
-    border: 1px solid #ddd;
+    padding: 6px 3px;
+    border: 1px solid #e0e0e0;
     background-color: #f8f9fa;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     text-align: center;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     touch-action: manipulation;
-    min-height: 44px; /* 触屏友好 */
+    min-height: 28px;
+    line-height: 1.2;
+    word-break: break-all;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .word-grid-btn:hover {
     background-color: #e9ecef;
     border-color: #007bff;
+    transform: scale(1.02);
 }
 
 .word-grid-btn:active {
     background-color: #007bff;
     color: white;
+    transform: scale(0.98);
 }
 
 /* 日期快捷按钮 */
@@ -621,7 +630,14 @@ position: absolute;
     }
     
     .common-words-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 3px;
+    }
+    
+    .word-grid-btn {
+        padding: 5px 2px;
+        font-size: 10px;
+        min-height: 26px;
     }
     
     .date-quick-buttons {
@@ -645,14 +661,14 @@ position: absolute;
     }
     
     .common-words-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: 5px;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 2px;
     }
     
     .word-grid-btn {
-        padding: 8px 4px;
-        font-size: 12px;
-        min-height: 40px;
+        font-size: 9px;
+        min-height: 24px;
+        padding: 4px 1px;
     }
     
     .form-control {
@@ -1143,4 +1159,52 @@ select.form-control {
     border-color: #007bff;
     outline: none;
     box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 常用词组容器 */
+.common-words-section {
+    margin-bottom: 12px;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #fdfdfd;
+}
+
+.common-words-section h4 {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    color: #666;
+    font-weight: bold;
+}
+
+/* 科目常用词和通用常用词分组 */
+.subject-words-grid,
+.global-words-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    margin-bottom: 6px;
+}
+
+/* 空状态提示 */
+.no-words-hint {
+    text-align: center;
+    color: #999;
+    font-size: 10px;
+    padding: 8px;
+    font-style: italic;
+    grid-column: 1 / -1; /* 跨所有列 */
+}
+
+/* 更多提示样式 */
+.more-words-hint {
+    text-align: center;
+    color: #666;
+    font-size: 9px;
+    padding: 4px;
+    font-style: italic;
+    grid-column: 1 / -1; /* 跨所有列 */
+    background-color: #f0f0f0;
+    border-radius: 2px;
+    margin-top: 2px;
 }
