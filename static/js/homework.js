@@ -815,6 +815,7 @@ function openQuickPublishModal() {
     setTimeout(() => {
         modal.scrollTop = 0;
         initSubjectSelects();
+        initSubjectChangeListeners(); // 确保事件监听器已初始化
     }, 10);
 }
 
@@ -851,6 +852,7 @@ function openQuickPublishModal2() {
     setTimeout(() => {
         modal.scrollTop = 0;
         initSubjectSelects();
+        initSubjectChangeListeners(); // 确保事件监听器已初始化
     }, 10);
 }
 
@@ -874,31 +876,16 @@ function openFirstModalFromSecond() {
 function initSubjectSelects() {
     const subjectSelects = document.querySelectorAll('.subject-select');
     subjectSelects.forEach(select => {
-        // 完全移除可能干扰的事件监听器
-        const newSelect = select.cloneNode(true);
-        select.parentNode.replaceChild(newSelect, select);
-        
-        // 重新添加简单的事件处理 - 只阻止模态窗口关闭，不阻止选择框行为
-        newSelect.addEventListener('mousedown', function(e) {
+        // 只添加必要的事件处理，不阻止默认行为
+        select.addEventListener('mousedown', function(e) {
             e.stopPropagation();
         });
         
-        newSelect.addEventListener('touchstart', function(e) {
+        select.addEventListener('touchstart', function(e) {
             e.stopPropagation();
         });
         
-        newSelect.addEventListener('click', function(e) {
-            e.stopPropagation();
-        });
-        
-        // 修复 iOS Safari 上的问题
-        newSelect.addEventListener('focus', function() {
-            this.style.backgroundColor = '#fff';
-        });
-        
-        newSelect.addEventListener('blur', function() {
-            this.style.backgroundColor = '';
-        });
+        // 移除可能干扰选择框正常行为的事件监听器
     });
 }
 
@@ -922,9 +909,13 @@ function initQuickPublishForm(formId) {
 // 加载常用词宫格
 function loadCommonWordsGrid(gridId, subjectName) {
     const container = document.getElementById(gridId);
-    container.innerHTML = '<div class="no-words-hint">加载中...</div>';
+    if (!container) {
+        console.error('常用词容器未找到:', gridId);
+        return;
+    }
     
-    console.log(`开始加载学科"${subjectName}"的常用词...`);
+    console.log(`开始加载学科"${subjectName}"的常用词，容器: ${gridId}...`);
+    container.innerHTML = '<div class="no-words-hint">加载中...</div>';
     
     // 获取科目常用词和通用常用词
     Promise.all([
@@ -1074,22 +1065,43 @@ function createWordsSection(type, words, title, gridId) {
     return section;
 }
 
-// 为学科选择框添加常用词更新事件
+// 初始化学科变更监听
 function initSubjectChangeListeners() {
     const subjectSelect1 = document.getElementById('quickSubject');
     const subjectSelect2 = document.getElementById('quickSubject2');
     
     if (subjectSelect1) {
-        subjectSelect1.addEventListener('change', function() {
+        // 移除可能存在的旧监听器
+        const newSelect1 = subjectSelect1.cloneNode(true);
+        subjectSelect1.parentNode.replaceChild(newSelect1, subjectSelect1);
+        
+        // 重新添加事件监听
+        document.getElementById('quickSubject').addEventListener('change', function() {
+            console.log('学科选择变化:', this.value);
             loadCommonWordsGrid('commonWordsGrid', this.value);
         });
     }
     
     if (subjectSelect2) {
-        subjectSelect2.addEventListener('change', function() {
+        // 移除可能存在的旧监听器
+        const newSelect2 = subjectSelect2.cloneNode(true);
+        subjectSelect2.parentNode.replaceChild(newSelect2, subjectSelect2);
+        
+        // 重新添加事件监听
+        document.getElementById('quickSubject2').addEventListener('change', function() {
+            console.log('学科选择变化2:', this.value);
             loadCommonWordsGrid('commonWordsGrid2', this.value);
         });
     }
+    
+    // 添加全局事件委托，确保动态创建的选择框也能工作
+    document.addEventListener('change', function(e) {
+        if (e.target && (e.target.id === 'quickSubject' || e.target.id === 'quickSubject2')) {
+            const gridId = e.target.id === 'quickSubject' ? 'commonWordsGrid' : 'commonWordsGrid2';
+            console.log('全局事件捕获到学科变化:', e.target.value, 'grid:', gridId);
+            loadCommonWordsGrid(gridId, e.target.value);
+        }
+    });
 }
 
 // 插入词语到内容
