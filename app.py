@@ -633,8 +633,8 @@ class Homework:
         subjects = Subject.load_subjects()
         # 按order字段排序
         subjects.sort(key=lambda x: x.get('order', 999))
-        # 返回学科名称列表，按排序顺序
-        return jsonify([subject['name'] for subject in subjects])
+        # 返回完整的学科对象，包含常用词等信息
+        return jsonify(subjects)
 
     @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():

@@ -161,6 +161,10 @@ function fetchHomeworkAndLabels() {
             if (response.ok) return response.json();
             throw new Error('Subjects file not found');
         })
+        .then(subjects => {
+            // 从完整对象数组中提取学科名称
+            return subjects.map(subject => subject.name);
+        })
         .catch(() => null);
 
     // 获取作业数据
@@ -917,20 +921,25 @@ function initQuickPublishForm(formId) {
 
 // 加载常用词宫格
 function loadCommonWordsGrid(gridId, subjectName) {
-    const grid = document.getElementById(gridId);
-    grid.innerHTML = '<div class="no-words-hint">加载中...</div>';
+    const container = document.getElementById(gridId);
+    container.innerHTML = '<div class="no-words-hint">加载中...</div>';
+    
+    console.log(`开始加载学科"${subjectName}"的常用词...`);
     
     // 获取科目常用词和通用常用词
     Promise.all([
         getSubjectCommonWords(subjectName),
         getGlobalCommonWords()
     ]).then(([subjectWords, globalWords]) => {
+        console.log(`学科"${subjectName}"专用词:`, subjectWords);
+        console.log(`通用常用词:`, globalWords);
         displayWordsGrid(subjectWords, globalWords, gridId);
     }).catch((error) => {
         console.error('加载常用词失败:', error);
         // 使用默认常用词
-        const defaultWords = ['练习', '复习', '预习', '作业', '试卷', '背诵', '默写', '作文', '笔记'];
-        displayWordsGrid(defaultWords, [], gridId);
+        const defaultSubjectWords = getDefaultSubjectWords(subjectName);
+        const defaultGlobalWords = ['作业', '试卷', '背诵', '默写', '作文', '笔记'];
+        displayWordsGrid(defaultSubjectWords, defaultGlobalWords, gridId);
     });
 }
 
@@ -942,10 +951,43 @@ function getSubjectCommonWords(subjectName) {
             return response.json();
         })
         .then(subjects => {
+            // 查找匹配的学科
             const subject = subjects.find(s => s.name === subjectName);
-            return subject ? (subject.common_words || []) : [];
+            
+            if (subject) {
+                // 直接返回学科的 common_words 字段
+                const commonWords = subject.common_words || [];
+                console.log(`学科"${subjectName}"的常用词:`, commonWords);
+                return commonWords;
+            } else {
+                // 如果没有找到学科，使用默认的学科常用词
+                const defaultWords = getDefaultSubjectWords(subjectName);
+                console.log(`学科"${subjectName}"未找到，使用默认词:`, defaultWords);
+                return defaultWords;
+            }
         })
-        .catch(() => []);
+        .catch((error) => {
+            console.error(`获取学科"${subjectName}"常用词失败:`, error);
+            // 出错时返回默认常用词
+            return getDefaultSubjectWords(subjectName);
+        });
+}
+
+// 获取默认的学科常用词
+function getDefaultSubjectWords(subjectName) {
+    const defaultWords = {
+        '语文': ['朗读', '背诵', '默写', '作文', '阅读', '预习', '复习', '生字', '词语', '课文'],
+        '数学': ['练习', '计算', '习题', '预习', '复习', '作业本', '试卷', '口算', '应用题', '几何'],
+        '英语': ['朗读', '背诵', '默写', '作文', '阅读', '单词', '语法', '听力', '口语', '预习'],
+        '物理': ['实验', '习题', '预习', '复习', '公式', '计算', '概念', '作业本', '试卷'],
+        '化学': ['实验', '方程式', '预习', '复习', '元素', '反应', '作业本', '试卷'],
+        '生物': ['实验', '预习', '复习', '概念', '图表', '作业本', '试卷'],
+        '历史': ['预习', '复习', '背诵', '时间线', '事件', '作业本', '试卷'],
+        '地理': ['预习', '复习', '地图', '概念', '作业本', '试卷'],
+        '政治': ['预习', '复习', '背诵', '概念', '作业本', '试卷']
+    };
+    
+    return defaultWords[subjectName] || ['练习', '复习', '预习', '作业'];
 }
 
 // 获取通用常用词
@@ -960,23 +1002,57 @@ function getGlobalCommonWords() {
 
 // 显示常用词宫格
 function displayWordsGrid(subjectWords, globalWords, gridId) {
-    const grid = document.getElementById(gridId);
-    grid.innerHTML = '';
+    const container = document.getElementById(gridId);
+    container.innerHTML = '';
+    container.className = 'common-words-container';
     
-    // 去重并合并词库
-    const allWords = [...new Set([...subjectWords, ...globalWords])];
+    console.log(`显示宫格 - 学科词: ${subjectWords.length}个, 通用词: ${globalWords.length}个`); // 调试信息
     
-    if (allWords.length === 0) {
-        grid.innerHTML = '<div class="no-words-hint">暂无常用词，可在设置中添加</div>';
-        return;
+    // 创建学科专用词区域
+    if (subjectWords && subjectWords.length > 0) {
+        const subjectSection = createWordsSection('subject', subjectWords, '学科专用词', gridId);
+        container.appendChild(subjectSection);
+    } else {
+        console.log(`学科"${document.getElementById(gridId === 'commonWordsGrid2' ? 'quickSubject2' : 'quickSubject').value}"没有专用词`); // 调试信息
     }
     
-    // 显示所有词语，不限制数量
-    allWords.forEach(word => {
+    // 创建通用常用词区域
+    if (globalWords && globalWords.length > 0) {
+        const globalSection = createWordsSection('global', globalWords, '通用常用词', gridId);
+        container.appendChild(globalSection);
+    }
+    
+    // 如果都没有词，显示提示
+    if ((!subjectWords || subjectWords.length === 0) && (!globalWords || globalWords.length === 0)) {
+        const noWordsHint = document.createElement('div');
+        noWordsHint.className = 'no-words-hint';
+        noWordsHint.textContent = '暂无常用词，可在设置中添加';
+        noWordsHint.style.gridColumn = '1 / -1';
+        container.appendChild(noWordsHint);
+    }
+}
+
+// 创建词条区域
+function createWordsSection(type, words, title, gridId) {
+    const section = document.createElement('div');
+    section.className = `words-section ${type}-words-section`;
+    
+    // 添加标题
+    const titleElement = document.createElement('div');
+    titleElement.className = 'section-title';
+    titleElement.textContent = `${title} (${words.length})`;
+    section.appendChild(titleElement);
+    
+    // 创建网格容器
+    const grid = document.createElement('div');
+    grid.className = 'words-grid';
+    
+    // 添加词条按钮
+    words.forEach(word => {
         const button = document.createElement('button');
         button.type = 'button';
-        button.className = 'word-grid-btn';
-        button.title = word; // 添加悬停提示
+        button.className = `word-grid-btn ${type}-word`;
+        button.title = word;
         button.textContent = word.length > 4 ? word.substring(0, 4) + '...' : word;
         
         // 点击事件
@@ -994,11 +1070,8 @@ function displayWordsGrid(subjectWords, globalWords, gridId) {
         grid.appendChild(button);
     });
     
-    // 显示词库统计信息
-    const wordCount = document.createElement('div');
-    wordCount.className = 'more-words-hint';
-    wordCount.textContent = `共 ${allWords.length} 个常用词`;
-    grid.appendChild(wordCount);
+    section.appendChild(grid);
+    return section;
 }
 
 // 为学科选择框添加常用词更新事件
