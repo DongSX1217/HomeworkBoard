@@ -234,6 +234,43 @@
             margin-top: 1rem;
         }
 
+        /* 进度条样式 */
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: var(--dark-color);
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -287,6 +324,21 @@
                     <input type="file" class="form-control" id="file" name="file" required>
                 </div>
 
+                <!-- 进度信息区域 -->
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-info">
+                        <span id="progressPercent">0%</span>
+                        <span id="progressStatus">准备上传...</span>
+                    </div>
+                    <div class="progress-stats">
+                        <span id="uploadedSize">已上传: 0 KB</span>
+                        <span id="uploadSpeed">速度: 0 KB/s</span>
+                    </div>
+                </div>
+
                 <div class="text-center">
                     <button type="submit" class="btn" id="uploadBtn">
                         <i class="fas fa-upload"></i> 上传文件
@@ -327,22 +379,117 @@
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
         }
 
-        document.getElementById('uploadForm').addEventListener('submit', function() {
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
             const file = document.getElementById('file').files[0];
             const uploadBtn = document.getElementById('uploadBtn');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressStatus = document.getElementById('progressStatus');
+            const uploadedSizeElement = document.getElementById('uploadedSize');
+            const uploadSpeedElement = document.getElementById('uploadSpeed');
             
-            if (file) {
-                // 检查文件大小 (1.5GB = 1.5 * 1024 * 1024 * 1024 bytes)
-                const maxSize = 1.5 * 1024 * 1024 * 1024; // 1.5GB in bytes
-                if (file.size > maxSize) {
-                    alert('文件大小超过1.5GB限制，请选择较小的文件。');
-                    return false;
+            if (!file) {
+                alert('请选择要上传的文件');
+                return;
+            }
+            
+            // 检查文件大小 (1.5GB = 1.5 * 1024 * 1024 * 1024 bytes)
+            const maxSize = 1.5 * 1024 * 1024 * 1024; // 1.5GB in bytes
+            if (file.size > maxSize) {
+                alert('文件大小超过1.5GB限制，请选择较小的文件。');
+                return false;
+            }
+            
+            // 显示进度条
+            progressContainer.style.display = 'block';
+            
+            // 禁用上传按钮并显示加载状态
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
+            
+            // 创建FormData对象
+            const formData = new FormData(document.getElementById('uploadForm'));
+            
+            // 创建XMLHttpRequest对象
+            const xhr = new XMLHttpRequest();
+            
+            // 记录开始时间
+            let startTime = new Date().getTime();
+            
+            // 监听上传进度
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100;
+                    
+                    // 更新进度条
+                    progressFill.style.width = percentComplete + '%';
+                    progressPercent.textContent = Math.round(percentComplete) + '%';
+                    
+                    // 更新已上传大小
+                    uploadedSizeElement.textContent = '已上传: ' + formatFileSize(e.loaded) + ' / ' + formatFileSize(e.total);
+                    
+                    // 计算并更新上传速度
+                    const currentTime = new Date().getTime();
+                    const elapsedTime = (currentTime - startTime) / 1000; // 秒
+                    if (elapsedTime > 0) {
+                        const speed = e.loaded / elapsedTime; // bytes per second
+                        uploadSpeedElement.textContent = '速度: ' + formatFileSize(speed) + '/s';
+                    }
+                    
+                    // 更新状态信息
+                    if (percentComplete < 100) {
+                        progressStatus.textContent = '上传中...';
+                    } else {
+                        progressStatus.textContent = '处理中...';
+                    }
+                }
+            });
+            
+            // 监听上传完成
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200) {
+                    progressFill.style.width = '100%';
+                    progressPercent.textContent = '100%';
+                    progressStatus.textContent = '上传完成!';
+                    
+                    // 解析响应并显示结果
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        if (response.success) {
+                            alert('文件上传成功!');
+                            // 可以选择重置表单或跳转到其他页面
+                            // window.location.href = response.redirect_url;
+                        } else {
+                            alert('上传失败: ' + response.message);
+                        }
+                    } catch (e) {
+                        // 如果不是JSON响应，可能是重定向或其他响应
+                        alert('上传完成');
+                        // 重新加载页面以显示flash消息
+                        location.reload();
+                    }
+                } else {
+                    alert('上传失败，服务器错误');
                 }
                 
-                // 禁用上传按钮并显示加载状态
-                uploadBtn.disabled = true;
-                uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 上传中...';
-            }
+                // 恢复按钮状态
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 上传文件';
+            });
+            
+            // 监听上传错误
+            xhr.addEventListener('error', function() {
+                alert('上传过程中发生错误');
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> 上传文件';
+            });
+            
+            // 发送请求
+            xhr.open('POST', document.getElementById('uploadForm').action);
+            xhr.send(formData);
         });
     </script>
 </body>
