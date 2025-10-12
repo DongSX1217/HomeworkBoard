@@ -337,6 +337,45 @@ def check_user_upload_quota(name, student_id, file_size):
     
     return True, ""
 
+def get_file_tree(root_path, relative_path=''):
+    """获取文件树结构"""
+    items = []
+    full_path = os.path.join(root_path, relative_path.lstrip('/'))
+    
+    if not os.path.exists(full_path):
+        return items
+        
+    try:
+        entries = os.listdir(full_path)
+        for entry in entries:
+            entry_path = os.path.join(full_path, entry)
+            relative_entry_path = os.path.join(relative_path, entry).replace('\\', '/')
+            static_entry_path = os.path.join('/static/file', relative_entry_path.lstrip('/')).replace('\\', '/')
+            
+            if os.path.isdir(entry_path):
+                # 递归获取子目录内容
+                sub_items = get_file_tree(root_path, relative_entry_path)
+                items.append({
+                    'type': 'directory',
+                    'name': entry,
+                    'path': relative_entry_path if relative_entry_path.startswith('/') else '/' + relative_entry_path,
+                    'items': len(sub_items)
+                })
+            else:
+                items.append({
+                    'type': 'file',
+                    'name': entry,
+                    'path': static_entry_path,
+                    'size': os.path.getsize(entry_path)
+                })
+    except Exception as e:
+        print(f"Error reading directory {full_path}: {e}")
+    
+    # 按类型和名称排序，文件夹在前，文件在后，都按名称排序
+    items.sort(key=lambda x: (x['type'] == 'file', x['name'].lower()))
+    return items
+
+
 # 初始化数据
 submissions = load_submissions()
 
@@ -419,6 +458,24 @@ def class_schedule_page():
 def countdown_page():
     return render_template('countdown.html')
 
+@app.route('/file')
+def file_browser():
+    """文件浏览页面"""
+    return render_template('file/index.html')
+
+@app.route('/api/files')
+def api_files():
+    """获取文件列表的API"""
+    path = request.args.get('path', '/')
+    file_root = 'static/file'
+    
+    # 安全检查，防止目录遍历
+    if '..' in path:
+        return jsonify({'error': 'Invalid path'}), 400
+    
+    # 获取文件列表
+    items = get_file_tree(file_root, path if path != '/' else '')
+    return jsonify(items)
 
 @staticmethod # 静态方法，避免每次请求都创建实例
 @app.before_request

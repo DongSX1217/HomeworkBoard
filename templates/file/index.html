@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件浏览 - 作业公告板</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='fontawesome-free-6.4.0-web/css/all.min.css') }}">
+    <style>
+        body {
+            font-family: "Microsoft YaHei", sans-serif;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .file-browser {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .breadcrumb {
+            background-color: #e9ecef;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .file-item:hover {
+            background-color: #f8f9fa;
+        }
+        .file-icon {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .file-link {
+            color: #007bff;
+            text-decoration: none;
+            flex-grow: 1;
+        }
+        .file-link:hover {
+            text-decoration: underline;
+        }
+        .file-size {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .folder-item {
+            cursor: pointer;
+        }
+        .folder-contents {
+            margin-left: 20px;
+            border-left: 1px dashed #ccc;
+            padding-left: 10px;
+        }
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            .file-browser {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4"><i class="fas fa-folder-open"></i> 文件浏览</h1>
+        
+        <div class="file-browser">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb" id="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">首页</a></li>
+                    <li class="breadcrumb-item active">文件浏览</li>
+                </ol>
+            </nav>
+            
+            <div id="file-list">
+                <!-- 文件列表将通过JavaScript动态加载 -->
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <a href="{{ url_for('homepage') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> 返回首页
+            </a>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/jquery-3.7.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+    <script>
+        // 文件浏览器JavaScript代码
+        $(document).ready(function() {
+            // 当前路径
+            let currentPath = '/';
+            
+            // 加载根目录内容
+            loadDirectory('/');
+            
+            // 加载目录内容的函数
+            function loadDirectory(path) {
+                $.ajax({
+                    url: '/api/files',
+                    method: 'GET',
+                    data: { path: path },
+                    success: function(data) {
+                        currentPath = path;
+                        renderFileList(data, path);
+                        updateBreadcrumb(path);
+                    },
+                    error: function() {
+                        $('#file-list').html('<div class="alert alert-danger">加载文件列表失败</div>');
+                    }
+                });
+            }
+            
+            // 渲染文件列表
+            function renderFileList(items, currentPath) {
+                let html = '';
+                
+                if (currentPath !== '/') {
+                    html += `<div class="file-item" data-path="${getParentPath(currentPath)}">
+                                <div class="file-icon">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="file-link">返回上级目录</div>
+                            </div>`;
+                }
+                
+                items.forEach(function(item) {
+                    if (item.type === 'directory') {
+                        html += `<div class="file-item folder-item" data-path="${item.path}">
+                                    <div class="file-icon">
+                                        <i class="fas fa-folder"></i>
+                                    </div>
+                                    <div class="file-link">${item.name}</div>
+                                    <div class="file-size">${item.items} 项</div>
+                                </div>`;
+                    } else {
+                        html += `<div class="file-item">
+                                    <div class="file-icon">
+                                        <i class="fas fa-file"></i>
+                                    </div>
+                                    <a href="${item.path}" class="file-link" target="_blank">${item.name}</a>
+                                    <div class="file-size">${formatFileSize(item.size)}</div>
+                                </div>`;
+                    }
+                });
+                
+                $('#file-list').html(html);
+                
+                // 绑定文件夹点击事件
+                $('.folder-item').off('click').on('click', function() {
+                    const path = $(this).data('path');
+                    loadDirectory(path);
+                });
+                
+                // 绑定返回上级目录点击事件
+                $('#file-list .file-item[data-path]').off('click').on('click', function() {
+                    const path = $(this).data('path');
+                    loadDirectory(path);
+                });
+            }
+            
+            // 更新面包屑导航
+            function updateBreadcrumb(path) {
+                const breadcrumb = $('#breadcrumb');
+                breadcrumb.empty();
+                
+                // 添加首页链接
+                breadcrumb.append('<li class="breadcrumb-item"><a href="/">首页</a></li>');
+                breadcrumb.append('<li class="breadcrumb-item"><a href="/file">文件浏览</a></li>');
+                
+                if (path === '/') {
+                    return;
+                }
+                
+                // 分割路径并创建面包屑
+                const parts = path.split('/').filter(part => part.length > 0);
+                let current = '';
+                
+                parts.forEach(function(part, index) {
+                    current += '/' + part;
+                    if (index === parts.length - 1) {
+                        // 最后一项，当前目录
+                        breadcrumb.append(`<li class="breadcrumb-item active">${part}</li>`);
+                    } else {
+                        // 中间目录
+                        breadcrumb.append(`<li class="breadcrumb-item"><a href="#" class="breadcrumb-link" data-path="${current}">${part}</a></li>`);
+                    }
+                });
+                
+                // 绑定面包屑链接点击事件
+                $('.breadcrumb-link').off('click').on('click', function(e) {
+                    e.preventDefault();
+                    const path = $(this).data('path');
+                    loadDirectory(path);
+                });
+            }
+            
+            // 获取父级路径
+            function getParentPath(path) {
+                if (path === '/') return '/';
+                const parts = path.split('/').filter(part => part.length > 0);
+                parts.pop();
+                return '/' + parts.join('/');
+            }
+            
+            // 格式化文件大小
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        });
+    </script>
+</body>
+</html>
