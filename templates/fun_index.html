@@ -142,6 +142,7 @@
         .menu-card.ai-settings { border-top: 4px solid var(--primary-color); }
         .menu-card.logout { border-top: 4px solid var(--danger-color); }
         .menu-card.password { border-top: 4px solid #6f42c1; }
+        .menu-card.upload { border-top: 4px solid #20c997; }
 
         .menu-link {
             text-decoration: none;
@@ -662,6 +663,15 @@
                     <h3>查看内容</h3>
                     <p>浏览所有提交的内容</p>
                     <div class="btn">查看全部</div>
+                </a>
+            </div>
+
+            <div class="menu-card upload">
+                <a href="{{ url_for('upload') }}" class="menu-link">
+                    <i class="fas fa-file-upload"></i>
+                    <h3>文件上传</h3>
+                    <p>向服务器上传需要托管的文件</p>
+                    <div class="btn">开始上传</div>
                 </a>
             </div>
 

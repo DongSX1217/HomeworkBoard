@@ -246,6 +246,97 @@ def log_prompt_operation(operation, details, user_identifier, ip_address):
     with open(PROMPT_LOG_FILE, 'a', encoding='utf-8') as f:
         f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
 
+def log_input(content, name, student_id, ip_address, anonymous):
+    """记录用户输入到文件"""
+    # 加载现有数据
+    if os.path.exists(INPUT_LOG_FILE):
+        with open(INPUT_LOG_FILE, 'r', encoding='utf-8') as f:
+            try:
+                inputs = json.load(f)
+            except json.JSONDecodeError:
+                inputs = []
+    else:
+        inputs = []
+    
+    # 添加新输入
+    input_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "content": content,
+        "name": name,
+        "student_id": student_id,
+        "ip_address": ip_address,
+        "anonymous": anonymous
+    }
+    
+    inputs.append(input_entry)
+    
+    # 保存数据
+    with open(INPUT_LOG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(inputs, f, ensure_ascii=False, indent=2)
+
+# 添加文件上传日志记录函数
+def log_file_upload(filename, upload_path, file_size, user_name, user_id, ip_address):
+    """记录文件上传日志到文件"""
+    UPLOAD_LOG_FILE = os.path.join(DATA_DIR, 'upload.log')
+    
+    log_entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "filename": filename,
+        "upload_path": upload_path,
+        "file_size": file_size,
+        "user_name": user_name,
+        "user_id": user_id,
+        "ip_address": ip_address
+    }
+    
+    # 确保日志目录存在
+    log_dir = os.path.dirname(UPLOAD_LOG_FILE)
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+    
+    # 追加写入日志
+    with open(UPLOAD_LOG_FILE, 'a', encoding='utf-8') as f:
+        f.write(json.dumps(log_entry, ensure_ascii=False) + '\n')
+
+# 添加检查用户上传配额的函数
+def check_user_upload_quota(name, student_id, file_size):
+    """检查用户上传配额（每月限制）"""
+    UPLOAD_LOG_FILE = os.path.join(DATA_DIR, 'upload.log')
+    
+    # 如果日志文件不存在，说明用户没有上传过文件
+    if not os.path.exists(UPLOAD_LOG_FILE):
+        return True, ""
+    
+    try:
+        with open(UPLOAD_LOG_FILE, 'r', encoding='utf-8') as f:
+            logs = [json.loads(line) for line in f if line.strip()]
+    except:
+        return True, ""
+    
+    # 计算当前月份
+    now = datetime.now()
+    current_month = now.strftime("%Y-%m")
+    
+    # 计算用户本月上传的总大小
+    user_monthly_usage = 0
+    for log in logs:
+        # 检查是否是该用户的记录
+        if log.get('user_name') == name and log.get('user_id') == student_id:
+            # 检查是否是本月的记录
+            log_date = datetime.strptime(log.get('timestamp', ''), "%Y-%m-%d %H:%M:%S")
+            if log_date.strftime("%Y-%m") == current_month:
+                user_monthly_usage += log.get('file_size', 0)
+    
+    # 2GB 限制 (2 * 1024 * 1024 * 1024 bytes)
+    quota_limit = 2 * 1024 * 1024 * 1024
+    
+    # 检查加上当前文件是否会超出配额
+    if user_monthly_usage + file_size > quota_limit:
+        remaining_quota = quota_limit - user_monthly_usage
+        return False, f"本月上传配额不足。您本月还可上传 {remaining_quota / (1024*1024):.2f} MB"
+    
+    return True, ""
+
 # 初始化数据
 submissions = load_submissions()
 
@@ -1355,6 +1446,124 @@ class Fun:
             "is_dict": isinstance(students_data, dict),
             "keys": list(students_data.keys()) if isinstance(students_data, dict) else "N/A"
         })
+    
+    @app.route('/902504/upload', methods=['GET', 'POST'])
+    def upload():
+        """文件上传页面"""
+        # 检查身份验证
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        
+        if not name or not student_id:
+            return redirect(url_for('fun_auth'))
+        
+        if request.method == 'POST':
+            # 处理文件上传
+            if 'file' not in request.files:
+                flash('没有选择文件', 'error')
+                return render_template('upload.html', name=name, student_id=student_id)
+            
+            file = request.files['file']
+            
+            # 检查文件名
+            if file.filename == '':
+                flash('没有选择文件', 'error')
+                return render_template('upload.html', name=name, student_id=student_id)
+            
+            if file:
+                # 获取上传路径
+                upload_path = request.form.get('upload_path', '').strip()
+                # 清理路径，防止目录遍历攻击
+                if upload_path:
+                    # 移除路径开头和结尾的斜杠
+                    upload_path = upload_path.strip('/')
+                    # 防止目录遍历攻击
+                    if '..' in upload_path:
+                        flash('上传路径不合法', 'error')
+                        return render_template('upload.html', name=name, student_id=student_id)
+                    upload_path += '/'
+                
+                # 确保upload_path以斜杠结尾或为空
+                if upload_path and not upload_path.endswith('/'):
+                    upload_path += '/'
+                
+                # 构建完整的保存路径
+                save_directory = os.path.join('static', upload_path.strip('/'))
+                
+                # 确保目录存在
+                os.makedirs(save_directory, exist_ok=True)
+                
+                # 获取文件大小
+                file.seek(0, os.SEEK_END)
+                file_size = file.tell()
+                file.seek(0)
+                
+                # 检查文件大小限制 (1.5GB)
+                max_file_size = 1.5 * 1024 * 1024 * 1024  # 1.5GB in bytes
+                if file_size > max_file_size:
+                    flash('文件大小超过1.5GB限制', 'error')
+                    return render_template('upload.html', name=name, student_id=student_id)
+                
+                # 检查用户配额 (每月2GB)
+                quota_check, quota_message = check_user_upload_quota(name, student_id, file_size)
+                if not quota_check:
+                    flash(quota_message, 'error')
+                    return render_template('upload.html', name=name, student_id=student_id)
+                
+                # 生成安全的文件名
+                filename = file.filename
+                if '.' in filename:
+                    # 保留文件扩展名
+                    name_part, ext = os.path.splitext(filename)
+                    # 生成安全的文件名
+                    safe_name = re.sub(r'[^\w\-_\.]', '_', name_part)
+                    filename = safe_name + ext
+                else:
+                    # 没有扩展名的情况
+                    filename = re.sub(r'[^\w\-_]', '_', filename)
+                
+                # 构建完整文件路径
+                file_path = os.path.join(save_directory, filename)
+                
+                # 处理文件名冲突
+                counter = 1
+                original_filename = filename
+                while os.path.exists(file_path):
+                    name_part, ext = os.path.splitext(original_filename)
+                    filename = f"{name_part}_{counter}{ext}"
+                    file_path = os.path.join(save_directory, filename)
+                    counter += 1
+                
+                try:
+                    # 保存文件
+                    file.save(file_path)
+                    
+                    # 记录上传日志
+                    client_ip = get_client_ip()
+                    log_file_upload(
+                        filename=filename,
+                        upload_path=upload_path,
+                        file_size=file_size,
+                        user_name=name,
+                        user_id=student_id,
+                        ip_address=client_ip
+                    )
+                    
+                    # 计算文件大小显示格式
+                    if file_size < 1024:
+                        size_str = f"{file_size} bytes"
+                    elif file_size < 1024 * 1024:
+                        size_str = f"{file_size / 1024:.2f} KB"
+                    elif file_size < 1024 * 1024 * 1024:
+                        size_str = f"{file_size / (1024 * 1024):.2f} MB"
+                    else:
+                        size_str = f"{file_size / (1024 * 1024 * 1024):.2f} GB"
+                    
+                    flash(f'文件上传成功！文件名: {filename}, 大小: {size_str}', 'success')
+                except Exception as e:
+                    flash(f'文件上传失败: {str(e)}', 'error')
+        
+        return render_template('upload.html', name=name, student_id=student_id)
     
 class AI:
     # 保存对话历史的文件路径
