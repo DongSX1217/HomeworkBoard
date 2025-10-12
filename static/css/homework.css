@@ -52,7 +52,7 @@ h1 {
 }
 
 .home-button {
-position: absolute;
+    position: absolute;
     top: 10px;
     left: 10px;
     z-index: 100;
@@ -63,6 +63,7 @@ position: absolute;
     border-radius: 3px;
     cursor: pointer;
 }
+
 .home-button:hover {
     background-color: #0b7dda;
 }
@@ -495,21 +496,24 @@ position: absolute;
 }
 
 .word-grid-btn {
-    padding: 5px 2px;
+    padding: 4px 2px;
     border: 1px solid #e0e0e0;
     background-color: #fff;
     border-radius: 2px;
     cursor: pointer;
-    font-size: 10px;
+    font-size: 9px;
     text-align: center;
     transition: all 0.15s ease;
     touch-action: manipulation;
-    min-height: 24px;
+    min-height: 22px;
     line-height: 1.2;
-    word-break: break-all;
+    word-break: break-word; /* 允许长词换行 */
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal; /* 允许换行 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .word-grid-btn:hover {
@@ -544,24 +548,25 @@ position: absolute;
     background-color: #e6f3ff;
 }
 
-/* 日期快捷按钮 */
+/* 日期快捷按钮 - 改为四个按钮一排 */
 .date-quick-buttons {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px;
     margin-bottom: 8px;
 }
 
 .date-btn {
-    padding: 10px;
+    padding: 6px 4px;
     border: 1px solid #ddd;
     background-color: #f8f9fa;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 11px;
     text-align: center;
     transition: all 0.2s ease;
-    min-height: 44px; /* 触屏友好 */
+    min-height: 32px;
+    line-height: 1.2;
 }
 
 .date-btn:hover {
@@ -577,14 +582,16 @@ position: absolute;
     background-color: #f1b0b7;
 }
 
-.btn-cancel, .btn-submit {
-    padding: 12px 24px;
+/* 缩小按钮样式 */
+.btn-cancel, .btn-submit, .btn-open-second, .btn-open-first {
+    padding: 8px 12px;
     border: none;
-    border-radius: 4px;
+    border-radius: 3px;
     cursor: pointer;
-    font-size: 16px;
+    font-size: 13px;
     transition: all 0.2s ease;
-    min-height: 44px; /* 触屏友好 */
+    min-height: 36px;
+    line-height: 1.2;
 }
 
 .btn-cancel {
@@ -605,25 +612,36 @@ position: absolute;
     background-color: #218838;
 }
 
+.btn-open-second, .btn-open-first {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #007bff;
+}
+
+.btn-open-second:hover, .btn-open-first:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
 /* 改善学科选择框的显示 */
 .subject-select {
-    min-height: 44px;
-    font-size: 16px;
+    min-height: 40px;
+    font-size: 14px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 10px;
+    padding: 8px;
     background-color: white;
     appearance: menulist;
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
-    z-index: 10010; /* 提高z-index确保在最上层 */
+    z-index: 10010;
     position: relative;
-    cursor: pointer; /* 确保显示为可点击 */
+    cursor: pointer;
 }
 
 .subject-select option {
-    font-size: 16px;
-    padding: 8px;
+    font-size: 14px;
+    padding: 6px;
     background: white;
     color: #333;
     border: none;
@@ -632,11 +650,11 @@ position: absolute;
 /* 多选下拉框样式 */
 .quick-publish-modal select[multiple] {
     height: auto;
-    min-height: 100px;
+    min-height: 80px;
 }
 
 .quick-publish-modal select[multiple] option {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid #eee;
 }
 
@@ -698,9 +716,9 @@ position: absolute;
     }
     
     .word-grid-btn {
-        padding: 4px 1px;
-        font-size: 9px;
-        min-height: 22px;
+        padding: 3px 1px;
+        font-size: 8px;
+        min-height: 20px;
     }
     
     .section-title {
@@ -708,15 +726,25 @@ position: absolute;
     }
     
     .date-quick-buttons {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+    }
+    
+    .date-btn {
+        font-size: 10px;
+        padding: 5px 3px;
+        min-height: 30px;
     }
     
     .form-buttons {
         flex-direction: column;
     }
     
-    .btn-cancel, .btn-submit {
+    .btn-cancel, .btn-submit, .btn-open-second, .btn-open-first {
         width: 100%;
+        font-size: 12px;
+        padding: 7px 10px;
+        min-height: 34px;
     }
 }
 
@@ -738,13 +766,19 @@ position: absolute;
     }
     
     .word-grid-btn {
-        font-size: 8px;
-        min-height: 20px;
-        padding: 3px 1px;
+        font-size: 7px;
+        min-height: 18px;
+        padding: 2px 1px;
     }
     
     .form-control {
-        font-size: 16px; /* 防止iOS缩放 */
+        font-size: 14px;
+    }
+    
+    .date-btn {
+        font-size: 9px;
+        padding: 4px 2px;
+        min-height: 28px;
     }
 }
 
@@ -756,17 +790,17 @@ position: absolute;
 
 /* 改善滚动条样式 */
 .quick-publish-modal::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
 }
 
 .quick-publish-modal::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .quick-publish-modal::-webkit-scrollbar-thumb {
     background: #c1c1c1;
-    border-radius: 4px;
+    border-radius: 3px;
 }
 
 .quick-publish-modal::-webkit-scrollbar-thumb:hover {
@@ -811,7 +845,7 @@ position: absolute;
 
 /* 全屏模式下的优化 */
 .fullscreen .container {
-    background-color: #f5f5f5 !important; /* 强制设置背景色 */
+    background-color: #f5f5f5 !important;
 }
 
 /* 确保全屏元素背景色正确 */
@@ -820,11 +854,11 @@ position: absolute;
 }
 
 .container:-webkit-full-screen {
-    background-color: #f5f5f5 !important; /* Safari */
+    background-color: #f5f5f5 !important;
 }
 
 .container:-ms-fullscreen {
-    background-color: #f5f5f5 !important; /* IE/Edge */
+    background-color: #f5f5f5 !important;
 }
 
 /* 全屏时的标题样式 */
@@ -887,12 +921,12 @@ position: absolute;
 /* 标签复选框容器样式 */
 .labels-checkbox-container {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 5px;
     margin-top: 5px;
-    max-height: 120px;
+    max-height: 100px;
     overflow-y: auto;
-    padding: 6px;
+    padding: 5px;
     border: 1px solid #ddd;
     border-radius: 4px;
     background-color: #f8f9fa;
@@ -902,12 +936,12 @@ position: absolute;
     display: flex;
     align-items: center;
     cursor: pointer;
-    padding: 4px;
+    padding: 3px;
     border-radius: 3px;
     transition: background-color 0.2s ease;
     user-select: none;
     touch-action: manipulation;
-    font-size: 12px;
+    font-size: 11px;
 }
 
 .label-checkbox-item:hover {
@@ -915,17 +949,17 @@ position: absolute;
 }
 
 .label-checkbox {
-    margin-right: 6px;
-    transform: scale(1.1);
+    margin-right: 5px;
+    transform: scale(1);
 }
 
 .label-checkbox-item .label-preview {
     display: inline-block;
-    padding: 2px 6px;
+    padding: 2px 5px;
     border-radius: 3px;
-    font-size: 0.8em;
+    font-size: 0.7em;
     color: #fff;
-    min-width: 50px;
+    min-width: 45px;
     text-align: center;
     cursor: pointer;
     white-space: nowrap;
@@ -946,7 +980,7 @@ position: absolute;
     border: none;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     cursor: pointer;
-    z-index: 10003; /* 确保在最上层 */
+    z-index: 10003;
     font-size: 24px;
     display: flex;
     align-items: center;
@@ -973,8 +1007,6 @@ position: absolute;
         margin: 0;
         max-height: 90vh;
     }
-    
-
 }
 
 /* 改善弹窗在移动设备上的显示 */
@@ -1008,17 +1040,17 @@ position: absolute;
 
 /* 标签容器滚动条样式 */
 .labels-checkbox-container::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
 }
 
 .labels-checkbox-container::-webkit-scrollbar-track {
     background: #f1f1f1;
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 .labels-checkbox-container::-webkit-scrollbar-thumb {
     background: #c1c1c1;
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 .labels-checkbox-container::-webkit-scrollbar-thumb:hover {
@@ -1027,19 +1059,132 @@ position: absolute;
 
 /* 弹窗关闭按钮优化 */
 .close {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
     cursor: pointer;
     position: absolute;
-    top: 10px;
-    right: 15px;
+    top: 8px;
+    right: 12px;
     z-index: 10004;
-    width: 30px;
-    height: 30px;
+    width: 26px;
+    height: 26px;
     display: flex;
     align-items: center;
     justify-content: center;
     touch-action: manipulation;
+    background: none;
+    border: none;
+    color: #aaa;
+}
+
+.close:hover {
+    color: black;
+}
+
+/* 确保选择框在模态窗口中正常工作 */
+.quick-publish-modal .form-control:focus {
+    border-color: #007bff;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+/* 常用词组容器 */
+.common-words-section {
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 6px;
+    background-color: #fdfdfd;
+}
+
+.common-words-section h4 {
+    margin: 0 0 5px 0;
+    font-size: 11px;
+    color: #666;
+    font-weight: bold;
+}
+
+/* 科目常用词和通用常用词分组 */
+.subject-words-grid,
+.global-words-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    margin-bottom: 5px;
+}
+
+/* 空状态提示 */
+.no-words-hint {
+    text-align: center;
+    color: #999;
+    font-size: 8px;
+    padding: 5px;
+    font-style: italic;
+    grid-column: 1 / -1;
+}
+
+/* 更多提示样式 */
+.more-words-hint {
+    text-align: center;
+    color: #666;
+    font-size: 8px;
+    padding: 3px;
+    font-style: italic;
+    grid-column: 1 / -1;
+    background-color: #f0f0f0;
+    border-radius: 2px;
+    margin-top: 2px;
+}
+
+/* 调整表单按钮布局 */
+.form-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-top: 15px;
+    flex-shrink: 0;
+}
+
+/* 移动设备上的按钮布局 */
+@media (max-width: 768px) {
+    .form-buttons {
+        grid-template-columns: 1fr;
+        gap: 5px;
+    }
+    
+    .btn-open-second,
+    .btn-open-first {
+        order: 2;
+    }
+    
+    .btn-cancel {
+        order: 1;
+    }
+    
+    .btn-submit {
+        order: 3;
+    }
+}
+
+/* 确保模态窗口背景覆盖整个屏幕 */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* 修复全屏模式下的弹窗显示 */
+.container.fullscreen ~ .modal {
+    z-index: 10000 !important;
+}
+
+.container.fullscreen ~ .modal .modal-content {
+    z-index: 10001 !important;
 }
 
 /* 确保两个弹窗可以同时显示 */
@@ -1089,20 +1234,20 @@ position: absolute;
 /* 改善选择框在移动设备上的体验 */
 @media (max-width: 768px) {
     .subject-select {
-        font-size: 16px; /* 防止iOS缩放 */
-        padding: 12px;
+        font-size: 14px;
+        padding: 10px;
     }
 }
 
 /* 改善学科选择框 */
 .form-control {
-    min-height: 44px;
-    font-size: 16px;
+    min-height: 40px;
+    font-size: 14px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    padding: 10px;
+    padding: 8px;
     background-color: white;
-    appearance: menulist; /* 确保下拉箭头显示 */
+    appearance: menulist;
 }
 
 /* 确保选择框在移动设备上正常工作 */
@@ -1110,173 +1255,26 @@ select.form-control {
     -webkit-appearance: menulist;
     -moz-appearance: menulist;
     appearance: menulist;
-    background-image: none; /* 防止自定义样式干扰 */
+    background-image: none;
 }
 
-/* 新的按钮样式 */
-.btn-open-second,
-.btn-open-first {
-    padding: 12px 16px;
-    border: 1px solid #007bff;
-    background-color: #007bff;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    transition: all 0.2s ease;
-    min-height: 44px;
+/* 长词显示优化 */
+.long-word {
+    font-size: 8px;
+    line-height: 1.1;
+    padding: 2px 1px;
 }
 
-.btn-open-second:hover,
-.btn-open-first:hover {
-    background-color: #0056b3;
-    border-color: #0056b3;
+/* 常用词按钮自适应高度 */
+.word-grid-btn.adaptive-height {
+    min-height: auto;
+    height: auto;
+    padding: 3px 1px;
 }
 
-/* 调整表单按钮布局 */
-.form-buttons {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
-    margin-top: 20px;
-    flex-shrink: 0;
-}
-
-/* 移动设备上的按钮布局 */
-@media (max-width: 768px) {
-    .form-buttons {
-        grid-template-columns: 1fr;
-    }
-    
-    .btn-open-second,
-    .btn-open-first {
-        order: 2; /* 将打开另一个窗口的按钮放在中间 */
-    }
-    
-    .btn-cancel {
-        order: 1;
-    }
-    
-    .btn-submit {
-        order: 3;
-    }
-}
-
-/* 确保模态窗口背景覆盖整个屏幕 */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 10000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-/* 修复全屏模式下的弹窗显示 */
-.container.fullscreen ~ .modal {
-    z-index: 10000 !important;
-}
-
-.container.fullscreen ~ .modal .modal-content {
-    z-index: 10001 !important;
-}
-
-/* 改善滚动条样式 */
-.labels-checkbox-container::-webkit-scrollbar {
-    width: 4px;
-}
-
-.labels-checkbox-container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 2px;
-}
-
-.labels-checkbox-container::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 2px;
-}
-
-.labels-checkbox-container::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
-}
-
-/* 确保弹窗关闭按钮可点击 */
-.close {
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    z-index: 10004;
-    width: 30px;
-    height: 30px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    touch-action: manipulation;
-    background: none;
-    border: none;
-    color: #aaa;
-}
-
-.close:hover {
-    color: black;
-}
-
-/* 确保选择框在模态窗口中正常工作 */
-.quick-publish-modal .form-control:focus {
-    border-color: #007bff;
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-}
-
-/* 常用词组容器 */
-.common-words-section {
-    margin-bottom: 12px;
-    border: 1px solid #e9ecef;
-    border-radius: 4px;
-    padding: 8px;
-    background-color: #fdfdfd;
-}
-
-.common-words-section h4 {
-    margin: 0 0 6px 0;
-    font-size: 12px;
-    color: #666;
-    font-weight: bold;
-}
-
-/* 科目常用词和通用常用词分组 */
-.subject-words-grid,
-.global-words-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 3px;
-    margin-bottom: 6px;
-}
-
-/* 空状态提示 */
-.no-words-hint {
-    text-align: center;
-    color: #999;
-    font-size: 9px;
-    padding: 6px;
-    font-style: italic;
-    grid-column: 1 / -1;
-}
-
-/* 更多提示样式 */
-.more-words-hint {
-    text-align: center;
-    color: #666;
-    font-size: 9px;
-    padding: 4px;
-    font-style: italic;
-    grid-column: 1 / -1; /* 跨所有列 */
-    background-color: #f0f0f0;
-    border-radius: 2px;
-    margin-top: 2px;
+/* 针对特别长的词 */
+.word-grid-btn.very-long {
+    font-size: 7px;
+    line-height: 1;
+    padding: 2px 1px;
 }
