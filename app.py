@@ -647,7 +647,6 @@ class Homework:
         # 返回完整的学科对象，包含常用词等信息
         return jsonify(subjects)
 
-    @app.route('/homework/publish', methods=['GET', 'POST'])
     def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
         labels = Label.load_labels()
@@ -730,9 +729,10 @@ class Homework:
                 # 加载最新的数据
                 submissions = load_submissions()
                 
-                # 保存提交的数据
+                # 保存提交的数据，使用下一个可用ID而不是数组长度+1
+                next_id = max([s['id'] for s in submissions], default=0) + 1
                 submission = {
-                    'id': len(submissions) + 1,
+                    'id': next_id,
                     'subject': subject,
                     'content': content,
                     'labels': selected_labels,
@@ -751,6 +751,7 @@ class Homework:
                 
                 # 记录日志
                 log_operation("添加作业", {
+                    "id": next_id,
                     "subject": subject,
                     "content": content,
                     "labels": selected_labels,
@@ -866,6 +867,13 @@ class Homework:
                                          confirm=True)
                 
                 # 确认后执行更新操作
+                # 重新加载数据以防并发修改
+                submissions = load_submissions()
+                homework = next((s for s in submissions if s['id'] == homework_id), None)
+                if not homework:
+                    flash('作业未找到！可能已被其他用户删除。', 'error')
+                    return redirect(url_for('view_submissions'))
+                
                 # 更新作业数据
                 homework['subject'] = subject
                 homework['content'] = content
@@ -950,10 +958,7 @@ class Homework:
         # 从列表中删除作业
         submissions = [s for s in submissions if s['id'] != homework_id]
         
-        # 重新编号ID以保持连续性
-        for i, submission in enumerate(submissions):
-            submission['id'] = i + 1
-        
+        # 不再重新编号ID以保持连续性，避免编辑过程中的ID不一致问题
         # 保存更新后的数据
         save_submissions(submissions)
         
