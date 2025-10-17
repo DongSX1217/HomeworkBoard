@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify, make_response, Response
+from flask import Flask, render_template, request, flash, redirect, url_for, session, jsonify, make_response, Response, send_from_directory
 import base64, time, json, re, os, uuid, threading, requests, smtplib, sys, random
 import http.client
 from datetime import datetime, timedelta
@@ -70,6 +70,11 @@ def handle_exception(e):
     
     # 在生产环境中，渲染自定义错误页面
     return render_template('error.html', error=str(e)), 500
+
+@app.errorhandler(404)
+def not_found_error(e):
+    # 处理404错误
+    return render_template('error.html', error="请求的页面不存在"), 404
 
 app.secret_key = 'test_key'  # 生产环境中使用强密钥
 
@@ -506,6 +511,12 @@ else:
 @app.route('/')
 def homepage():
     return render_template('home.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 
 @app.route('/clock')
 def clock_page():
