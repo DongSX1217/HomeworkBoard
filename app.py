@@ -670,8 +670,8 @@ class Homework:
             errors = []
             if not subject:
                 errors.append("请选择学科")
-            if not content or len(content.strip()) < 5:
-                errors.append("内容至少需要5个字符")
+            if not content or len(content.strip()) < 2:
+                errors.append("内容至少需要2个字符")
             
             if errors:
                 if is_ajax:
@@ -805,8 +805,8 @@ class Homework:
             errors = []
             if not subject:
                 errors.append("请选择学科")
-            if not content or len(content.strip()) < 5:
-                errors.append("内容至少需要5个字符")
+            if not content or len(content.strip()) < 2:
+                errors.append("内容至少需要2个字符")
             '''
             if not deadline:
                 errors.append("请选择截止日期")
