@@ -886,12 +886,11 @@ class Homework:
                 # 保存更新后的数据
                 save_submissions(submissions)
                 
-                # 清除session中的编辑数据，'
-                '''
+                # 清除session中的编辑数据
                 session.pop('edit_subject_' + str(homework_id), None)
                 session.pop('edit_content_' + str(homework_id), None)
                 session.pop('edit_label_ids_' + str(homework_id), None)
-                session.pop('edit_deadline_' + str(homework_id), None)'''
+                session.pop('edit_deadline_' + str(homework_id), None)
                 
                 # 记录日志
                 log_operation("编辑作业", {
@@ -905,17 +904,32 @@ class Homework:
                 flash('作业更新成功！', 'success')
                 return redirect(url_for('view_submissions'))
         else:
-            # 准备编辑数据，优先使用session中的数据
-            subject = session.get('edit_subject_' + str(homework_id), homework['subject'])
-            content = session.get('edit_content_' + str(homework_id), homework['content'])
-            label_ids = session.get('edit_label_ids_' + str(homework_id), None)
-            deadline = session.get('edit_deadline_' + str(homework_id), homework['deadline'])
+            # 检查是否是从确认页面返回取消编辑（即使用session中的临时数据）
+            use_session_data = request.args.get('from_confirm') == '1'
+            
+            if use_session_data:
+                # 准备编辑数据，优先使用session中的数据
+                subject = session.get('edit_subject_' + str(homework_id), homework['subject'])
+                content = session.get('edit_content_' + str(homework_id), homework['content'])
+                label_ids = session.get('edit_label_ids_' + str(homework_id), None)
+                deadline = session.get('edit_deadline_' + str(homework_id), homework['deadline'])
 
-            # 处理标签
-            if label_ids is not None:
-                selected_labels = [label['name'] for label in labels if label['id'] in label_ids]
+                # 处理标签
+                if label_ids is not None:
+                    selected_labels = [label['name'] for label in labels if label['id'] in label_ids]
+                else:
+                    selected_labels = homework['labels']
             else:
+                # 使用最新的数据，忽略session中的旧数据
+                subject = homework['subject']
+                content = homework['content']
                 selected_labels = homework['labels']
+                deadline = homework['deadline']
+                # 清除可能存在的session数据
+                session.pop('edit_subject_' + str(homework_id), None)
+                session.pop('edit_content_' + str(homework_id), None)
+                session.pop('edit_label_ids_' + str(homework_id), None)
+                session.pop('edit_deadline_' + str(homework_id), None)
 
             # 构造临时作业对象
             temp_homework = {
