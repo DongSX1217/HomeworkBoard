@@ -648,7 +648,7 @@ class Homework:
         return jsonify(subjects)
 
     @app.route('/homework/publish', methods=['GET', 'POST'])
-fix:    def homework_publish():
+    def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
         labels = Label.load_labels()
         subjects = Subject.load_subjects()
