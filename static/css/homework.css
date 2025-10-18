@@ -20,6 +20,38 @@ body {
     position: relative;
 }
 
+/* Flash消息样式 */
+.flash-messages {
+    margin: 10px auto;
+    width: 80%;
+    text-align: center;
+}
+
+.flash-message {
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.flash-error {
+    background-color: #f2dede;
+    color: #a94442;
+    border: 1px solid #ebccd1;
+}
+
+.flash-success {
+    background-color: #dff0d8;
+    color: #3c763d;
+    border: 1px solid #d6e9c6;
+}
+
+.flash-info {
+    background-color: #d9edf7;
+    color: #31708f;
+    border: 1px solid #bce8f1;
+}
+
 /* 标题样式 */
 h1 {
     text-align: center;

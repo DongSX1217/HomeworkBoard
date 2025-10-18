@@ -18,6 +18,7 @@ except ImportError:
         DEBUG = False
         LOG_DIR = os.path.join(DATA_DIR, 'logs')
         ERROR_LOG_FILE = os.path.join(LOG_DIR, 'error.log')
+        clear_password = 'test'
         
         @staticmethod
         def init_app(app):
@@ -1008,12 +1009,17 @@ class Homework:
         
         return render_template('homework_delete.html', homework=homework)
 
-    @app.route('/homework/clear/all')
+    @app.route('/homework/clear/all', methods=['POST'])
     def clear_all_homework():
-        submissions = load_submissions()
-        save_submissions([])
-        log_operation("清空所有作业", submissions, get_client_ip())
-        return redirect(url_for('view_homework'))
+        password = request.form.get('password')
+        
+        if password == Config.clear_password:
+            submissions = load_submissions()
+            save_submissions([])
+            log_operation("清空所有作业", submissions, get_client_ip())
+            return jsonify({'success': True, 'message': '所有作业已清空！'})
+        else:
+            return jsonify({'success': False, 'message': '密码错误！'}), 401
 
 @app.route('/submissions')
 def view_submissions():

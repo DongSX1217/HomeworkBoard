@@ -510,6 +510,74 @@ function closeSettings() {
     document.getElementById("settingsModal").style.display = "none";
 }
 
+// 显示消息函数
+function showMessage(message, type = 'info') {
+    // 创建消息元素
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `flash-message flash-${type}`;
+    messageDiv.textContent = message;
+    
+    // 创建消息容器（如果还不存在）
+    let flashContainer = document.querySelector('.flash-messages');
+    if (!flashContainer) {
+        flashContainer = document.createElement('div');
+        flashContainer.className = 'flash-messages';
+        const container = document.querySelector('.container');
+        container.insertBefore(flashContainer, container.firstChild.nextSibling); // 插入到标题之后
+    }
+    
+    // 添加消息
+    flashContainer.appendChild(messageDiv);
+    
+    // 3秒后自动移除消息
+    setTimeout(() => {
+        if (messageDiv.parentNode) {
+            messageDiv.parentNode.removeChild(messageDiv);
+        }
+        // 如果容器为空，则移除容器
+        if (flashContainer.children.length === 0) {
+            flashContainer.parentNode.removeChild(flashContainer);
+        }
+    }, 3000);
+}
+
+function clearAllHomework() {
+    const password = prompt("请输入清空作业密码：");
+    if (password !== null) {
+        fetch('/homework/clear/all', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'password=' + encodeURIComponent(password),
+            credentials: 'same-origin'
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json().then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        showMessage(data.message, 'error');
+                    }
+                });
+            } else {
+                return response.json().then(data => {
+                    showMessage(data.message || '操作失败', 'error');
+                }).catch(() => {
+                    showMessage('密码错误！', 'error');
+                });
+            }
+        })
+        .catch(error => {
+            showMessage('发生错误: ' + error.message, 'error');
+        });
+    }
+}
+
 // 切换全屏模式
 function toggleFullscreen() {
     const container = document.querySelector('.container');
