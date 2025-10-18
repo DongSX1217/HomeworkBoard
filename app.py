@@ -647,7 +647,8 @@ class Homework:
         # 返回完整的学科对象，包含常用词等信息
         return jsonify(subjects)
 
-    def homework_publish():
+    @app.route('/homework/publish', methods=['GET', 'POST'])
+fix:    def homework_publish():
         # 每次访问时都重新加载标签，确保获取最新数据
         labels = Label.load_labels()
         subjects = Subject.load_subjects()
