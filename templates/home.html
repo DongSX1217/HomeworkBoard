@@ -1,77 +1,588 @@
-<html>
-    <head>
-        <title>作业公告板</title>
-        <style>
-            h1 {
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人大附中三亚学校高一(4)班公告站</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #0066cc;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #004499;
+            transform: translateY(-1px);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 顶部样式 */
+        header {
+            background: linear-gradient(135deg, #1a5fb4, #2d7bc9);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .school-name {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .class-info {
+            font-size: 1.2em;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        
+        /* 导航菜单 */
+        nav {
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            margin-top: -10px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-menu li {
+            position: relative;
+        }
+        
+        .nav-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            margin: 3px;
+        }
+        
+        .nav-menu a:hover {
+            background-color: #f0f7ff;
+            color: #1a5fb4;
+            box-shadow: 0 2px 8px rgba(26, 95, 180, 0.2);
+        }
+        
+        .dropdown {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eaeaea;
+        }
+        
+        .nav-menu li:hover .dropdown {
+            display: block;
+        }
+        
+        .dropdown a {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            margin: 0;
+            border-radius: 0;
+        }
+        
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+        
+        /* 主体内容 */
+        main {
+            padding: 30px 0;
+            min-height: 500px;
+        }
+        
+        .welcome-section {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            border-left: 5px solid #1a5fb4;
+        }
+        
+        .welcome-section h1 {
+            color: #1a5fb4;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 10px;
+        }
+        
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+        }
+        
+        .main-content, .sidebar {
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .main-content:hover, .sidebar:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        
+        .section-title {
+            color: #1a5fb4;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 8px;
+            border-radius: 4px;
+        }
+        
+        .resource-list {
+            list-style: none;
+            margin-top: 15px;
+        }
+        
+        .resource-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            padding-left: 10px;
+        }
+        
+        .resource-list li:hover {
+            background-color: #f9f9f9;
+            transform: translateX(5px);
+        }
+        
+        .resource-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .notice-item {
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #1a5fb4;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .notice-item:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .notice-item h3 {
+            margin-bottom: 8px;
+            color: #1a5fb4;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #ecf0f1;
+            padding: 40px 0 20px;
+            border-radius: 12px 12px 0 0;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-section h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #4a6572;
+            border-radius: 4px;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        
+        .footer-section ul li:hover {
+            transform: translateX(5px);
+        }
+        
+        .footer-section a {
+            color: #bdc3c7;
+        }
+        
+        .footer-section a:hover {
+            color: #3498db;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #34495e;
+            font-size: 0.9em;
+            color: #95a5a6;
+            border-radius: 4px;
+        }
+        
+        /* 响应式设计 - 竖屏优化 */
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+            
+            .nav-menu {
+                flex-direction: column;
+            }
+            
+            .nav-menu li {
+                width: 100%;
+            }
+            
+            .nav-menu a {
+                margin: 2px 0;
+                padding: 12px 15px;
+                border-radius: 8px;
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            /* 为有下拉菜单的项添加小三角 */
+            .nav-menu li.has-dropdown > a::after {
+                content: '▶';
+                font-size: 0.8em;
+                transition: transform 0.3s ease;
+                margin-left: 10px;
+            }
+            
+            .nav-menu li.has-dropdown.active > a::after {
+                transform: rotate(90deg);
+            }
+            
+            .dropdown {
+                position: static;
+                display: none;
+                width: 100%;
+                box-shadow: none;
+                border: none;
+                margin-top: 5px;
+                padding-left: 15px;
+                background-color: #f8f8f8;
+                border-radius: 0 0 8px 8px;
+            }
+            
+            .nav-menu li.active .dropdown {
+                display: block;
+            }
+            
+            .dropdown a {
+                padding: 10px 25px;
+                background-color: #f8f8f8;
+            }
+            
+            .header-top {
+                flex-direction: column;
                 text-align: center;
-                margin-top: 6%;
-                margin-bottom: 2%;
-                font-size: 2.2em;
+                gap: 10px;
             }
-            p{
-                margin:20px;
-                font-size: 1.4em;
-            }
-            a{
-                margin:20px;
+            
+            .school-name {
                 font-size: 1.5em;
             }
-            h3{
-                font-size: 1.6em;
-                margin-left: 5%;
+            
+            .class-info {
+                font-size: 1em;
             }
-            li{
-                font-size: 1.55em;
+            
+            .welcome-section, .main-content, .sidebar {
+                padding: 20px;
+                margin-bottom: 20px;
             }
-            li a{
-                font-size: 1.25em;
-                margin:0;
+            
+            .container {
+                padding: 0 15px;
             }
-        </style>
-        <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-    </head>
-    <body>
-        <h1>欢迎访问使用人大附中三亚学校高一(4)班公告站</h1>
-        <a href="/homework"> 作业公告板 </a>
-        <a href="/homework/publish"> 布置（发布）新作业</a>
-        <a href="/submissions"> 修改/删除作业</a>
-        <a href="/label/edit"> 管理标签</a>
-        <a href="/subjects"> 管理科目与常用词</a>
-        <br>
-        <a href="/clock"> 在线时钟 </a>
-        <a href="/class_schedule"> 标准课表 </a>
-        <a href="/image"> 临时课表 </a>
-        <a href="/countdown"> 在线倒计时 </a>
-        <br>
-        <p>其他页面/文件：</p>
-            <ul>
-            <li><a href="/file" style="font-size: 0.95em;"> 所有可供下载的文件浏览 </a></li>
-            <li>化学《步步高》配套资料（PPT+参考答案+解析+电子版文档）<small>（仅供学习、预习、复习使用，不当使用造成的后果自负）</small></li>
-            <ul style="font-size: 0.95em;">
-                <li><a href="/static/file/化学.zip" style="font-size: 0.95em;"> 直接下载（速度较慢）</a>
-                <li><a href="https://www.alipan.com/s/p1Xqnugud2M" style="font-size: 0.95em;">阿里云盘下载链接（速度更快，提取码: dd97）</a></li>
-                <li><a href="/file" style="font-size: 0.95em;"> 下载单个文件 </a></li>
+            
+            main {
+                padding: 20px 0;
+            }
+            
+            .notice-item {
+                padding: 15px;
+            }
+            
+            .resource-list li {
+                padding: 10px 0;
+                padding-left: 8px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .school-name {
+                font-size: 1.3em;
+            }
+            
+            .class-info {
+                font-size: 0.9em;
+            }
+            
+            .welcome-section h1 {
+                font-size: 1.5em;
+            }
+            
+            .section-title {
+                font-size: 1.2em;
+            }
+            
+            .welcome-section, .main-content, .sidebar {
+                padding: 15px;
+            }
+            
+            .notice-item {
+                padding: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <header>
+        <div class="container">
+            <div class="header-top">
+                <div class="school-name">人大附中三亚学校高一(4)班公告站</div>
+                <div class="class-info">班级专用网站（测试阶段）</div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 导航菜单 -->
+    <nav>
+        <div class="container">
+            <ul class="nav-menu">
+                <li class="has-dropdown">
+                    <a href="/homework">作业展示与编辑</a>
+                    <div class="dropdown">
+                        <a href="/homework">作业公告板</a>
+                        <a href="/homework/publish">布置新作业</a>
+                        <a href="/submissions">修改/删除作业</a>
+                    </div>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">作业编辑设置</a>
+                    <div class="dropdown">
+                        <a href="/label/edit">管理标签</a>
+                        <a href="/subjects">管理科目与常用词</a>
+                    </div>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">工具</a>
+                    <div class="dropdown">
+                        <a href="/clock">在线时钟</a>
+                        <a href="/countdown">在线倒计时</a>
+                    </div>
+                </li>
+                <li class="has-dropdown">
+                    <a href="/class_schedule">课表</a>
+                    <div class="dropdown">
+                        <a href="/class_schedule">标准课表</a>
+                        <a href="/image">临时课表</a>
+                    </div>
+                </li>
+                <li><a href="/file">文件下载</a></li>
             </ul>
-            <li><s><a href="/static/202510/07/1.html" style="font-size: 0.8em;"> 学生会关于“防范青少年药物滥用”禁毒作品征集的补充通知（已过期）</a></s></li>
-            </ul>
-        <br>
-        <h3>测试说明及声明</h3>
-        <ul>
-        <li>本网站仅用于教育教学用途。</li>
-        <li>本网站测试中，<b>因服务器端相关配置尚不完善，随时可能出现无法访问等情况</b>，如遇问题，请联系开发者。</li>
-        <li>本网站在学生群体（未成年人群体）内使用，并可能在学校内使用，<b>请无关访客不要恶意、随意使用相关功能，严禁篡改作业、恶意删除作业，严禁发布违法内容</b>，您的一切操作都会有后台日志记录，一经发现，您的IP将遭到封禁。</li>
-        <li>本网站会使用cookie功能。主要用于记录您的登录信息，作业板显示设置，和其他必要用途。如果您不同意使用，则不能继续使用本网站。</li>
-        <li>为了防止遭受网络攻击，考虑到本站服务器安全防御尚不完善，请使用者切勿公开本站网址（IP地址）。严禁以任何形式攻击本站（服务器）。如遇网络攻击，将向公安机关和国家安全机关报告。</li>
-        <li><b>致谢：</b>感谢DeepSeek/qwen/GPT对大部分bug的修复，以及对各项复杂功能的技术支持。</li>
-        <li><b>开源说明：</b>本网站代码（包括前端和后端）在Github以GNU v3协议开源，欢迎借鉴使用（如果你能找的到源代码仓库在哪的话:D ）。</li>
-        <li>测试阶段，有时需要重启服务器/应用以更新网站，这会导致短时间无法访问，请稍等约1min后重试，若长时间无法访问，请向开发者报告反馈。</li>
-        <li><b>警告：</b>请勿尝试通过代理服务器绕过IP封禁，因为大多数情况下没用。</li>
-        <li><b>友情链接（广告位招租）：</b>
-            <ul style="font-size: 0.5em;">
-                <li>ClassIsland，课表展示软件，由人大附中深圳学校一名高三学生主要开发，目前在<a href="https://github.com/ClassIsland/ClassIsland">Github</a>开源，并办有<a href="https://classisland.tech/">官方网站</a>。</li>
-                <li><a href="https://www.ip9.com.cn">ip9.com.cn</a>，IP属地检测，本站及有关项目使用的免费API，用于检测网站访问者所属地区，以屏蔽一些异常访问请求。</li>
-            </ul>
-        </li>
-        </ul>
-    </body>
+        </div>
+    </nav>
+    
+    <!-- 主体内容 -->
+    <main class="container">
+        <!-- 欢迎区域 -->
+        <section class="welcome-section">
+            <h1>欢迎使用高一(4)班公告站</h1>
+            <p>本网站旨在为人大附中三亚学校高一(4)班师生提供便捷的作业管理、课表查询和资源共享服务。我们致力于打造高效、安全、易用的班级信息管理平台。</p>
+        </section>
+        
+        <!-- 主要内容区域 -->
+        <div class="content-grid">
+            <!-- 左侧主要内容 -->
+            <div class="main-content">
+                <h2 class="section-title">最新公告</h2>
+                
+                <div class="notice-item">
+                    <h3>化学《步步高》配套资料</h3>
+                    <p>化学《步步高》配套资料（PPT+参考答案+解析+电子版文档）已上传至网站，可自行下载使用，也可提前打印准备。</p>
+                    <p><small>（仅供学习、预习、复习使用，不当使用造成的后果自负）</small></p>
+                    <p>
+                        <a href="/static/file/化学.zip">直接下载</a> | 
+                        <a href="https://www.alipan.com/s/p1Xqnugud2M">阿里云盘下载（提取码: dd97）</a> | 
+                        <a href="/file">下载单个文件</a>
+                    </p>
+                </div>
+                
+                <div class="notice-item">
+                    <h3>网站使用说明</h3>
+                    <p>本网站处于测试阶段，如遇无法访问等情况，请稍后重试或联系开发者。所有操作均有后台日志记录，请勿恶意篡改作业或发布违法内容。</p>
+                </div>
+                
+                <div class="notice-item">
+                    <h3>系统维护说明</h3>
+                    <p>测试阶段，经常不定时地需要重启服务器/应用以更新网站，这会导致短时间无法访问，如遇到此类情况，请稍等约1~2分钟后重试。</p>
+                </div>
+            </div>
+            
+            <!-- 右侧边栏 -->
+            <div class="sidebar">
+                <h2 class="section-title">快速链接</h2>
+                <ul class="resource-list">
+                    <li><a href="/homework">查看今日作业</a></li>
+                    <li><a href="/class_schedule">查看本周课表</a></li>
+                    <li><a href="/countdown">在线倒计时</a></li>
+                    <li><a href="/file">可下载的资料列表</a></li>
+                </ul>
+                
+                <h2 class="section-title" style="margin-top: 30px;">重要声明</h2>
+                <p>本网站仅用于教育教学用途，会使用cookie功能记录登录信息和显示设置。如不同意使用，则不能继续使用本网站。</p>
+                <p style="margin-top: 10px;">为防止网络攻击，请使用者切勿公开本站网址。严禁以任何形式攻击本站服务器，如遇网络攻击，将向公安机关和国家安全机关报告。</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>关于我们</h3>
+                    <p>人大附中三亚学校高一(4)班公告站，致力于为班级师生提供便捷的信息服务。</p>
+                    <p>感谢DeepSeek/qwen/GPT对大部分bug的修复，以及对各项复杂功能的技术支持。</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>网站说明</h3>
+                    <ul>
+                        <li><a href="#">使用条款（暂无）</a></li>
+                        <li><a href="#">隐私政策（暂无）</a></li>
+                        <li><a href="#">网站声明（暂无）</a></li>
+                        <li><a href="#">帮助文档（暂无）</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>友情链接</h3>
+                    <ul>
+                        <li><a href="https://classisland.tech/">ClassIsland官方网站</a></li>
+                        <li><a href="https://www.ip9.com.cn">IP属地检测</a></li>
+                        <li><a href="#">广告位招租</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>© 2025 人大附中三亚学校高一(4)班网站 | 本网站代码以GNU v3协议开源</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // 竖屏状态下菜单折叠功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-menu li.has-dropdown');
+            
+            navItems.forEach(item => {
+                const link = item.querySelector('a');
+                
+                link.addEventListener('click', function(e) {
+                    // 仅在竖屏状态下处理点击事件
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        
+                        // 如果点击的是当前活动的菜单项，则关闭它
+                        if (item.classList.contains('active')) {
+                            item.classList.remove('active');
+                        } else {
+                            // 关闭所有其他菜单项
+                            navItems.forEach(otherItem => {
+                                if (otherItem !== item) {
+                                    otherItem.classList.remove('active');
+                                }
+                            });
+                            // 打开当前菜单项
+                            item.classList.add('active');
+                        }
+                    }
+                });
+            });
+            
+            // 点击页面其他区域关闭菜单
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768) {
+                    if (!e.target.closest('.nav-menu')) {
+                        navItems.forEach(item => {
+                            item.classList.remove('active');
+                        });
+                    }
+                }
+            });
+        });
+    </script>
+</body>
 </html>
