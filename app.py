@@ -83,19 +83,21 @@ def inject_subject_class(): # 注入Subject类到模板
     return dict(Subject=Subject) # 返回一个包含Subject类的字典
 
 # 确保data目录存在
-DATA_DIR = 'data'
-if not os.path.exists(DATA_DIR):
-    os.makedirs(DATA_DIR)
+if not os.path.exists(Config.DATA_DIR):
+    os.makedirs(Config.DATA_DIR)
+if not os.path.exists(Config.LOG_DIR):
+    os.makedirs(Config.LOG_DIR)
 
-DATA_FILE = os.path.join(DATA_DIR, 'submissions.json')
-LABELS_FILE = os.path.join(DATA_DIR, 'labels.json')
-LOG_FILE = os.path.join(DATA_DIR, 'operation.log')
-SUBJECTS_FILE = os.path.join(DATA_DIR, 'subjects.json')
-IP_FILE = os.path.join(DATA_DIR, 'ips.json')
-STUDENTS_FILE = os.path.join(DATA_DIR, 'students.json')
-LOGIN_LOG_FILE = os.path.join(DATA_DIR, 'login.log')
-INPUT_LOG_FILE = os.path.join(DATA_DIR, 'input.log')
-PASSWORD_FILE = os.path.join(DATA_DIR, 'password.json')
+DATA_FILE = os.path.join(Config.DATA_DIR, 'submissions.json')
+LABELS_FILE = os.path.join(Config.DATA_DIR, 'labels.json')
+SUBJECTS_FILE = os.path.join(Config.DATA_DIR, 'subjects.json')
+IP_FILE = os.path.join(Config.DATA_DIR, 'ips.json')
+STUDENTS_FILE = os.path.join(Config.DATA_DIR, 'students.json')
+PASSWORD_FILE = os.path.join(Config.DATA_DIR, 'password.json')
+
+LOG_FILE = os.path.join(Config.LOG_DIR, 'operation.log')
+LOGIN_LOG_FILE = os.path.join(Config.LOG_DIR, 'login.log')
+INPUT_LOG_FILE = os.path.join(Config.LOG_DIR, 'input.log')
 
 default_labels = [
   {
@@ -297,7 +299,7 @@ def validate_password(password):
 
 def log_prompt_operation(operation, details, user_identifier, ip_address):
     """记录提示词操作日志到文件"""
-    PROMPT_LOG_FILE = os.path.join(DATA_DIR, 'prompt.log')
+    PROMPT_LOG_FILE = os.path.join(Config.LOG_DIR, 'prompt.log')
     
     log_entry = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -347,7 +349,7 @@ def log_input(content, name, student_id, ip_address, anonymous):
 # 添加文件上传日志记录函数
 def log_file_upload(filename, upload_path, file_size, user_name, user_id, ip_address):
     """记录文件上传日志到文件"""
-    UPLOAD_LOG_FILE = os.path.join(DATA_DIR, 'upload.log')
+    UPLOAD_LOG_FILE = os.path.join(Config.LOG_DIR, 'upload.log')
     
     log_entry = {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -371,7 +373,7 @@ def log_file_upload(filename, upload_path, file_size, user_name, user_id, ip_add
 # 添加检查用户上传配额的函数
 def check_user_upload_quota(name, student_id, file_size):
     """检查用户上传配额（每月限制）"""
-    UPLOAD_LOG_FILE = os.path.join(DATA_DIR, 'upload.log')
+    UPLOAD_LOG_FILE = os.path.join(Config.LOG_DIR, 'upload.log')
     
     # 如果日志文件不存在，说明用户没有上传过文件
     if not os.path.exists(UPLOAD_LOG_FILE):
@@ -1006,6 +1008,13 @@ class Homework:
         
         return render_template('homework_delete.html', homework=homework)
 
+    @app.route('/homework/clear/all')
+    def clear_all_homework():
+        submissions = load_submissions()
+        save_submissions([])
+        log_operation("清空所有作业", submissions, get_client_ip())
+        return redirect(url_for('view_homework'))
+
 @app.route('/submissions')
 def view_submissions():
     # 每次访问时都重新加载数据，确保获取最新数据
@@ -1153,7 +1162,7 @@ class Subject:
     def get_all_common_words_list():
         """获取所有通用常用词列表（用于模板渲染）"""
         # 检查是否存在专门的通用词文件
-        GLOBAL_WORDS_FILE = os.path.join(DATA_DIR, 'global_words.json')
+        GLOBAL_WORDS_FILE = os.path.join(Config.DATA_DIR, 'global_words.json')
         if os.path.exists(GLOBAL_WORDS_FILE):
             with open(GLOBAL_WORDS_FILE, 'r', encoding='utf-8') as f:
                 try:
@@ -1182,7 +1191,7 @@ class Subject:
     @staticmethod
     def save_global_common_words(words):
         """保存全局常用词到独立文件"""
-        GLOBAL_WORDS_FILE = os.path.join(DATA_DIR, 'global_words.json')
+        GLOBAL_WORDS_FILE = os.path.join(Config.DATA_DIR, 'global_words.json')
         with open(GLOBAL_WORDS_FILE, 'w', encoding='utf-8') as f:
             json.dump(words, f, ensure_ascii=False, indent=2)
 
@@ -1727,13 +1736,13 @@ class Fun:
     
 class AI:
     # 保存对话历史的文件路径
-    CHAT_HISTORY_FILE = os.path.join(DATA_DIR, 'chat_history.json')
-    PUBLIC_CHAT_HISTORY_FILE = os.path.join(DATA_DIR, 'public_chat_history.json')
+    CHAT_HISTORY_FILE = os.path.join(Config.DATA_DIR, 'chat_history.json')
+    PUBLIC_CHAT_HISTORY_FILE = os.path.join(Config.DATA_DIR, 'public_chat_history.json')
     # 保存系统提示词的文件路径
-    SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'system_prompt.txt')
-    PUBLIC_SYSTEM_PROMPT_FILE = os.path.join(DATA_DIR, 'public_system_prompt.txt')
+    SYSTEM_PROMPT_FILE = os.path.join(Config.DATA_DIR, 'system_prompt.txt')
+    PUBLIC_SYSTEM_PROMPT_FILE = os.path.join(Config.DATA_DIR, 'public_system_prompt.txt')
     # 保存预设问答的文件路径
-    QA_PROMPT_FILE = os.path.join(DATA_DIR, 'qa_prompt.json')
+    QA_PROMPT_FILE = os.path.join(Config.DATA_DIR, 'qa_prompt.json')
     
     @staticmethod
     def get_default_system_prompt():
@@ -2274,7 +2283,7 @@ class ClassroomGame:
     """虚拟教室搞破坏游戏"""
     
     # 游戏状态存储文件
-    GAME_STATE_FILE = os.path.join(DATA_DIR, 'classroom_game.json')
+    GAME_STATE_FILE = os.path.join(Config.DATA_DIR, 'classroom_game.json')
     
     # 游戏配置
     ACTIONS = {
@@ -2619,7 +2628,7 @@ class CampusLegendGame:
     """校园传说游戏类"""
     
     # 游戏状态存储文件
-    GAME_STATE_FILE = os.path.join(DATA_DIR, 'campus_legend_game.json')
+    GAME_STATE_FILE = os.path.join(Config.DATA_DIR, 'campus_legend_game.json')
     
     # 游戏配置
     LOCATIONS = {
