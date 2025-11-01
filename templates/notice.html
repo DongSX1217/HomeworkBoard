@@ -4,163 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>公告管理 - 人大附中三亚学校高一(4)班公告站</title>
-    <style>
-        /* 全局样式 */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
-        }
-        
-        body {
-            background-color: #f5f5f5;
-            color: #333;
-            line-height: 1.6;
-        }
-        
-        a {
-            text-decoration: none;
-            color: #0066cc;
-            transition: all 0.3s ease;
-        }
-        
-        a:hover {
-            color: #004499;
-            transform: translateY(-1px);
-        }
-        
-        button {
-            background-color: #1a5fb4;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 14px;
-        }
-        
-        button:hover {
-            background-color: #154c8a;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 20px;
-        }
-        
-        /* 顶部样式 */
-        header {
-            background: linear-gradient(135deg, #1a5fb4, #2d7bc9);
-            color: white;
-            padding: 15px 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            border-radius: 0 0 12px 12px;
-        }
-        
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .school-name {
-            font-size: 1.8em;
-            font-weight: bold;
-        }
-        
-        .class-info {
-            font-size: 1.2em;
-            background: rgba(255,255,255,0.2);
-            padding: 5px 12px;
-            border-radius: 20px;
-        }
-        
-        /* 导航菜单 */
-        nav {
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-radius: 8px;
-            margin-top: -10px;
-            position: relative;
-            z-index: 10;
-        }
-        
-        .nav-menu {
-            display: flex;
-            list-style: none;
-            padding: 0;
-            flex-wrap: wrap;
-        }
-        
-        .nav-menu li {
-            position: relative;
-        }
-        
-        .nav-menu a {
-            display: block;
-            padding: 15px 20px;
-            color: #333;
-            font-weight: 500;
-            transition: all 0.3s ease;
-            border-radius: 6px;
-            margin: 3px;
-        }
-        
-        .nav-menu a:hover {
-            background-color: #f0f7ff;
-            color: #1a5fb4;
-            box-shadow: 0 2px 8px rgba(26, 95, 180, 0.2);
-        }
-        
-        .dropdown {
-            position: absolute;
-            background-color: white;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-            min-width: 200px;
-            display: none;
-            z-index: 100;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #eaeaea;
-        }
-        
-        .nav-menu li:hover .dropdown {
-            display: block;
-        }
-        
-        .dropdown a {
-            padding: 12px 20px;
-            border-bottom: 1px solid #f0f0f0;
-            margin: 0;
-            border-radius: 0;
-        }
-        
-        .dropdown a:last-child {
-            border-bottom: none;
-        }
-        
-        /* 主体内容 */
-        main {
-            padding: 30px 0;
-            min-height: 500px;
-        }
-        
-        .page-title {
-            background-color: white;
-            padding: 20px 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-            border-left: 5px solid #1a5fb4;
-        }
-        
-        .page-title h1 {
+    <link rel="stylesheet" href="/static/css/basic.css">
+    <style>     
+        /* 主体内容 */           
+       .page-title h1 {
             color: #1a5fb4;
             margin-bottom: 10px;
             font-size: 1.8em;
@@ -377,129 +224,8 @@
             background-color: #5a6268;
         }
         
-        /* 页脚样式 */
-        footer {
-            background: linear-gradient(135deg, #2c3e50, #34495e);
-            color: #ecf0f1;
-            padding: 40px 0 20px;
-            border-radius: 12px 12px 0 0;
-            margin-top: 40px;
-        }
-        
-        .footer-content {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-        
-        .footer-section h3 {
-            color: #3498db;
-            margin-bottom: 15px;
-            font-size: 1.2em;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #4a6572;
-            border-radius: 4px;
-        }
-        
-        .footer-section ul {
-            list-style: none;
-        }
-        
-        .footer-section ul li {
-            margin-bottom: 10px;
-            transition: transform 0.3s ease;
-            border-radius: 4px;
-            padding: 5px;
-        }
-        
-        .footer-section ul li:hover {
-            transform: translateX(5px);
-        }
-        
-        .footer-section a {
-            color: #bdc3c7;
-        }
-        
-        .footer-section a:hover {
-            color: #3498db;
-        }
-        
-        .copyright {
-            text-align: center;
-            padding-top: 20px;
-            border-top: 1px solid #34495e;
-            font-size: 0.9em;
-            color: #95a5a6;
-            border-radius: 4px;
-        }
-        
         /* 响应式设计 - 竖屏优化 */
         @media (max-width: 768px) {
-            .header-top {
-                flex-direction: column;
-                text-align: center;
-                gap: 10px;
-            }
-            
-            .school-name {
-                font-size: 1.5em;
-            }
-            
-            .class-info {
-                font-size: 1em;
-            }
-            
-            .nav-menu {
-                flex-direction: column;
-            }
-            
-            .nav-menu li {
-                width: 100%;
-            }
-            
-            .nav-menu a {
-                margin: 2px 0;
-                padding: 12px 15px;
-                border-radius: 8px;
-                position: relative;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            
-            .nav-menu li.has-dropdown > a::after {
-                content: '▶';
-                font-size: 0.8em;
-                transition: transform 0.3s ease;
-                margin-left: 10px;
-            }
-            
-            .nav-menu li.has-dropdown.active > a::after {
-                transform: rotate(90deg);
-            }
-            
-            .dropdown {
-                position: static;
-                display: none;
-                width: 100%;
-                box-shadow: none;
-                border: none;
-                margin-top: 5px;
-                padding-left: 15px;
-                background-color: #f8f8f8;
-                border-radius: 0 0 8px 8px;
-            }
-            
-            .nav-menu li.active .dropdown {
-                display: block;
-            }
-            
-            .dropdown a {
-                padding: 10px 25px;
-                background-color: #f8f8f8;
-            }
-            
             .controls {
                 flex-direction: column;
                 align-items: stretch;
@@ -523,22 +249,9 @@
                 flex-direction: column;
                 gap: 5px;
             }
-            
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 25px;
-            }
         }
         
         @media (max-width: 480px) {
-            .school-name {
-                font-size: 1.3em;
-            }
-            
-            .class-info {
-                font-size: 0.9em;
-            }
-            
             .page-title h1 {
                 font-size: 1.5em;
             }
@@ -569,6 +282,7 @@
         <div class="container">
             <ul class="nav-menu">
                 <li><a href="/home">首页</a></li>
+                <li><a href="/notice" style="background-color: #f0f7ff; color: #1a5fb4;">公告</a></li>
                 <li class="has-dropdown">
                     <a href="/homework">作业展示与编辑</a>
                     <div class="dropdown">
@@ -599,7 +313,6 @@
                     </div>
                 </li>
                 <li><a href="/file">文件下载</a></li>
-                <li><a href="/notice" style="background-color: #f0f7ff; color: #1a5fb4;">公告管理</a></li>
             </ul>
         </div>
     </nav>
@@ -737,6 +450,12 @@
         document.addEventListener('DOMContentLoaded', function() {
             fetchNotices();
             
+            // 给"全部公告"按钮添加事件监听器
+            const allBtn = document.querySelector('[data-category="all"]');
+            if (allBtn) {
+                allBtn.addEventListener('click', () => filterByCategory('all'));
+            }
+            
             // 事件监听
             sortSelect.addEventListener('change', function() {
                 sortOrder = this.value;
@@ -759,7 +478,12 @@
         // 获取公告数据
         function fetchNotices() {
             fetch('/notice/api?action=get')
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
                 .then(data => {
                     notices = data;
                     renderNotices();
@@ -880,7 +604,7 @@
         // 更新分类筛选器
         function updateCategoryFilters() {
             // 获取所有分类
-            const categories = [...new Set(notices.map(notice => notice.cat))];
+            const categories = [...new Set(notices.map(notice => notice.cat))].filter(cat => cat); // 过滤掉空值
             
             // 清空现有按钮（除了"全部公告"）
             const allBtn = categoryFilters.querySelector('[data-category="all"]');
@@ -889,14 +613,12 @@
             
             // 添加分类按钮
             categories.forEach(category => {
-                if (category) {
-                    const btn = document.createElement('button');
-                    btn.className = 'category-btn';
-                    btn.textContent = category;
-                    btn.dataset.category = category;
-                    btn.addEventListener('click', () => filterByCategory(category));
-                    categoryFilters.appendChild(btn);
-                }
+                const btn = document.createElement('button');
+                btn.className = 'category-btn';
+                btn.textContent = category;
+                btn.dataset.category = category;
+                btn.addEventListener('click', () => filterByCategory(category));
+                categoryFilters.appendChild(btn);
             });
             
             // 设置当前分类按钮为激活状态

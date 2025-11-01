@@ -513,6 +513,7 @@ else:
         json.dump(password_data, f, ensure_ascii=False, indent=4)
 
 @app.route('/')
+@app.route('/home')
 def homepage():
     return render_template('home.html')
 
@@ -606,34 +607,51 @@ class Notice:
         """公告页面"""
         return render_template('notice.html')
 
-    @app.route('/notice/api',methods=['POST', 'GET'])
+    @app.route('/notice/api', methods=['POST', 'GET'])
     def notice():
         global notice
         action = request.args.get('action')
-        data = request.get_json()
-        if action == 'add':
-            if data is None:
-                return jsonify({"status": "error", "message": "No notice content provided."})
-            notice_data = [data]
-            notice = Notice.load_notice()
-            notice = notice + notice_data
-            Notice.save_notice(notice)
-            return jsonify({"status": "success", "message": "Notice added successfully."})
+        
         if action == 'get':
             notice = Notice.load_notice()
-            return jsonify({"status": "success", "notices": notice})
-        if action == 'edit':
-            if data is None:
-                return jsonify({"status": "error", "message": "No notice content provided."})
-            notice = Notice.load_notice()
-            for i in notice:
-                if data['id'] == i['id']:
-                    for key, value in data.items():
-                        i[key] = value
-                    Notice.save_notice(notice)
-                    return jsonify({"status": "success", "message": "Notice edited successfully."})
-            return jsonify({"status": "error", "message": "Notice not found."})
-        return jsonify({"status": "error", "message": "Invalid action."})
+            # 直接返回公告列表，确保是JSON格式
+            return jsonify(notice)
+            
+        # 对于POST请求，处理添加和编辑操作
+        if request.method == 'POST':
+            try:
+                data = request.get_json()
+            except Exception as e:
+                return jsonify({"success": False, "message": "Failed to parse request data."})
+            
+            if action == 'add':
+                if data is None:
+                    return jsonify({"success": False, "message": "No notice content provided."})
+                
+                # 确保必需字段存在
+                required_fields = ['id', 'title', 'author', 'content', 'date']
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return jsonify({"success": False, "message": f"Missing required field: {field}"})
+                
+                notice = Notice.load_notice()
+                notice.append(data)
+                Notice.save_notice(notice)
+                return jsonify({"success": True, "message": "Notice added successfully."})
+                
+            if action == 'edit':
+                if data is None:
+                    return jsonify({"success": False, "message": "No notice content provided."})
+                
+                notice = Notice.load_notice()
+                for i, item in enumerate(notice):
+                    if data.get('id') == item.get('id'):
+                        notice[i] = data
+                        Notice.save_notice(notice)
+                        return jsonify({"success": True, "message": "Notice edited successfully."})
+                return jsonify({"success": False, "message": "Notice not found."})
+                
+        return jsonify({"success": False, "message": "Invalid action or method."})
     
     def load_notice():
         if os.path.exists(NOTICE_FILE):
@@ -648,7 +666,7 @@ class Notice:
         with open(NOTICE_FILE, 'w', encoding='utf-8') as f:
             json.dump(notices, f, ensure_ascii=False, indent=2)
             app.logger.info("Notice saved successfully.")
-            return "success"
+        
 class Homework:
     '''
     def __init__(self, subject, content, labels, deadline):
