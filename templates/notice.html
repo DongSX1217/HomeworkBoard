@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>公告管理 - 人大附中三亚学校高一(4)班公告站</title>
+    <style>
+        /* 全局样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        a {
+            text-decoration: none;
+            color: #0066cc;
+            transition: all 0.3s ease;
+        }
+        
+        a:hover {
+            color: #004499;
+            transform: translateY(-1px);
+        }
+        
+        button {
+            background-color: #1a5fb4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: #154c8a;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* 顶部样式 */
+        header {
+            background: linear-gradient(135deg, #1a5fb4, #2d7bc9);
+            color: white;
+            padding: 15px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .school-name {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        
+        .class-info {
+            font-size: 1.2em;
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+        }
+        
+        /* 导航菜单 */
+        nav {
+            background-color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
+            margin-top: -10px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            flex-wrap: wrap;
+        }
+        
+        .nav-menu li {
+            position: relative;
+        }
+        
+        .nav-menu a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 6px;
+            margin: 3px;
+        }
+        
+        .nav-menu a:hover {
+            background-color: #f0f7ff;
+            color: #1a5fb4;
+            box-shadow: 0 2px 8px rgba(26, 95, 180, 0.2);
+        }
+        
+        .dropdown {
+            position: absolute;
+            background-color: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #eaeaea;
+        }
+        
+        .nav-menu li:hover .dropdown {
+            display: block;
+        }
+        
+        .dropdown a {
+            padding: 12px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            margin: 0;
+            border-radius: 0;
+        }
+        
+        .dropdown a:last-child {
+            border-bottom: none;
+        }
+        
+        /* 主体内容 */
+        main {
+            padding: 30px 0;
+            min-height: 500px;
+        }
+        
+        .page-title {
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            border-left: 5px solid #1a5fb4;
+        }
+        
+        .page-title h1 {
+            color: #1a5fb4;
+            margin-bottom: 10px;
+            font-size: 1.8em;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .category-filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .category-btn {
+            background-color: #e9ecef;
+            color: #495057;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .category-btn:hover, .category-btn.active {
+            background-color: #1a5fb4;
+            color: white;
+        }
+        
+        .sort-options {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sort-options select {
+            padding: 8px 12px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            background-color: white;
+        }
+        
+        .notice-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .notice-category {
+            margin-bottom: 30px;
+        }
+        
+        .category-header {
+            font-size: 1.4em;
+            color: #1a5fb4;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .notice-item {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .notice-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+        }
+        
+        .notice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .notice-title {
+            font-size: 1.2em;
+            color: #1a5fb4;
+            margin-right: 15px;
+        }
+        
+        .notice-meta {
+            display: flex;
+            gap: 15px;
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+        
+        .notice-content {
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .notice-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .edit-btn {
+            background-color: #28a745;
+        }
+        
+        .edit-btn:hover {
+            background-color: #218838;
+        }
+        
+        .no-notices {
+            text-align: center;
+            padding: 40px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            color: #6c757d;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        
+        .modal-title {
+            font-size: 1.5em;
+            color: #1a5fb4;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #6c757d;
+            padding: 5px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        
+        .form-group textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .cancel-btn {
+            background-color: #6c757d;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #5a6268;
+        }
+        
+        /* 页脚样式 */
+        footer {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: #ecf0f1;
+            padding: 40px 0 20px;
+            border-radius: 12px 12px 0 0;
+            margin-top: 40px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .footer-section h3 {
+            color: #3498db;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #4a6572;
+            border-radius: 4px;
+        }
+        
+        .footer-section ul {
+            list-style: none;
+        }
+        
+        .footer-section ul li {
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+            border-radius: 4px;
+            padding: 5px;
+        }
+        
+        .footer-section ul li:hover {
+            transform: translateX(5px);
+        }
+        
+        .footer-section a {
+            color: #bdc3c7;
+        }
+        
+        .footer-section a:hover {
+            color: #3498db;
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #34495e;
+            font-size: 0.9em;
+            color: #95a5a6;
+            border-radius: 4px;
+        }
+        
+        /* 响应式设计 - 竖屏优化 */
+        @media (max-width: 768px) {
+            .header-top {
+                flex-direction: column;
+                text-align: center;
+                gap: 10px;
+            }
+            
+            .school-name {
+                font-size: 1.5em;
+            }
+            
+            .class-info {
+                font-size: 1em;
+            }
+            
+            .nav-menu {
+                flex-direction: column;
+            }
+            
+            .nav-menu li {
+                width: 100%;
+            }
+            
+            .nav-menu a {
+                margin: 2px 0;
+                padding: 12px 15px;
+                border-radius: 8px;
+                position: relative;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            
+            .nav-menu li.has-dropdown > a::after {
+                content: '▶';
+                font-size: 0.8em;
+                transition: transform 0.3s ease;
+                margin-left: 10px;
+            }
+            
+            .nav-menu li.has-dropdown.active > a::after {
+                transform: rotate(90deg);
+            }
+            
+            .dropdown {
+                position: static;
+                display: none;
+                width: 100%;
+                box-shadow: none;
+                border: none;
+                margin-top: 5px;
+                padding-left: 15px;
+                background-color: #f8f8f8;
+                border-radius: 0 0 8px 8px;
+            }
+            
+            .nav-menu li.active .dropdown {
+                display: block;
+            }
+            
+            .dropdown a {
+                padding: 10px 25px;
+                background-color: #f8f8f8;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .category-filters, .sort-options {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .page-title, .notice-item {
+                padding: 15px;
+            }
+            
+            .notice-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .notice-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 25px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .school-name {
+                font-size: 1.3em;
+            }
+            
+            .class-info {
+                font-size: 0.9em;
+            }
+            
+            .page-title h1 {
+                font-size: 1.5em;
+            }
+            
+            .category-header {
+                font-size: 1.2em;
+            }
+            
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部标题栏 -->
+    <header>
+        <div class="container">
+            <div class="header-top">
+                <div class="school-name">人大附中三亚学校高一(4)班网站</div>
+                <div class="class-info">班级专用（测试阶段）</div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- 导航菜单 -->
+    <nav>
+        <div class="container">
+            <ul class="nav-menu">
+                <li><a href="/home">首页</a></li>
+                <li class="has-dropdown">
+                    <a href="/homework">作业展示与编辑</a>
+                    <div class="dropdown">
+                        <a href="/homework">作业公告板</a>
+                        <a href="/homework/publish">布置新作业</a>
+                        <a href="/submissions">修改/删除作业</a>
+                    </div>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">作业编辑设置</a>
+                    <div class="dropdown">
+                        <a href="/label/edit">管理标签</a>
+                        <a href="/subjects">管理科目与常用词</a>
+                    </div>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">工具</a>
+                    <div class="dropdown">
+                        <a href="/clock">在线时钟</a>
+                        <a href="/countdown">在线倒计时</a>
+                    </div>
+                </li>
+                <li class="has-dropdown">
+                    <a href="/class_schedule">课表</a>
+                    <div class="dropdown">
+                        <a href="/class_schedule">标准课表</a>
+                        <a href="/image">临时课表</a>
+                    </div>
+                </li>
+                <li><a href="/file">文件下载</a></li>
+                <li><a href="/notice" style="background-color: #f0f7ff; color: #1a5fb4;">公告管理</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- 主体内容 -->
+    <main class="container">
+        <!-- 页面标题 -->
+        <section class="page-title">
+            <h1>公告管理</h1>
+            <p>在这里查看、发布和管理班级公告</p>
+        </section>
+        
+        <!-- 控制区域 -->
+        <div class="controls">
+            <div class="category-filters">
+                <button class="category-btn active" data-category="all">全部公告</button>
+                <!-- 分类按钮将通过JavaScript动态生成 -->
+            </div>
+            
+            <div class="sort-options">
+                <label for="sort-select">排序方式：</label>
+                <select id="sort-select">
+                    <option value="desc">发布日期倒序</option>
+                    <option value="asc">发布日期正序</option>
+                </select>
+                <button id="add-notice-btn">发布新公告</button>
+            </div>
+        </div>
+        
+        <!-- 公告列表 -->
+        <div class="notice-list" id="notice-list">
+            <!-- 公告内容将通过JavaScript动态生成 -->
+            <div class="no-notices" id="no-notices">
+                <p>暂无公告，点击"发布新公告"按钮添加第一条公告</p>
+            </div>
+        </div>
+    </main>
+    
+    <!-- 发布/编辑公告模态框 -->
+    <div class="modal" id="notice-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">发布新公告</h2>
+                <button class="close-btn" id="close-modal">&times;</button>
+            </div>
+            
+            <form id="notice-form">
+                <input type="hidden" id="notice-id">
+                
+                <div class="form-group">
+                    <label for="notice-title">公告标题</label>
+                    <input type="text" id="notice-title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notice-category">分类</label>
+                    <input type="text" id="notice-category" placeholder="输入分类名称，如：班级通知、学习资料等">
+                </div>
+                
+                <div class="form-group">
+                    <label for="notice-author">发布人</label>
+                    <input type="text" id="notice-author" placeholder="请输入您的姓名" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notice-content">公告内容</label>
+                    <textarea id="notice-content" required></textarea>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="cancel-btn" id="cancel-btn">取消</button>
+                    <button type="submit" id="submit-btn">发布公告</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>关于我们</h3>
+                    <p>人大附中三亚学校高一(4)班公告站，提供各类信息公告等服务。</p>
+                    <p>感谢DeepSeek/qwen/GPT对大部分bug的修复，以及对各项复杂功能的技术支持。</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>网站说明</h3>
+                    <ul>
+                        <li><a href="#">使用条款（暂无）</a></li>
+                        <li><a href="#">隐私政策（暂无）</a></li>
+                        <li><a href="#">网站声明（暂无）</a></li>
+                        <li><a href="#">帮助文档（暂无）</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h3>友情链接</h3>
+                    <ul>
+                        <li><a href="https://classisland.tech/">ClassIsland官方网站</a></li>
+                        <li><a href="https://www.ip9.com.cn">IP属地检测</a></li>
+                        <li><a href="#">广告位招租</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                <p>© 2025 人大附中三亚学校高一(4)班网站 | 本网站代码以GNU v3协议开源</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        // 全局变量
+        let notices = [];
+        let currentCategory = 'all';
+        let sortOrder = 'desc';
+        let editingNoticeId = null;
+        
+        // DOM元素
+        const noticeList = document.getElementById('notice-list');
+        const noNotices = document.getElementById('no-notices');
+        const categoryFilters = document.querySelector('.category-filters');
+        const sortSelect = document.getElementById('sort-select');
+        const addNoticeBtn = document.getElementById('add-notice-btn');
+        const noticeModal = document.getElementById('notice-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const closeModal = document.getElementById('close-modal');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const noticeForm = document.getElementById('notice-form');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        // 页面加载时获取公告数据
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchNotices();
+            
+            // 事件监听
+            sortSelect.addEventListener('change', function() {
+                sortOrder = this.value;
+                renderNotices();
+            });
+            
+            addNoticeBtn.addEventListener('click', openAddModal);
+            closeModal.addEventListener('click', closeNoticeModal);
+            cancelBtn.addEventListener('click', closeNoticeModal);
+            noticeForm.addEventListener('submit', handleFormSubmit);
+            
+            // 点击模态框外部关闭
+            noticeModal.addEventListener('click', function(e) {
+                if (e.target === noticeModal) {
+                    closeNoticeModal();
+                }
+            });
+        });
+        
+        // 获取公告数据
+        function fetchNotices() {
+            fetch('/notice/api?action=get')
+                .then(response => response.json())
+                .then(data => {
+                    notices = data;
+                    renderNotices();
+                    updateCategoryFilters();
+                })
+                .catch(error => {
+                    console.error('获取公告失败:', error);
+                    noticeList.innerHTML = '<div class="no-notices"><p>获取公告失败，请稍后重试</p></div>';
+                });
+        }
+        
+        // 渲染公告列表
+        function renderNotices() {
+            // 清空列表
+            noticeList.innerHTML = '';
+            
+            // 如果没有公告
+            if (notices.length === 0) {
+                noNotices.style.display = 'block';
+                return;
+            }
+            
+            noNotices.style.display = 'none';
+            
+            // 筛选和排序
+            let filteredNotices = notices;
+            
+            // 按分类筛选
+            if (currentCategory !== 'all') {
+                filteredNotices = notices.filter(notice => notice.cat === currentCategory);
+            }
+            
+            // 按日期排序
+            filteredNotices.sort((a, b) => {
+                const dateA = new Date(a.date);
+                const dateB = new Date(b.date);
+                return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
+            });
+            
+            // 按分类分组
+            const categories = {};
+            filteredNotices.forEach(notice => {
+                if (!categories[notice.cat]) {
+                    categories[notice.cat] = [];
+                }
+                categories[notice.cat].push(notice);
+            });
+            
+            // 渲染分类组
+            for (const category in categories) {
+                const categorySection = document.createElement('div');
+                categorySection.className = 'notice-category';
+                
+                const categoryHeader = document.createElement('h3');
+                categoryHeader.className = 'category-header';
+                categoryHeader.textContent = category || '未分类';
+                
+                categorySection.appendChild(categoryHeader);
+                
+                // 渲染该分类下的公告
+                categories[category].forEach(notice => {
+                    const noticeItem = createNoticeItem(notice);
+                    categorySection.appendChild(noticeItem);
+                });
+                
+                noticeList.appendChild(categorySection);
+            }
+        }
+        
+        // 创建公告项
+        function createNoticeItem(notice) {
+            const noticeItem = document.createElement('div');
+            noticeItem.className = 'notice-item';
+            
+            const noticeHeader = document.createElement('div');
+            noticeHeader.className = 'notice-header';
+            
+            const title = document.createElement('h3');
+            title.className = 'notice-title';
+            title.textContent = notice.title;
+            
+            const actions = document.createElement('div');
+            actions.className = 'notice-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'edit-btn';
+            editBtn.textContent = '编辑';
+            editBtn.addEventListener('click', () => openEditModal(notice));
+            
+            actions.appendChild(editBtn);
+            
+            noticeHeader.appendChild(title);
+            noticeHeader.appendChild(actions);
+            
+            const meta = document.createElement('div');
+            meta.className = 'notice-meta';
+            
+            const author = document.createElement('span');
+            author.textContent = `发布人: ${notice.author}`;
+            
+            const date = document.createElement('span');
+            date.textContent = `发布日期: ${formatDate(notice.date)}`;
+            
+            meta.appendChild(author);
+            meta.appendChild(date);
+            
+            const content = document.createElement('div');
+            content.className = 'notice-content';
+            content.textContent = notice.content;
+            
+            noticeItem.appendChild(noticeHeader);
+            noticeItem.appendChild(meta);
+            noticeItem.appendChild(content);
+            
+            return noticeItem;
+        }
+        
+        // 更新分类筛选器
+        function updateCategoryFilters() {
+            // 获取所有分类
+            const categories = [...new Set(notices.map(notice => notice.cat))];
+            
+            // 清空现有按钮（除了"全部公告"）
+            const allBtn = categoryFilters.querySelector('[data-category="all"]');
+            categoryFilters.innerHTML = '';
+            categoryFilters.appendChild(allBtn);
+            
+            // 添加分类按钮
+            categories.forEach(category => {
+                if (category) {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.textContent = category;
+                    btn.dataset.category = category;
+                    btn.addEventListener('click', () => filterByCategory(category));
+                    categoryFilters.appendChild(btn);
+                }
+            });
+            
+            // 设置当前分类按钮为激活状态
+            setActiveCategory(currentCategory);
+        }
+        
+        // 按分类筛选
+        function filterByCategory(category) {
+            currentCategory = category;
+            setActiveCategory(category);
+            renderNotices();
+        }
+        
+        // 设置激活的分类按钮
+        function setActiveCategory(category) {
+            const buttons = categoryFilters.querySelectorAll('.category-btn');
+            buttons.forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+        }
+        
+        // 打开添加公告模态框
+        function openAddModal() {
+            modalTitle.textContent = '发布新公告';
+            submitBtn.textContent = '发布公告';
+            
+            // 清空表单
+            document.getElementById('notice-id').value = '';
+            document.getElementById('notice-title').value = '';
+            document.getElementById('notice-category').value = '';
+            document.getElementById('notice-author').value = '';
+            document.getElementById('notice-content').value = '';
+            
+            editingNoticeId = null;
+            noticeModal.style.display = 'flex';
+        }
+        
+        // 打开编辑公告模态框
+        function openEditModal(notice) {
+            modalTitle.textContent = '编辑公告';
+            submitBtn.textContent = '更新公告';
+            
+            // 填充表单
+            document.getElementById('notice-id').value = notice.id;
+            document.getElementById('notice-title').value = notice.title;
+            document.getElementById('notice-category').value = notice.cat;
+            document.getElementById('notice-author').value = notice.author;
+            document.getElementById('notice-content').value = notice.content;
+            
+            editingNoticeId = notice.id;
+            noticeModal.style.display = 'flex';
+        }
+        
+        // 关闭模态框
+        function closeNoticeModal() {
+            noticeModal.style.display = 'none';
+        }
+        
+        // 处理表单提交
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const id = editingNoticeId || generateId();
+            const title = document.getElementById('notice-title').value;
+            const cat = document.getElementById('notice-category').value || '未分类';
+            const author = document.getElementById('notice-author').value;
+            const content = document.getElementById('notice-content').value;
+            const date = new Date().toISOString();
+            
+            const noticeData = {
+                id,
+                title,
+                cat,
+                author,
+                content,
+                date
+            };
+            
+            // 确定是添加还是编辑
+            const action = editingNoticeId ? 'edit' : 'add';
+            const url = `/notice/api?action=${action}`;
+            
+            fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(noticeData)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    closeNoticeModal();
+                    fetchNotices(); // 重新获取数据
+                } else {
+                    alert('操作失败，请重试');
+                }
+            })
+            .catch(error => {
+                console.error('操作失败:', error);
+                alert('操作失败，请检查网络连接');
+            });
+        }
+        
+        // 生成唯一ID
+        function generateId() {
+            return 'notice_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // 格式化日期
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`;
+        }
+        
+        // 竖屏状态下菜单折叠功能
+        document.addEventListener('DOMContentLoaded', function() {
+            const navItems = document.querySelectorAll('.nav-menu li.has-dropdown');
+            
+            navItems.forEach(item => {
+                const link = item.querySelector('a');
+                
+                link.addEventListener('click', function(e) {
+                    // 仅在竖屏状态下处理点击事件
+                    if (window.innerWidth <= 768) {
+                        e.preventDefault();
+                        
+                        // 如果点击的是当前活动的菜单项，则关闭它
+                        if (item.classList.contains('active')) {
+                            item.classList.remove('active');
+                        } else {
+                            // 关闭所有其他菜单项
+                            navItems.forEach(otherItem => {
+                                if (otherItem !== item) {
+                                    otherItem.classList.remove('active');
+                                }
+                            });
+                            // 打开当前菜单项
+                            item.classList.add('active');
+                        }
+                    }
+                });
+            });
+            
+            // 点击页面其他区域关闭菜单
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768) {
+                    if (!e.target.closest('.nav-menu')) {
+                        navItems.forEach(item => {
+                            item.classList.remove('active');
+                        });
+                    }
+                }
+            });
+            
+            // 阻止下拉菜单内部点击事件冒泡
+            document.querySelectorAll('.dropdown a').forEach(dropdownLink => {
+                dropdownLink.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                });
+            });
+        });
+    </script>
+</body>
+</html>
