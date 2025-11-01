@@ -592,7 +592,8 @@
             
             const content = document.createElement('div');
             content.className = 'notice-content';
-            content.textContent = notice.content;
+            // 使用innerHTML代替textContent来支持HTML内容
+            content.innerHTML = notice.content.replace(/\n/g, '<br>');
             
             noticeItem.appendChild(noticeHeader);
             noticeItem.appendChild(meta);
@@ -670,6 +671,7 @@
             document.getElementById('notice-title').value = notice.title;
             document.getElementById('notice-category').value = notice.cat;
             document.getElementById('notice-author').value = notice.author;
+            // 保留原始内容格式（包括换行符）
             document.getElementById('notice-content').value = notice.content;
             
             editingNoticeId = notice.id;
