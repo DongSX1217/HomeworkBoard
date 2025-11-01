@@ -95,6 +95,7 @@ SUBJECTS_FILE = os.path.join(Config.DATA_DIR, 'subjects.json')
 IP_FILE = os.path.join(Config.DATA_DIR, 'ips.json')
 STUDENTS_FILE = os.path.join(Config.DATA_DIR, 'students.json')
 PASSWORD_FILE = os.path.join(Config.DATA_DIR, 'password.json')
+NOTICE_FILE = os.path.join(Config.DATA_DIR, 'notices.json')
 
 LOG_FILE = os.path.join(Config.LOG_DIR, 'operation.log')
 LOGIN_LOG_FILE = os.path.join(Config.LOG_DIR, 'login.log')
@@ -599,6 +600,55 @@ def get_client_ip():
     # app.logger.info(f"Using REMOTE_ADDR: {ip}")
     return ip
 
+class Notice:
+    @app.route('/notice')
+    def notice_page():
+        """公告页面"""
+        return render_template('notice.html')
+
+    @app.route('/notice/api',methods=['POST', 'GET'])
+    def notice():
+        global notice
+        action = request.args.get('action')
+        data = request.get_json()
+        if action == 'add':
+            if data is None:
+                return jsonify({"status": "error", "message": "No notice content provided."})
+            notice_data = [data]
+            notice = Notice.load_notice()
+            notice = notice + notice_data
+            Notice.save_notice(notice)
+            return jsonify({"status": "success", "message": "Notice added successfully."})
+        if action == 'get':
+            notice = Notice.load_notice()
+            return jsonify({"status": "success", "notices": notice})
+        if action == 'edit':
+            if data is None:
+                return jsonify({"status": "error", "message": "No notice content provided."})
+            notice = Notice.load_notice()
+            for i in notice:
+                if data['id'] == i['id']:
+                    for key, value in data.items():
+                        i[key] = value
+                    Notice.save_notice(notice)
+                    return jsonify({"status": "success", "message": "Notice edited successfully."})
+            return jsonify({"status": "error", "message": "Notice not found."})
+        return jsonify({"status": "error", "message": "Invalid action."})
+    
+    def load_notice():
+        if os.path.exists(NOTICE_FILE):
+            with open(NOTICE_FILE, 'r', encoding='utf-8') as f:
+                try:
+                    return json.load(f)
+                except json.JSONDecodeError:
+                    return []
+        return []
+
+    def save_notice(notices):
+        with open(NOTICE_FILE, 'w', encoding='utf-8') as f:
+            json.dump(notices, f, ensure_ascii=False, indent=2)
+            app.logger.info("Notice saved successfully.")
+            return "success"
 class Homework:
     '''
     def __init__(self, subject, content, labels, deadline):
