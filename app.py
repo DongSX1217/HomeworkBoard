@@ -639,17 +639,18 @@ class Notice:
                 notice = Notice.load_notice()
                 notice.append(data)
                 Notice.save_notice(notice)
+                log_operation(operation='add notice', details=data, ip_address=get_client_ip())
                 return jsonify({"success": True, "message": "Notice added successfully."})
                 
             if action == 'edit':
                 if data is None:
-                    return jsonify({"success": False, "message": "No notice content provided."})
-                
+                    return jsonify({"success": False, "message": "No notice content provided."})             
                 notice = Notice.load_notice()
                 for i, item in enumerate(notice):
                     if data.get('id') == item.get('id'):
                         notice[i] = data
                         Notice.save_notice(notice)
+                        log_operation(operation='edit notice', details=data, ip_address=get_client_ip())
                         return jsonify({"success": True, "message": "Notice edited successfully."})
                 return jsonify({"success": False, "message": "Notice not found."})
                 
@@ -667,7 +668,7 @@ class Notice:
     def save_notice(notices):
         with open(NOTICE_FILE, 'w', encoding='utf-8') as f:
             json.dump(notices, f, ensure_ascii=False, indent=2)
-            app.logger.info("Notice saved successfully.")
+            app.logger.info(f"公告保存成功！内容：{notices}")
         
 class Homework:
     '''
