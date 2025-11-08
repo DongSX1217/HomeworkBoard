@@ -720,7 +720,8 @@
                     closeNoticeModal();
                     fetchNotices(); // 重新获取数据
                 } else {
-                    alert('操作失败，请重试');
+                    // 显示后端返回的失败原因
+                    alert('操作失败: ' + (result.message || '未知错误'));
                 }
             })
             .catch(error => {

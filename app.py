@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from openai import OpenAI
 import logging
 import traceback
+import ipaddress
 
 # 导入配置
 try:
@@ -448,7 +449,34 @@ def get_file_tree(root_path, relative_path=''):
     # 按类型和名称排序，文件夹在前，文件在后，都按名称排序
     items.sort(key=lambda x: (x['type'] == 'file', x['name'].lower()))
     return items
-
+def check_ip(ip, ip_list):
+    """
+    检查IP是否被封禁，支持CIDR格式
+    :param ip: 要检查的IP地址
+    :param ip_list: IP列表，可以包含单独IP或CIDR格式的IP段
+    :return: 如果ip属于ip_list返回True，否则返回False
+    """
+    try:
+        ip_obj = ipaddress.ip_address(ip)
+        for ip_entry in ip_list:
+            try:
+                # 尝试解析为IP网络（CIDR格式）
+                if '/' in ip_entry:
+                    network = ipaddress.ip_network(ip_entry, strict=False)
+                    if ip_obj in network:
+                        return True
+                else:
+                    # 单个IP地址
+                    if ip == ip_entry:
+                        return True
+            except ValueError:
+                # 如果解析失败，当作普通字符串比较
+                if ip == ip_entry:
+                    return True
+        return False
+    except ValueError:
+        # 如果IP地址无效，返回False
+        return False
 
 # 初始化数据
 submissions = load_submissions()
@@ -567,8 +595,9 @@ def check_banned_ip():
     global data_ip
     user_ip = get_client_ip() # 获取用户IP地址
     banned_ips = data_ip.get('banned_ips', [])
-    if user_ip in banned_ips:
+    if check_ip(user_ip, banned_ips):
         return "<br><br><h3>您的IP已被禁止访问，如有疑问，请联系开发者。</h3>", 403
+    
 def get_client_ip():
     """
     获取客户端真实IP地址
@@ -621,10 +650,15 @@ class Notice:
             
         # 对于POST请求，处理添加和编辑操作
         if request.method == 'POST':
+            global data_ip
             try:
                 data = request.get_json()
             except Exception as e:
                 return jsonify({"success": False, "message": "Failed to parse request data."})
+            
+            limit_ips = data_ip.get('禁止编辑公告', [])
+            if check_ip(get_client_ip(),limit_ips):
+                return jsonify({"success": False, "message": "您的IP被禁止发布或编辑公告"})
             
             if action == 'add':
                 if data is None:
@@ -639,7 +673,7 @@ class Notice:
                 notice = Notice.load_notice()
                 notice.append(data)
                 Notice.save_notice(notice)
-                log_operation(operation='add notice', details=data, ip_address=get_client_ip())
+                log_operation(operation='添加公告', details=data, ip_address=get_client_ip())
                 return jsonify({"success": True, "message": "Notice added successfully."})
                 
             if action == 'edit':
@@ -648,9 +682,11 @@ class Notice:
                 notice = Notice.load_notice()
                 for i, item in enumerate(notice):
                     if data.get('id') == item.get('id'):
+                        old_item = notice[i] # 保存旧数据以供日志记录
                         notice[i] = data
                         Notice.save_notice(notice)
-                        log_operation(operation='edit notice', details=data, ip_address=get_client_ip())
+                        data = {'old': old_item, 'new': data} # 记录修改前后的数据
+                        log_operation(operation='编辑公告', details=data, ip_address=get_client_ip())
                         return jsonify({"success": True, "message": "Notice edited successfully."})
                 return jsonify({"success": False, "message": "Notice not found."})
                 
