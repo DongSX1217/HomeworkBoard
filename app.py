@@ -545,7 +545,16 @@ else:
 @app.route('/')
 @app.route('/home')
 def homepage():
-    return render_template('home.html')
+    from get_xinhuanet import get_xinhuanet
+    get_xinhuanet_result = get_xinhuanet(lists=1)
+    if get_xinhuanet_result.get('status') == 'error':
+        app.logger.error(f"获取新华网新闻失败: {get_xinhuanet_result.get('message')}")
+        return render_template('home.html')
+    print(get_xinhuanet_result)
+    news = get_xinhuanet_result.get('result',{}).get('head_news', [])
+    url = news[0].get('url')
+    title = news[0].get('title')
+    return render_template('home.html',news=news,news_url=url,news_title=title)
 
 @app.route('/favicon.ico')
 def favicon():

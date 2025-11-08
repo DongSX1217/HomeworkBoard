@@ -60,11 +60,19 @@
     <!-- 主体内容 -->
     <main class="container">
         <!-- 欢迎区域 -->
-        <section class="welcome-section">
+        <section class="top-section">
             <h1>欢迎使用高一(4)班公告站</h1>
             <p>本网站提供作业公告板功能，可以在线查看/发布/修改作业信息，下载文件资料，查阅课表等信息，发布公告等信息，使用在线工具（倒计时）等。</p>
         </section>
-        
+
+        {% if news != None %}
+        <section class="top-section">
+            <h1>新华网头条新闻</h1>
+            <p><a href="{{news_url}}">{{news_title}}</a></p>
+            <p>以上自动获取自<a href="https://news.cn/">新华网</a>。</p>
+        </section>
+        {% endif %}
+
         <!-- 主要内容区域 -->
         <div class="content-grid">
             <!-- 左侧主要内容 -->
