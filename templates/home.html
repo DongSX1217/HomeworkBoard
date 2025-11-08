@@ -65,13 +65,11 @@
             <p>本网站提供作业公告板功能，可以在线查看/发布/修改作业信息，下载文件资料，查阅课表等信息，发布公告等信息，使用在线工具（倒计时）等。</p>
         </section>
 
-        {% if news != None %}
-        <section class="top-section">
+        <section class="top-section" id="news-section" style="display: none;">
             <h1>新华网头条新闻</h1>
-            <p><a href="{{news_url}}">{{news_title}}</a></p>
+            <p><a href="" id="news-link"></a></p>
             <p>以上自动获取自<a href="https://news.cn/">新华网</a>。</p>
         </section>
-        {% endif %}
 
         <!-- 主要内容区域 -->
         <div class="content-grid">
@@ -158,6 +156,20 @@
     <script>
         // 竖屏状态下菜单折叠功能
         document.addEventListener('DOMContentLoaded', function() {
+            // 异步获取新闻
+            fetch('/api/news')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        document.getElementById('news-link').href = data.news_url;
+                        document.getElementById('news-link').textContent = data.news_title;
+                        document.getElementById('news-section').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取新闻失败:', error);
+                });
+
             const navItems = document.querySelectorAll('.nav-menu li.has-dropdown');
             let isTouching = false;
             let touchStartX = 0;
