@@ -504,8 +504,10 @@ if os.path.exists(PASSWORD_FILE):
             # 确保password_data是字典类型
             if not isinstance(password_data, dict):
                 password_data = {}
-        except json.JSONDecodeError:
+                print(f"密码文件格式错误，已创建一个空的密码文件。")
+        except json.JSONDecodeError as e:
             password_data = {}
+            print(f"密码文件格式错误，错误为{e}，已创建一个空的密码文件。")
 else:
     # 如果没有密码文件，创建一个空的
     password_data = {}
