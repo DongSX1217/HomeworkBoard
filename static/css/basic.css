@@ -283,12 +283,14 @@ footer {
     }
     
     .nav-menu {
-        flex-direction: column;
+        position: relative; 
+        /* flex-direction: column;  */
     }
-    
+    /*
     .nav-menu li {
-        width: 100%;
-    }
+        weight: 100%;
+        height: 2.6em;
+    }*/
     
     .nav-menu a {
         margin: 2px 0;
@@ -313,15 +315,19 @@ footer {
     }
     
     .dropdown {
-        position: static;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
         display: none;
         width: 100%;
-        box-shadow: none;
-        border: none;
-        margin-top: 5px;
-        padding-left: 15px;
-        background-color: #f8f8f8;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        background-color: white;
+        z-index: 999;
         border-radius: 0 0 8px 8px;
+        /* 移除之前影响布局的属性 */
+        margin-top: 5px;
+        padding-left: 0;
     }
     
     .nav-menu li.active .dropdown {
@@ -331,6 +337,8 @@ footer {
     .dropdown a {
         padding: 10px 25px;
         background-color: #f8f8f8;
+        display: block;
+        width: 100%;
     }
     
     .header-top {

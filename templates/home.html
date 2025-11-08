@@ -151,48 +151,88 @@
         // 竖屏状态下菜单折叠功能
         document.addEventListener('DOMContentLoaded', function() {
             const navItems = document.querySelectorAll('.nav-menu li.has-dropdown');
+            let isTouching = false;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            
+            // 防止快速点击误触发
+            function isClickEvent(e) {
+                if (!e.touches || e.touches.length === 0) return true;
+                
+                const touch = e.touches[0];
+                const dx = Math.abs(touch.clientX - touchStartX);
+                const dy = Math.abs(touch.clientY - touchStartY);
+                return dx < 5 && dy < 5;
+            }
+            
+            // 触摸开始记录位置
+            document.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    touchStartX = e.touches[0].clientX;
+                    touchStartY = e.touches[0].clientY;
+                    isTouching = true;
+                }
+            }, { passive: true });
+            
+            // 触摸结束处理
+            document.addEventListener('touchend', function(e) {
+                isTouching = false;
+            }, { passive: true });
             
             navItems.forEach(item => {
                 const link = item.querySelector('a');
                 
                 link.addEventListener('click', function(e) {
+                    const isMobile = window.innerWidth <= 768;
+                    
                     // 仅在竖屏状态下处理点击事件
-                    if (window.innerWidth <= 768) {
+                    if (isMobile) {
                         e.preventDefault();
+                        e.stopPropagation();
                         
-                        // 如果点击的是当前活动的菜单项，则关闭它
-                        if (item.classList.contains('active')) {
-                            item.classList.remove('active');
-                        } else {
-                            // 关闭所有其他菜单项
-                            navItems.forEach(otherItem => {
-                                if (otherItem !== item) {
-                                    otherItem.classList.remove('active');
-                                }
-                            });
-                            // 打开当前菜单项
-                            item.classList.add('active');
+                        // 如果是触摸设备，验证是否为真正的点击
+                        if (isTouching && !isClickEvent(e)) {
+                            return;
                         }
+                        
+                        // 切换当前菜单项的active状态
+                        item.classList.toggle('active');
                     }
                 });
+                
+                // 为下拉菜单添加点击处理
+                const dropdown = item.querySelector('.dropdown');
+                if (dropdown) {
+                    dropdown.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                    });
+                }
             });
             
             // 点击页面其他区域关闭菜单
             document.addEventListener('click', function(e) {
-                if (window.innerWidth <= 768) {
-                    if (!e.target.closest('.nav-menu')) {
-                        navItems.forEach(item => {
-                            item.classList.remove('active');
-                        });
+                const isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    // 检查是否点击了导航菜单内部
+                    if (e.target.closest('.nav-menu')) {
+                        return;
                     }
+                    
+                    // 关闭所有菜单
+                    navItems.forEach(item => {
+                        item.classList.remove('active');
+                    });
                 }
             });
             
-            // 阻止下拉菜单内部点击事件冒泡
-            document.querySelectorAll('.dropdown a').forEach(dropdownLink => {
-                dropdownLink.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                });
+            // 监听窗口大小变化
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    navItems.forEach(item => {
+                        item.classList.remove('active');
+                    });
+                }
             });
         });
     </script>
