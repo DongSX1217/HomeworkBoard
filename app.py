@@ -1410,6 +1410,7 @@ class Fun:
                             print(f"调试信息 - 密码验证成功（自定义密码）")
                         else:
                             flash('密码不正确！', 'error')
+                            print(f"调试信息 - 密码错误 预期密码='{password_data[student_id]}', 输入密码='{password}'")
                             return render_template('fun_auth.html', name=name, student_id=student_id)
                     else:
                         # 使用默认密码验证
@@ -1420,6 +1421,7 @@ class Fun:
                             print(f"调试信息 - 密码验证成功（默认密码）")
                         else:
                             flash('密码不正确！', 'error')
+                            print(f"调试信息 - 密码错误 预期密码（默认密码）='{get_default_password()}', 输入密码='{password}'")
                             return render_template('fun_auth.html', name=name, student_id=student_id)
             
             # 方法2: 如果直接匹配失败，尝试遍历所有项进行模糊匹配
