@@ -54,6 +54,12 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
         .btn {
             padding: 10px 20px;
             border: none;
@@ -74,6 +80,10 @@
         .btn-danger {
             background: #dc3545;
             color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
         }
         .btn:hover {
             opacity: 0.9;
@@ -114,6 +124,55 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
+        .password-protected {
+            position: relative;
+        }
+        .password-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 8px;
+        }
+        .password-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 300px;
+        }
+        .protected-content {
+            filter: blur(4px);
+            pointer-events: none;
+        }
+        .edit-password-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .edit-password-form {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 300px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -153,33 +212,73 @@
                 </button>
             </form>
         </div>
-        <div class="setting-section">
+        <div class="setting-section password-protected">
             <h3>公共聊天提示词设置</h3>
-            <form method="POST">
+            {% if not public_prompt_visible %}
+            <div class="password-overlay" id="publicPromptOverlay">
+                <div class="password-form">
+                    <h4>查看公共提示词</h4>
+                    <p>请输入密码以查看公共提示词</p>
+                    <form method="POST" style="margin-bottom: 10px;">
+                        <input type="hidden" name="action" value="verify_password">
+                        <input type="hidden" name="target" value="public_prompt">
+                        <div class="form-group">
+                            <input type="password" name="password" placeholder="请输入密码" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning">验证</button>
+                    </form>
+                    <button class="btn btn-secondary" onclick="document.getElementById('publicPromptOverlay').style.display='none'">取消</button>
+                </div>
+            </div>
+            <div class="protected-content">
+            {% endif %}
+            <form method="POST" class="public-prompt-form">
                 <input type="hidden" name="action" value="update_prompt">
                 <input type="hidden" name="prompt_type" value="public">
                 <div class="form-group">
                     <label for="public_prompt">公共聊天提示词：</label>
                     <textarea id="public_prompt" name="system_prompt" placeholder="请输入公共聊天的系统提示词...">{{ public_prompt }}</textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">保存公共提示词</button>
+                <button type="submit" class="btn btn-primary" onclick="return showEditPasswordModal(this)">保存公共提示词</button>
                 <button type="submit" class="btn btn-secondary" name="action" value="reset_prompt" 
-                        onclick="this.form.prompt_type.value='public'; return confirm('确定要重置公共提示词吗？')">
+                        onclick="this.form.prompt_type.value='public'; return showEditPasswordModal(this)">
                     重置公共提示词
                 </button>
             </form>
+            {% if not public_prompt_visible %}
+            </div>
+            {% endif %}
         </div>
 
         <!-- 预设问答管理（仅公共AI使用） -->
-        <div class="setting-section">
+        <div class="setting-section password-protected">
             <h3>预设问答管理</h3>
             <div class="info-box">
                 <p><strong>说明：</strong> 这些预设问答将作为知识参考提供给公共AI助手使用，帮助AI更好地回答相关问题。</p>
                 <p><strong>注意：</strong> 预设问答会作为系统提示词的一部分添加到公共AI的上下文中。</p>
             </div>
             
+            {% if not qa_visible %}
+            <div class="password-overlay" id="qaOverlay">
+                <div class="password-form">
+                    <h4>管理预设问答</h4>
+                    <p>请输入密码以查看预设问答</p>
+                    <form method="POST" style="margin-bottom: 10px;">
+                        <input type="hidden" name="action" value="verify_password">
+                        <input type="hidden" name="target" value="qa">
+                        <div class="form-group">
+                            <input type="password" name="password" placeholder="请输入密码" required>
+                        </div>
+                        <button type="submit" class="btn btn-warning">验证</button>
+                    </form>
+                    <button class="btn btn-secondary" onclick="document.getElementById('qaOverlay').style.display='none'">取消</button>
+                </div>
+            </div>
+            <div class="protected-content">
+            {% endif %}
+            
             <!-- 添加新的预设问答 -->
-            <form method="POST">
+            <form method="POST" class="add-qa-form">
                 <input type="hidden" name="action" value="add_qa">
                 <div class="form-group">
                     <label for="qa_question">问题：</label>
@@ -189,7 +288,7 @@
                     <label for="qa_answer">答案：</label>
                     <textarea id="qa_answer" name="qa_answer" placeholder="输入对应的答案..." style="width: 100%; min-height: 80px;"></textarea>
                 </div>
-                <button type="submit" class="btn btn-primary">添加预设问答</button>
+                <button type="submit" class="btn btn-primary" onclick="return showEditPasswordModal(this)">添加预设问答</button>
             </form>
             
             <!-- 显示现有的预设问答 -->
@@ -203,11 +302,13 @@
                                 <strong>问题：</strong> {{ qa.question }}<br>
                                 <strong>答案：</strong> {{ qa.answer }}
                             </div>
-                            <form method="POST" style="margin-left: 10px;">
+                            <form method="POST" style="margin-left: 10px;" class="delete-qa-form">
                                 <input type="hidden" name="action" value="delete_qa">
                                 <input type="hidden" name="qa_id" value="{{ qa.id }}">
                                 <button type="submit" class="btn btn-danger" 
-                                        onclick="return confirm('确定要删除这个预设问答吗？')">删除</button>
+                                        onclick="return showEditPasswordModal(this)">
+                                    删除
+                                </button>
                             </form>
                         </div>
                     </div>
@@ -216,6 +317,9 @@
                     <p>暂无预设问答。</p>
                 {% endif %}
             </div>
+            {% if not qa_visible %}
+            </div>
+            {% endif %}
         </div>
 
 
@@ -272,5 +376,79 @@
             </div>
         </div>
     </div>
+
+    <!-- 编辑密码模态框 -->
+    <div id="editPasswordModal" class="edit-password-modal" style="display: none;">
+        <div class="edit-password-form">
+            <h4>编辑操作验证</h4>
+            <p>请输入编辑密码以继续操作</p>
+            <form id="editPasswordForm" method="POST">
+                <input type="hidden" name="action" id="editAction">
+                <input type="hidden" name="prompt_type" id="editPromptType">
+                <input type="hidden" name="qa_id" id="editQaId">
+                <input type="hidden" name="history_type" id="editHistoryType">
+                <input type="hidden" name="qa_question" id="editQaQuestion">
+                <input type="hidden" name="qa_answer" id="editQaAnswer">
+                <input type="hidden" name="system_prompt" id="editSystemPrompt">
+                <div class="form-group">
+                    <input type="password" name="edit_password" placeholder="请输入编辑密码" required>
+                </div>
+                <button type="submit" class="btn btn-warning">确认</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditPasswordModal()">取消</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 显示编辑密码模态框
+        function showEditPasswordModal(button) {
+            const form = button.closest('form');
+            const modal = document.getElementById('editPasswordModal');
+            const editForm = document.getElementById('editPasswordForm');
+            
+            // 清除之前的值
+            document.getElementById('editAction').value = '';
+            document.getElementById('editPromptType').value = '';
+            document.getElementById('editQaId').value = '';
+            document.getElementById('editHistoryType').value = '';
+            document.getElementById('editQaQuestion').value = '';
+            document.getElementById('editQaAnswer').value = '';
+            document.getElementById('editSystemPrompt').value = '';
+            
+            // 根据表单类型填充隐藏字段
+            if (form.classList.contains('public-prompt-form')) {
+                // 公共提示词表单
+                document.getElementById('editAction').value = form.querySelector('[name="action"]').value;
+                document.getElementById('editPromptType').value = form.querySelector('[name="prompt_type"]').value;
+                document.getElementById('editSystemPrompt').value = form.querySelector('[name="system_prompt"]').value;
+            } else if (form.classList.contains('add-qa-form')) {
+                // 添加QA表单
+                document.getElementById('editAction').value = form.querySelector('[name="action"]').value;
+                document.getElementById('editQaQuestion').value = form.querySelector('[name="qa_question"]').value;
+                document.getElementById('editQaAnswer').value = form.querySelector('[name="qa_answer"]').value;
+            } else if (form.classList.contains('delete-qa-form')) {
+                // 删除QA表单
+                document.getElementById('editAction').value = form.querySelector('[name="action"]').value;
+                document.getElementById('editQaId').value = form.querySelector('[name="qa_id"]').value;
+            }
+            
+            // 显示模态框
+            modal.style.display = 'flex';
+            return false; // 阻止默认提交
+        }
+        
+        // 关闭编辑密码模态框
+        function closeEditPasswordModal() {
+            document.getElementById('editPasswordModal').style.display = 'none';
+        }
+        
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const modal = document.getElementById('editPasswordModal');
+            if (event.target === modal) {
+                closeEditPasswordModal();
+            }
+        }
+    </script>
 </body>
 </html>

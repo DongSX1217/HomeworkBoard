@@ -20,6 +20,8 @@ except ImportError:
         LOG_DIR = os.path.join(DATA_DIR, 'logs')
         ERROR_LOG_FILE = os.path.join(LOG_DIR, 'error.log')
         clear_password = 'test'
+        AI_SYSTEM_EDIT_PASSWORD = 'test'
+        AI_SYSTEM_SEE_PASSWORD = 'test'
         
         @staticmethod
         def init_app(app):
@@ -2269,13 +2271,72 @@ class AI:
         user_identifier = f"{name}_{student_id}"
         ip_address = get_client_ip()  # 获取客户端IP
         
+        # 从cookie获取密码验证状态
+        public_prompt_see_cookie = request.cookies.get('ai_public_prompt_see')
+        qa_see_cookie = request.cookies.get('ai_qa_see')
+        
+        public_prompt_visible = public_prompt_see_cookie == Config.AI_SYSTEM_SEE_PASSWORD
+        qa_visible = qa_see_cookie == Config.AI_SYSTEM_SEE_PASSWORD
+        
+        response = None
+        
         if request.method == 'POST':
             action = request.form.get('action')
             
-            if action == 'update_prompt':
+            if action == 'verify_password':
+                target = request.form.get('target')
+                password = request.form.get('password')
+                
+                resp = make_response(redirect(url_for('ai_settings')))
+                
+                # 根据目标检查相应密码
+                if target == 'public_prompt' and password == Config.AI_SYSTEM_SEE_PASSWORD:
+                    resp.set_cookie('ai_public_prompt_see', password, max_age=30*60)  # 30分钟有效
+                    flash('密码验证成功！现在可以查看和编辑公共提示词。', 'success')
+                elif target == 'qa' and password == Config.AI_SYSTEM_SEE_PASSWORD:
+                    resp.set_cookie('ai_qa_see', password, max_age=30*60)  # 30分钟有效
+                    flash('密码验证成功！现在可以管理预设问答。', 'success')
+                else:
+                    flash('密码错误！', 'error')
+                
+                return resp
+                    
+            elif action == 'update_prompt':
                 new_prompt = request.form.get('system_prompt', '').strip()
                 prompt_type = request.form.get('prompt_type', 'private')  # private 或 public
-                if new_prompt:
+                
+                # 对于公共提示词的处理
+                if prompt_type == 'public':
+                    # 检查是否已验证查看权限
+                    if not public_prompt_visible:
+                        flash('您没有权限编辑公共提示词，请先验证查看密码。', 'error')
+                    else:
+                        # 需要额外验证编辑密码
+                        edit_password = request.form.get('edit_password')
+                        if edit_password != Config.AI_SYSTEM_EDIT_PASSWORD:
+                            flash('编辑公共提示词需要输入编辑密码！', 'error')
+                            # 显示编辑密码输入框
+                            response = make_response(AI.render_template_with_data())
+                            response.set_cookie('show_edit_password_prompt', 'true')
+                            return response
+                        else:
+                            old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
+                            AI.save_system_prompt(new_prompt, is_public=(prompt_type == 'public'))
+                            
+                            # 记录提示词更新日志
+                            log_prompt_operation(
+                                operation=f"update_{prompt_type}_prompt",
+                                details={
+                                    "old_prompt": old_prompt,
+                                    "new_prompt": new_prompt,
+                                    "prompt_type": prompt_type
+                                },
+                                user_identifier=user_identifier,
+                                ip_address=ip_address
+                            )
+                            
+                            flash('公共系统提示词更新成功！', 'success')
+                elif new_prompt:
                     old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
                     AI.save_system_prompt(new_prompt, is_public=(prompt_type == 'public'))
                     
@@ -2297,23 +2358,57 @@ class AI:
             
             elif action == 'reset_prompt':
                 prompt_type = request.form.get('prompt_type', 'private')
-                old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
-                default_prompt = AI.get_default_system_prompt()
-                AI.save_system_prompt(default_prompt, is_public=(prompt_type == 'public'))
                 
-                # 记录提示词重置日志
-                log_prompt_operation(
-                    operation=f"reset_{prompt_type}_prompt",
-                    details={
-                        "old_prompt": old_prompt,
-                        "new_prompt": default_prompt,
-                        "prompt_type": prompt_type
-                    },
-                    user_identifier=user_identifier,
-                    ip_address=ip_address
-                )
-                
-                flash('系统提示词已重置为默认值！', 'success')
+                # 对于公共提示词的处理
+                if prompt_type == 'public':
+                    # 检查是否已验证查看权限
+                    if not public_prompt_visible:
+                        flash('您没有权限重置公共提示词，请先验证查看密码。', 'error')
+                    else:
+                        # 需要额外验证编辑密码
+                        edit_password = request.form.get('edit_password')
+                        if edit_password != Config.AI_SYSTEM_EDIT_PASSWORD:
+                            flash('重置公共提示词需要输入编辑密码！', 'error')
+                            # 显示编辑密码输入框
+                            response = make_response(AI.render_template_with_data())
+                            response.set_cookie('show_edit_password_prompt', 'true')
+                            return response
+                        else:
+                            old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
+                            default_prompt = AI.get_default_system_prompt()
+                            AI.save_system_prompt(default_prompt, is_public=(prompt_type == 'public'))
+                            
+                            # 记录提示词重置日志
+                            log_prompt_operation(
+                                operation=f"reset_{prompt_type}_prompt",
+                                details={
+                                    "old_prompt": old_prompt,
+                                    "new_prompt": default_prompt,
+                                    "prompt_type": prompt_type
+                                },
+                                user_identifier=user_identifier,
+                                ip_address=ip_address
+                            )
+                            
+                            flash('公共系统提示词已重置为默认值！', 'success')
+                else:
+                    old_prompt = AI.load_system_prompt(is_public=(prompt_type == 'public'))
+                    default_prompt = AI.get_default_system_prompt()
+                    AI.save_system_prompt(default_prompt, is_public=(prompt_type == 'public'))
+                    
+                    # 记录提示词重置日志
+                    log_prompt_operation(
+                        operation=f"reset_{prompt_type}_prompt",
+                        details={
+                            "old_prompt": old_prompt,
+                            "new_prompt": default_prompt,
+                            "prompt_type": prompt_type
+                        },
+                        user_identifier=user_identifier,
+                        ip_address=ip_address
+                    )
+                    
+                    flash('系统提示词已重置为默认值！', 'success')
             
             elif action == 'clear_my_history':
                 history_type = request.form.get('history_type', 'private')
@@ -2339,82 +2434,138 @@ class AI:
             
             elif action == 'add_qa':
                 # 添加预设问答
-                question = request.form.get('qa_question', '').strip()
-                answer = request.form.get('qa_answer', '').strip()
-                if question and answer:
-                    qa_list = AI.load_qa_prompt()
-                    new_qa = {
-                        'question': question,
-                        'answer': answer,
-                        'id': len(qa_list) + 1
-                    }
-                    qa_list.append(new_qa)
-                    AI.save_qa_prompt(qa_list)
-                    
-                    # 记录预设问答添加日志
-                    log_prompt_operation(
-                        operation="add_qa",
-                        details={
-                            "question": question,
-                            "answer": answer,
-                            "qa_id": new_qa['id']
-                        },
-                        user_identifier=user_identifier,
-                        ip_address=ip_address
-                    )
-                    
-                    flash('预设问答添加成功！', 'success')
+                if not qa_visible:
+                    flash('您没有权限添加预设问答，请先验证查看密码。', 'error')
                 else:
-                    flash('问题和答案都不能为空！', 'error')
+                    # 需要额外验证编辑密码
+                    edit_password = request.form.get('edit_password')
+                    if edit_password != Config.AI_SYSTEM_EDIT_PASSWORD:
+                        flash('添加预设问答需要输入编辑密码！', 'error')
+                        # 显示编辑密码输入框
+                        response = make_response(AI.render_template_with_data())
+                        response.set_cookie('show_edit_password_prompt', 'true')
+                        return response
+                    else:
+                        question = request.form.get('qa_question', '').strip()
+                        answer = request.form.get('qa_answer', '').strip()
+                        if question and answer:
+                            qa_list = AI.load_qa_prompt()
+                            new_qa = {
+                                'question': question,
+                                'answer': answer,
+                                'id': len(qa_list) + 1
+                            }
+                            qa_list.append(new_qa)
+                            AI.save_qa_prompt(qa_list)
+                            
+                            # 记录预设问答添加日志
+                            log_prompt_operation(
+                                operation="add_qa",
+                                details={
+                                    "question": question,
+                                    "answer": answer,
+                                    "qa_id": new_qa['id']
+                                },
+                                user_identifier=user_identifier,
+                                ip_address=ip_address
+                            )
+                            
+                            flash('预设问答添加成功！', 'success')
+                        else:
+                            flash('问题和答案都不能为空！', 'error')
             
             elif action == 'delete_qa':
                 # 删除预设问答
-                qa_id = int(request.form.get('qa_id', 0))
-                if qa_id > 0:
-                    qa_list = AI.load_qa_prompt()
-                    # 找到要删除的QA记录详情
-                    deleted_qa = None
-                    for qa in qa_list:
-                        if qa.get('id') == qa_id:
-                            deleted_qa = qa
-                            break
-                    
-                    qa_list = [qa for qa in qa_list if qa.get('id') != qa_id]
-                    AI.save_qa_prompt(qa_list)
-                    
-                    # 记录预设问答删除日志
-                    if deleted_qa:
-                        log_prompt_operation(
-                            operation="delete_qa",
-                            details={
-                                "question": deleted_qa.get('question'),
-                                "answer": deleted_qa.get('answer'),
-                                "qa_id": qa_id
-                            },
-                            user_identifier=user_identifier,
-                            ip_address=ip_address
-                        )
-                    
-                    flash('预设问答删除成功！', 'success')
+                if not qa_visible:
+                    flash('您没有权限删除预设问答，请先验证查看密码。', 'error')
+                else:
+                    # 需要额外验证编辑密码
+                    edit_password = request.form.get('edit_password')
+                    if edit_password != Config.AI_SYSTEM_EDIT_PASSWORD:
+                        flash('删除预设问答需要输入编辑密码！', 'error')
+                        # 显示编辑密码输入框
+                        response = make_response(AI.render_template_with_data())
+                        response.set_cookie('show_edit_password_prompt', 'true')
+                        return response
+                    else:
+                        qa_id = int(request.form.get('qa_id', 0))
+                        if qa_id > 0:
+                            qa_list = AI.load_qa_prompt()
+                            # 找到要删除的QA记录详情
+                            deleted_qa = None
+                            for qa in qa_list:
+                                if qa.get('id') == qa_id:
+                                    deleted_qa = qa
+                                    break
+                            
+                            qa_list = [qa for qa in qa_list if qa.get('id') != qa_id]
+                            AI.save_qa_prompt(qa_list)
+                            
+                            # 记录预设问答删除日志
+                            if deleted_qa:
+                                log_prompt_operation(
+                                    operation="delete_qa",
+                                    details={
+                                        "question": deleted_qa.get('question'),
+                                        "answer": deleted_qa.get('answer'),
+                                        "qa_id": qa_id
+                                    },
+                                    user_identifier=user_identifier,
+                                    ip_address=ip_address
+                                )
+                            
+                            flash('预设问答删除成功！', 'success')
         
-        # 加载当前系统提示词、预设问答和用户聊天历史统计
-        private_prompt = AI.load_system_prompt(is_public=False)
-        public_prompt = AI.load_system_prompt(is_public=True)
-        qa_list = AI.load_qa_prompt()
-        private_history = AI.load_chat_history(user_identifier, is_public=False)
-        public_history = AI.load_chat_history(user_identifier, is_public=True)
-        private_count = len(private_history)
-        public_count = len([msg for msg in public_history if msg.get('user_identifier') == user_identifier])
+        # 如果没有特殊的response，则正常渲染模板
+        if response is None:
+            response = make_response(AI.render_template_with_data(
+                private_prompt=AI.load_system_prompt(is_public=False),
+                public_prompt=AI.load_system_prompt(is_public=True),
+                qa_list=AI.load_qa_prompt(),
+                private_history=AI.load_chat_history(user_identifier, is_public=False),
+                public_history=AI.load_chat_history(user_identifier, is_public=True),
+                private_count=len(AI.load_chat_history(user_identifier, is_public=False)),
+                public_count=len([msg for msg in AI.load_chat_history(user_identifier, is_public=True) if msg.get('user_identifier') == user_identifier]),
+                name=name,
+                student_id=student_id,
+                public_prompt_visible=public_prompt_visible,
+                qa_visible=qa_visible
+            ))
         
-        return render_template('ai_settings.html',
-                            private_prompt=private_prompt,
-                            public_prompt=public_prompt,
-                            qa_list=qa_list,
-                            private_count=private_count,
-                            public_count=public_count,
-                            name=name,
-                            student_id=student_id)
-
+        return response
+    
+    def render_template_with_data(**kwargs):
+        """辅助函数，用于渲染模板并传递数据"""
+        # 设置默认值
+        defaults = {
+            'private_prompt': AI.load_system_prompt(is_public=False),
+            'public_prompt': AI.load_system_prompt(is_public=True),
+            'qa_list': AI.load_qa_prompt(),
+            'name': request.cookies.get('fun_name'),
+            'student_id': request.cookies.get('fun_student_id')
+        }
+        
+        # 计算动态默认值
+        name = request.cookies.get('fun_name')
+        student_id = request.cookies.get('fun_student_id')
+        user_identifier = f"{name}_{student_id}" if name and student_id else ""
+        
+        if user_identifier:
+            defaults.update({
+                'private_history': AI.load_chat_history(user_identifier, is_public=False),
+                'public_history': AI.load_chat_history(user_identifier, is_public=True),
+                'private_count': len(AI.load_chat_history(user_identifier, is_public=False)),
+                'public_count': len([msg for msg in AI.load_chat_history(user_identifier, is_public=True) if msg.get('user_identifier') == user_identifier])
+            })
+        
+        # 合并传入参数
+        defaults.update(kwargs)
+        
+        # 处理可见性参数
+        defaults.setdefault('public_prompt_visible', request.cookies.get('ai_public_prompt_see') == Config.AI_SYSTEM_SEE_PASSWORD)
+        defaults.setdefault('qa_visible', request.cookies.get('ai_qa_see') == Config.AI_SYSTEM_SEE_PASSWORD)
+        
+        return render_template('ai_settings.html', **defaults)
 
 homework = Homework()
 label = Label()
