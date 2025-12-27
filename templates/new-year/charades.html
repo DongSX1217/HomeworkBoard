@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>你比划我猜 - 元旦联欢会</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #7a0e0e 0%, #b71c1c 50%, #f44336 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 0 10px;
+        }
+        
+        .back-btn {
+            background: rgba(255, 255, 255, 0.25);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+        .back-btn i {
+            font-size: 20px;
+            color: #fff;
+        }
+        
+        .game-title {
+            text-align: center;
+            flex-grow: 1;
+        }
+        
+        .main-title {
+            font-size: 3.5rem;
+            font-weight: bold;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            letter-spacing: 5px;
+            background: linear-gradient(to bottom, #ffffff, #f0f0f0);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .game-area {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 40px 30px;
+            margin: 20px 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        .word-display {
+            font-size: 5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 40px 0;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            text-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            color: #ffeb3b;
+        }
+        
+        .word-placeholder {
+            font-size: 2rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .info-box {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            margin: 0 10px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .info-title {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #ffccbc;
+        }
+        
+        .info-content {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 180px;
+            justify-content: center;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #ff5252, #ff7961);
+            border-color: #ff5252;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #ff6b6b, #ff9a8b);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .rules {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .rules h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #ffccbc;
+        }
+        
+        .rules ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        
+        .rules li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+        
+        .rules li:before {
+            content: "•";
+            color: #ff8a80;
+            font-size: 1.5rem;
+            position: absolute;
+            left: 0;
+            top: -2px;
+        }
+        
+        .loading {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(122, 14, 14, 0.9);
+            z-index: 1000;
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid #ff8a80;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .timer {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffeb3b;
+            text-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        }
+        
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 2.5rem;
+            }
+            
+            .word-display {
+                font-size: 3.5rem;
+                min-height: 100px;
+            }
+            
+            .game-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .info-box {
+                margin: 0;
+            }
+            
+            .buttons {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>正在生成词语...</p>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <div class="back-btn" id="backBtn">
+                <i class="fas fa-arrow-left"></i>
+            </div>
+            <div class="game-title">
+                <h1 class="main-title">你比划我猜</h1>
+                <p class="subtitle">Charades Game - 考验默契的时候到了！</p>
+            </div>
+            <div style="width: 50px;"></div> <!-- 占位保持对称 -->
+        </div>
+        
+        <div class="game-area">
+            <div class="game-info">
+                <div class="info-box">
+                    <div class="info-title">本轮词语</div>
+                    <div class="info-content" id="wordCount">0</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-title">剩余时间</div>
+                    <div class="info-content timer" id="timer">60</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-title">游戏状态</div>
+                    <div class="info-content" id="gameStatus">准备开始</div>
+                </div>
+            </div>
+            
+            <div class="word-display" id="wordDisplay">
+                <span class="word-placeholder">点击开始游戏获取词语</span>
+            </div>
+            
+            <div class="buttons">
+                <button class="btn btn-primary" id="startBtn">
+                    <i class="fas fa-play"></i> 开始游戏
+                </button>
+                <button class="btn btn-secondary" id="nextBtn">
+                    <i class="fas fa-forward"></i> 下一个词语
+                </button>
+                <button class="btn btn-secondary" id="showAnswerBtn">
+                    <i class="fas fa-eye"></i> 显示答案
+                </button>
+            </div>
+        </div>
+        
+        <div class="rules">
+            <h3><i class="fas fa-info-circle"></i> 游戏规则</h3>
+            <ul>
+                <li>每轮游戏时间为60秒，需要尽可能多地猜出词语</li>
+                <li>比划者可以用肢体动作、表情来描述词语，但不能说出词语中的任何字</li>
+                <li>猜词者根据比划者的提示猜测词语</li>
+                <li>点击"下一个词语"可以跳过当前词语</li>
+                <li>点击"显示答案"可以查看当前词语的正确答案</li>
+                <li>游戏结束后，系统会显示猜对的词语数量</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // DOM元素
+        const backBtn = document.getElementById('backBtn');
+        const startBtn = document.getElementById('startBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const showAnswerBtn = document.getElementById('showAnswerBtn');
+        const wordDisplay = document.getElementById('wordDisplay');
+        const wordCount = document.getElementById('wordCount');
+        const timerElement = document.getElementById('timer');
+        const gameStatus = document.getElementById('gameStatus');
+        const loading = document.getElementById('loading');
+        
+        // 游戏状态变量
+        let currentWord = '';
+        let wordsGuessed = 0;
+        let totalWords = 0;
+        let gameTimer = null;
+        let timeLeft = 60;
+        let gameActive = false;
+        let timerStarted = false; // 新增：标记计时器是否已启动
+        let wordRevealed = false; // 新增：标记词语是否已显示
+        
+        // API端点
+        const API_URL = '/new-year/api/ai-words';
+        
+        // 返回首页
+        backBtn.addEventListener('click', () => {
+            window.location.href = '/new-year';
+        });
+        
+        // 开始游戏
+        startBtn.addEventListener('click', async () => {
+            if (gameActive) {
+                resetGame();
+            }
+            
+            gameActive = true;
+            wordsGuessed = 0;
+            totalWords = 0;
+            wordCount.textContent = wordsGuessed;
+            gameStatus.textContent = '游戏中';
+            startBtn.innerHTML = '<i class="fas fa-redo"></i> 重新开始';
+            
+            // 重置计时器状态
+            timerStarted = false;
+            wordRevealed = false;
+            
+            // 获取第一个词语
+            await getNewWord();
+        });
+        
+        // 获取下一个词语
+        nextBtn.addEventListener('click', async () => {
+            if (!gameActive) return;
+            
+            // 增加总词语数
+            totalWords++;
+            
+            // 重置计时器状态
+            timerStarted = false;
+            wordRevealed = false;
+            
+            // 获取新词语
+            await getNewWord();
+        });
+        
+        // 显示/隐藏答案
+        showAnswerBtn.addEventListener('click', () => {
+            if (!gameActive || !currentWord) return;
+            
+            // 如果词语还没有显示过，显示词语并启动计时器
+            if (!wordRevealed) {
+                wordRevealed = true;
+                wordDisplay.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">${currentWord}</div>
+                        <div style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.8);">正确答案</div>
+                    </div>
+                `;
+                
+                // 启动计时器（仅在第一次显示词语时启动）
+                if (!timerStarted) {
+                    startTimer();
+                    timerStarted = true;
+                }
+                
+                // 更新按钮文本
+                showAnswerBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏答案';
+            } else {
+                // 如果词语已显示，隐藏词语
+                wordDisplay.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 5rem; letter-spacing: 10px;">${'•'.repeat(currentWord.length)}</div>
+                        <div style="font-size: 1.2rem; margin-top: 15px; color: rgba(255, 255, 255, 0.7);">
+                            词语长度: ${currentWord.length}个字
+                        </div>
+                    </div>
+                `;
+                
+                // 更新按钮文本
+                showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+            }
+        });
+        
+        // 获取新词语
+        async function getNewWord() {
+            showLoading(true);
+            
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                
+                if (data.status === 200 || data.status === 'success') {
+                    currentWord = data.word;
+                    
+                    // 显示词语
+                    wordDisplay.innerHTML = `
+                        <div style="text-align: center;">
+                            <div style="font-size: 5rem; letter-spacing: 10px;">${'•'.repeat(currentWord.length)}</div>
+                            <div style="font-size: 1.2rem; margin-top: 15px; color: rgba(255, 255, 255, 0.7);">
+                                词语长度: ${currentWord.length}个字
+                            </div>
+                        </div>
+                    `;
+                    
+                    // 增加总词语数显示
+                    totalWords++;
+                    
+                    // 重置词语显示状态
+                    wordRevealed = false;
+                    showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+                } else {
+                    alert('获取词语失败，请重试');
+                    wordDisplay.innerHTML = '<span class="word-placeholder">获取词语失败</span>';
+                }
+            } catch (error) {
+                console.error('获取词语失败:', error);
+                wordDisplay.innerHTML = '<span class="word-placeholder">网络错误，请重试</span>';
+                
+                // 模拟一个词语作为备选
+                const mockWords = ['化学课', '消防员','跳绳比赛','太空漫步','打篮球','唱歌比赛','画画比赛','游泳比赛','踢足球','跑步比赛'];
+                currentWord = mockWords[Math.floor(Math.random() * mockWords.length)];
+                
+                wordDisplay.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 5rem; letter-spacing: 10px;">${'•'.repeat(currentWord.length)}</div>
+                        <div style="font-size: 1.2rem; margin-top: 15px; color: rgba(255, 255, 255, 0.7);">
+                            词语长度: ${currentWord.length}个字 (模拟数据)
+                        </div>
+                    </div>
+                `;
+                
+                // 增加总词语数显示
+                totalWords++;
+                
+                // 重置词语显示状态
+                wordRevealed = false;
+                showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+            }
+            
+            showLoading(false);
+        }
+        
+        // 开始计时器
+        function startTimer() {
+            timeLeft = 60;
+            timerElement.textContent = timeLeft;
+            
+            if (gameTimer) clearInterval(gameTimer);
+            
+            gameTimer = setInterval(() => {
+                timeLeft--;
+                timerElement.textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        // 结束游戏
+        function endGame() {
+            clearInterval(gameTimer);
+            gameActive = false;
+            gameStatus.textContent = '游戏结束';
+            
+            wordDisplay.innerHTML = `
+                <div style="text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 15px;">游戏结束！</div>
+                    <div style="font-size: 1.8rem; margin-bottom: 10px;">
+                        您一共尝试了 <span style="color: #ffeb3b;">${totalWords}</span> 个词语
+                    </div>
+                    <div style="font-size: 1.5rem;">
+                        猜对了 <span style="color: #4caf50;">${wordsGuessed}</span> 个词语
+                    </div>
+                </div>
+            `;
+        }
+        
+        // 重置游戏
+        function resetGame() {
+            clearInterval(gameTimer);
+            gameActive = false;
+            timeLeft = 60;
+            timerElement.textContent = timeLeft;
+            gameStatus.textContent = '准备开始';
+            startBtn.innerHTML = '<i class="fas fa-play"></i> 开始游戏';
+            wordDisplay.innerHTML = '<span class="word-placeholder">点击开始游戏获取词语</span>';
+            timerStarted = false;
+            wordRevealed = false;
+            showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+        }
+        
+        // 显示/隐藏加载动画
+        function showLoading(show) {
+            loading.style.display = show ? 'flex' : 'none';
+        }
+        
+        // 键盘快捷键
+        document.addEventListener('keydown', (e) => {
+            if (!gameActive) return;
+            
+            switch(e.key) {
+                case ' ': // 空格键显示/隐藏答案
+                    showAnswerBtn.click();
+                    break;
+                case 'n': // N键下一个词语
+                case 'N':
+                    nextBtn.click();
+                    break;
+                case 'Enter': // 回车键猜对
+                    if (currentWord && wordRevealed) {
+                        wordsGuessed++;
+                        wordCount.textContent = wordsGuessed;
+                        nextBtn.click();
+                    }
+                    break;
+                case 'Escape': // ESC键返回
+                    backBtn.click();
+                    break;
+            }
+        });
+        
+        // 初始化
+        resetGame();
+    </script>
+</body>
+</html>

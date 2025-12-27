@@ -2107,8 +2107,16 @@ class AI:
             yield error_message
 
     @staticmethod
-    def openai(model="deepseek-v3.2-exp", messages=[]):
-        """非流式调用OpenAI API"""
+    def openai(model="deepseek-v3.2-exp", messages=[], enable_thinking=False, output_thinking=False):
+        """
+        非流式调用OpenAI API
+
+        model: 模型名称，默认为"deepseek-v3.2-exp"
+        messages: 消息列表，格式为[{"role": "system/user/assistant",
+                    "content": "消息内容"}, ...]
+        enable_thinking: 是否启用思考模式，默认为False
+
+        """
         client = OpenAI(
             api_key=os.getenv("DASHSCOPE_API_KEY"),
             base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -2116,6 +2124,7 @@ class AI:
         completion = client.chat.completions.create(
             model=model, 
             messages=messages,
+            extra_body={"enable_thinking": enable_thinking},
         )
         return completion.choices[0].message.content
 
@@ -2195,11 +2204,10 @@ class AI:
                     if is_public:
                         qa_prompt = AI.load_qa_prompt()
                         if qa_prompt:
-                            qa_context = "以下是一些预设问答，请参考这些信息来回答问题：\n\n"
                             for qa in qa_prompt:
                                 if 'question' in qa and 'answer' in qa:
-                                    qa_context += f"问：{qa['question']}\n答：{qa['answer']}\n\n"
-                            messages[0]['content'] += "\n\n" + qa_context
+                                    messages.append({'role':'user','content':qa['question']})
+                                    messages.append({'role':'assistant','content':qa['answer']})
                     
                     # 添加上下文消息
                     if is_public:
@@ -2567,10 +2575,76 @@ class AI:
         
         return render_template('ai_settings.html', **defaults)
 
+class NewYear:
+    @app.route('/new-year/')
+    @app.route('/new-year')
+    @app.route('/new-year/index')
+    def index():
+        return render_template('new-year/index.html')
+    
+    @app.route('/new-year/charades')
+    def charades():
+        return render_template('new-year/charades.html')
+    
+    @app.route('/new-year/whisper-game')
+    def whisper_game():
+        return render_template('new-year/whisper-game.html')
+
+    @app.route('/new-year/api/ai-words')
+    def ai_words():
+        """AI生成猜词游戏词语接口"""
+        # 使用方法属性来存储历史生成的词语，避免使用未定义的全局名
+        if not hasattr(NewYear.ai_words, 'generated_words'):
+            NewYear.ai_words.generated_words = []
+        
+        system_prompt = AI.load_system_prompt(is_public=True)
+        # 构建消息列表
+        messages = [{'role': 'system', 'content': system_prompt}]
+        
+        # 添加问答式prompt
+        qa_prompt = AI.load_qa_prompt()
+        if qa_prompt:
+            for qa in qa_prompt:
+                if 'question' in qa and 'answer' in qa:
+                    messages.append({'role':'user','content':qa['question']})
+                    messages.append({'role':'assistant','content':qa['answer']})
+        
+        # 添加历史生成的词语到上下文中
+        for i, word in enumerate(NewYear.ai_words.generated_words):
+            if i == 0:
+                # 第一个词需要特殊处理
+                messages.append({'role':'user','content':'请为我生成一个词，用于我们班级元旦联欢会的"你比划我猜"游戏或"比划传话"游戏，即要求该词汇可以用肢体语言表达；另外词语要积极向上、价值观正确。返回内容只包括这个词语本身即可，不要包含任何其他说明。'})
+                messages.append({'role':'assistant','content':word})
+            else:
+                messages.append({'role':'user','content':'再生成一个。'})
+                messages.append({'role':'assistant','content':word})
+        
+        # 如果还没有生成过词语，添加初始示例
+        if True: #not NewYear.ai_words.generated_words:
+            messages.append({'role':'user','content':'请为我生成一个词，用于我们班级元旦联欢会的"你比划我猜"游戏或"比划传话"游戏，即要求该词汇可以用肢体语言表达；另外词语要积极向上、价值观正确。返回内容只包括这个词语本身即可，不要包含任何其他说明。请思考得快一些。'})
+            messages.append({'role':'assistant','content':'小偷'})
+            messages.append({'role':'user','content':'再生成一个。'})
+            messages.append({'role':'assistant','content':'消防员'})
+            messages.append({'role':'user','content':'再生成一个。这一个（仅限这一个）可以有趣一些。'})
+            messages.append({'role':'assistant','content':'化学课'})
+            messages.append({'role':'user','content':'再生成一个。'})
+            messages.append({'role':'assistant','content':'哪吒'})
+            messages.append({'role':'user','content':'再生成一个。'})
+        
+        try:
+            selected_words = AI.openai(model="deepseek-v3.2-exp", messages=messages, enable_thinking=False)
+        except Exception as e:
+            return jsonify({"error": f"AI服务报错: {str(e)}", "status":500}), 500
+
+        # 将新生成的词语添加到历史记录中
+        NewYear.ai_words.generated_words.append(selected_words)
+
+        return jsonify({"word": selected_words, "status":200}),200
 homework = Homework()
 label = Label()
 subject = Subject()
 fun = Fun()
+newyear = NewYear()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=app.config.get('DEBUG', False), port=2025)
