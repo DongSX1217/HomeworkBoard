@@ -2638,7 +2638,7 @@ class NewYear:
 
         # 将新生成的词语添加到历史记录中
         NewYear.ai_words.generated_words.append(selected_words)
-
+        print(f"新生成的猜词游戏词语: {selected_words}")
         return jsonify({"word": selected_words, "status":200}),200
 homework = Homework()
 label = Label()
