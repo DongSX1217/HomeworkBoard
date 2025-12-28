@@ -2646,6 +2646,18 @@ class NewYear:
         print(f"新生成的猜词游戏词语: {selected_words}")
         return jsonify({"word": selected_words, "status":200}),200
     
+    @app.route('/new-year/api/clear-ai-words', methods=['POST'])
+    def clear_ai_words():
+        """清空AI猜词游戏词语缓存接口"""
+        # 清空词语缓存
+        if hasattr(NewYear.ai_words, 'generated_words'):
+            cleared_count = len(NewYear.ai_words.generated_words)
+            NewYear.ai_words.generated_words = []
+            print(f"已清空猜词游戏词语缓存，共清空 {cleared_count} 个词语")
+            return jsonify({"status": "success", "cleared_count": cleared_count}), 200
+        else:
+            return jsonify({"status": "no_cache", "message": "没有找到词语缓存"}), 200
+
     @app.route('/new-year/api/ai-sentences')
     def ai_sentences():
         """AI生成传话句子游戏接口"""
@@ -2701,6 +2713,18 @@ class NewYear:
         NewYear.ai_sentences.generated_sentence.append(selected_sentence)
         print(f"新生成的传话游戏句子: {selected_sentence}")
         return jsonify({"word": selected_sentence, "status":200}),200
+    
+    @app.route('/new-year/api/clear-ai-sentences', methods=['POST'])
+    def clear_ai_sentences():
+        """清空AI传话游戏句子缓存接口"""
+        # 清空句子缓存
+        if hasattr(NewYear.ai_sentences, 'generated_sentence'):
+            cleared_count = len(NewYear.ai_sentences.generated_sentence)
+            NewYear.ai_sentences.generated_sentence = []
+            print(f"已清空传话游戏句子缓存，共清空 {cleared_count} 个句子")
+            return jsonify({"status": "success", "cleared_count": cleared_count}), 200
+        else:
+            return jsonify({"status": "no_cache", "message": "没有找到句子缓存"}), 200
     
     @app.route('/new-year/api/ai-check', methods=['POST'])
     def ai_check():
