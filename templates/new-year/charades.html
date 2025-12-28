@@ -197,6 +197,15 @@
             background: rgba(255, 255, 255, 0.25);
         }
         
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+            border-color: #4caf50;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #66bb6a, #81c784);
+        }
+        
         .rules {
             background: rgba(0, 0, 0, 0.25);
             border-radius: 15px;
@@ -320,12 +329,12 @@
         <div class="game-area">
             <div class="game-info">
                 <div class="info-box">
-                    <div class="info-title">本轮词语</div>
+                    <div class="info-title">已猜对词语</div>
                     <div class="info-content" id="wordCount">0</div>
                 </div>
                 <div class="info-box">
                     <div class="info-title">剩余时间</div>
-                    <div class="info-content timer" id="timer">60</div>
+                    <div class="info-content timer" id="timer">240</div>
                 </div>
                 <div class="info-box">
                     <div class="info-title">游戏状态</div>
@@ -341,11 +350,14 @@
                 <button class="btn btn-primary" id="startBtn">
                     <i class="fas fa-play"></i> 开始游戏
                 </button>
-                <button class="btn btn-secondary" id="nextBtn">
-                    <i class="fas fa-forward"></i> 下一个词语
+                <button class="btn btn-secondary" id="hideWordBtn">
+                    <i class="fas fa-eye-slash"></i> 隐藏词语
                 </button>
-                <button class="btn btn-secondary" id="showAnswerBtn">
-                    <i class="fas fa-eye"></i> 显示答案
+                <button class="btn btn-secondary" id="skipBtn">
+                    <i class="fas fa-forward"></i> 跳过
+                </button>
+                <button class="btn btn-success" id="correctBtn">
+                    <i class="fas fa-check"></i> 回答正确，下一个
                 </button>
             </div>
         </div>
@@ -353,11 +365,12 @@
         <div class="rules">
             <h3><i class="fas fa-info-circle"></i> 游戏规则</h3>
             <ul>
-                <li>每轮游戏时间为60秒，需要尽可能多地猜出词语</li>
+                <li>每轮游戏时间为240秒，需要尽可能多地猜出词语</li>
                 <li>比划者可以用肢体动作、表情来描述词语，但不能说出词语中的任何字</li>
                 <li>猜词者根据比划者的提示猜测词语</li>
-                <li>点击"下一个词语"可以跳过当前词语</li>
-                <li>点击"显示答案"可以查看当前词语的正确答案</li>
+                <li>点击"隐藏词语"可以隐藏当前词语，点击后按钮变为"显示词语"</li>
+                <li>点击"跳过"可以跳过当前词语，不计入猜对数量</li>
+                <li>点击"回答正确，下一个"表示猜对当前词语，会计入猜对数量并获取下一个词语</li>
                 <li>游戏结束后，系统会显示猜对的词语数量</li>
             </ul>
         </div>
@@ -367,8 +380,9 @@
         // DOM元素
         const backBtn = document.getElementById('backBtn');
         const startBtn = document.getElementById('startBtn');
-        const nextBtn = document.getElementById('nextBtn');
-        const showAnswerBtn = document.getElementById('showAnswerBtn');
+        const hideWordBtn = document.getElementById('hideWordBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const correctBtn = document.getElementById('correctBtn');
         const wordDisplay = document.getElementById('wordDisplay');
         const wordCount = document.getElementById('wordCount');
         const timerElement = document.getElementById('timer');
@@ -378,12 +392,11 @@
         // 游戏状态变量
         let currentWord = '';
         let wordsGuessed = 0;
-        let totalWords = 0;
         let gameTimer = null;
-        let timeLeft = 60;
+        let timeLeft = 240; // 总时长改为240秒
         let gameActive = false;
-        let timerStarted = false; // 新增：标记计时器是否已启动
-        let wordRevealed = false; // 新增：标记词语是否已显示
+        let timerStarted = false;
+        let wordHidden = false; // 标记词语是否已隐藏
         
         // API端点
         const API_URL = '/new-year/api/ai-words';
@@ -401,58 +414,24 @@
             
             gameActive = true;
             wordsGuessed = 0;
-            totalWords = 0;
             wordCount.textContent = wordsGuessed;
             gameStatus.textContent = '游戏中';
             startBtn.innerHTML = '<i class="fas fa-redo"></i> 重新开始';
             
             // 重置计时器状态
             timerStarted = false;
-            wordRevealed = false;
+            wordHidden = false;
             
             // 获取第一个词语
             await getNewWord();
         });
         
-        // 获取下一个词语
-        nextBtn.addEventListener('click', async () => {
-            if (!gameActive) return;
-            
-            // 增加总词语数
-            totalWords++;
-            
-            // 重置计时器状态
-            timerStarted = false;
-            wordRevealed = false;
-            
-            // 获取新词语
-            await getNewWord();
-        });
-        
-        // 显示/隐藏答案
-        showAnswerBtn.addEventListener('click', () => {
+        // 隐藏/显示词语
+        hideWordBtn.addEventListener('click', () => {
             if (!gameActive || !currentWord) return;
             
-            // 如果词语还没有显示过，显示词语并启动计时器
-            if (!wordRevealed) {
-                wordRevealed = true;
-                wordDisplay.innerHTML = `
-                    <div style="text-align: center;">
-                        <div style="font-size: 3rem; margin-bottom: 10px;">${currentWord}</div>
-                        <div style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.8);">正确答案</div>
-                    </div>
-                `;
-                
-                // 启动计时器（仅在第一次显示词语时启动）
-                if (!timerStarted) {
-                    startTimer();
-                    timerStarted = true;
-                }
-                
-                // 更新按钮文本
-                showAnswerBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏答案';
-            } else {
-                // 如果词语已显示，隐藏词语
+            if (!wordHidden) {
+                // 隐藏词语
                 wordDisplay.innerHTML = `
                     <div style="text-align: center;">
                         <div style="font-size: 5rem; letter-spacing: 10px;">${'•'.repeat(currentWord.length)}</div>
@@ -461,10 +440,57 @@
                         </div>
                     </div>
                 `;
+                hideWordBtn.innerHTML = '<i class="fas fa-eye"></i> 显示词语';
+                wordHidden = true;
+            } else {
+                // 显示词语
+                wordDisplay.innerHTML = `
+                    <div style="text-align: center;">
+                        <div style="font-size: 5rem; margin-bottom: 10px;">${currentWord}</div>
+                        <div style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.8);">当前词语</div>
+                    </div>
+                `;
+                hideWordBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏词语';
+                wordHidden = false;
                 
-                // 更新按钮文本
-                showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+                // 启动计时器（仅在游戏进行中且计时器未启动时）
+                if (gameActive && !timerStarted) {
+                    startTimer();
+                    timerStarted = true;
+                }
             }
+        });
+        
+        // 跳过当前词语
+        skipBtn.addEventListener('click', async () => {
+            if (!gameActive) return;
+            
+            // 暂停计时器
+            if (timerStarted) {
+                clearInterval(gameTimer);
+                timerStarted = false;
+            }
+            
+            // 获取新词语
+            await getNewWord();
+        });
+        
+        // 回答正确，下一个
+        correctBtn.addEventListener('click', async () => {
+            if (!gameActive || !currentWord) return;
+            
+            // 增加猜对词语数
+            wordsGuessed++;
+            wordCount.textContent = wordsGuessed;
+            
+            // 暂停计时器
+            if (timerStarted) {
+                clearInterval(gameTimer);
+                timerStarted = false;
+            }
+            
+            // 获取新词语
+            await getNewWord();
         });
         
         // 获取新词语
@@ -481,19 +507,20 @@
                     // 显示词语
                     wordDisplay.innerHTML = `
                         <div style="text-align: center;">
-                            <div style="font-size: 5rem; letter-spacing: 10px;">${'•'.repeat(currentWord.length)}</div>
-                            <div style="font-size: 1.2rem; margin-top: 15px; color: rgba(255, 255, 255, 0.7);">
-                                词语长度: ${currentWord.length}个字
-                            </div>
+                            <div style="font-size: 5rem; margin-bottom: 10px;">${currentWord}</div>
+                            <div style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.8);">当前词语</div>
                         </div>
                     `;
                     
-                    // 增加总词语数显示
-                    totalWords++;
+                    // 重置隐藏状态
+                    wordHidden = false;
+                    hideWordBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏词语';
                     
-                    // 重置词语显示状态
-                    wordRevealed = false;
-                    showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+                    // 启动计时器（仅在游戏进行中时）
+                    if (gameActive && !timerStarted) {
+                        startTimer();
+                        timerStarted = true;
+                    }
                 } else {
                     alert('获取词语失败，请重试');
                     wordDisplay.innerHTML = '<span class="word-placeholder">获取词语失败</span>';
@@ -508,19 +535,20 @@
                 
                 wordDisplay.innerHTML = `
                     <div style="text-align: center;">
-                        <div style="font-size: 5rem; letter-spacing: 10px;">${'•'.repeat(currentWord.length)}</div>
-                        <div style="font-size: 1.2rem; margin-top: 15px; color: rgba(255, 255, 255, 0.7);">
-                            词语长度: ${currentWord.length}个字 (模拟数据)
-                        </div>
+                        <div style="font-size: 5rem; margin-bottom: 10px;">${currentWord}</div>
+                        <div style="font-size: 1.2rem; color: rgba(255, 255, 255, 0.8);">当前词语 (模拟数据)</div>
                     </div>
                 `;
                 
-                // 增加总词语数显示
-                totalWords++;
+                // 重置隐藏状态
+                wordHidden = false;
+                hideWordBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏词语';
                 
-                // 重置词语显示状态
-                wordRevealed = false;
-                showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+                // 启动计时器（仅在游戏进行中时）
+                if (gameActive && !timerStarted) {
+                    startTimer();
+                    timerStarted = true;
+                }
             }
             
             showLoading(false);
@@ -528,7 +556,6 @@
         
         // 开始计时器
         function startTimer() {
-            timeLeft = 60;
             timerElement.textContent = timeLeft;
             
             if (gameTimer) clearInterval(gameTimer);
@@ -547,16 +574,17 @@
         function endGame() {
             clearInterval(gameTimer);
             gameActive = false;
+            timerStarted = false;
             gameStatus.textContent = '游戏结束';
             
             wordDisplay.innerHTML = `
                 <div style="text-align: center;">
                     <div style="font-size: 3rem; margin-bottom: 15px;">游戏结束！</div>
                     <div style="font-size: 1.8rem; margin-bottom: 10px;">
-                        您一共尝试了 <span style="color: #ffeb3b;">${totalWords}</span> 个词语
+                        您一共猜对了 <span style="color: #ffeb3b;">${wordsGuessed}</span> 个词语
                     </div>
                     <div style="font-size: 1.5rem;">
-                        猜对了 <span style="color: #4caf50;">${wordsGuessed}</span> 个词语
+                        用时: ${240 - timeLeft} 秒
                     </div>
                 </div>
             `;
@@ -566,14 +594,14 @@
         function resetGame() {
             clearInterval(gameTimer);
             gameActive = false;
-            timeLeft = 60;
+            timeLeft = 240;
             timerElement.textContent = timeLeft;
             gameStatus.textContent = '准备开始';
             startBtn.innerHTML = '<i class="fas fa-play"></i> 开始游戏';
             wordDisplay.innerHTML = '<span class="word-placeholder">点击开始游戏获取词语</span>';
             timerStarted = false;
-            wordRevealed = false;
-            showAnswerBtn.innerHTML = '<i class="fas fa-eye"></i> 显示答案';
+            wordHidden = false;
+            hideWordBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏词语';
         }
         
         // 显示/隐藏加载动画
@@ -586,19 +614,19 @@
             if (!gameActive) return;
             
             switch(e.key) {
-                case ' ': // 空格键显示/隐藏答案
-                    showAnswerBtn.click();
+                case ' ': // 空格键隐藏/显示词语
+                    hideWordBtn.click();
                     break;
-                case 'n': // N键下一个词语
-                case 'N':
-                    nextBtn.click();
+                case 's': // S键跳过
+                case 'S':
+                    skipBtn.click();
                     break;
-                case 'Enter': // 回车键猜对
-                    if (currentWord && wordRevealed) {
-                        wordsGuessed++;
-                        wordCount.textContent = wordsGuessed;
-                        nextBtn.click();
-                    }
+                case 'c': // C键回答正确
+                case 'C':
+                    correctBtn.click();
+                    break;
+                case 'Enter': // 回车键回答正确
+                    correctBtn.click();
                     break;
                 case 'Escape': // ESC键返回
                     backBtn.click();
