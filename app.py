@@ -2613,22 +2613,27 @@ class NewYear:
         for i, word in enumerate(NewYear.ai_words.generated_words):
             if i == 0:
                 # 第一个词需要特殊处理
-                messages.append({'role':'user','content':'请为我生成一个词，用于我们班级元旦联欢会的"你比划我猜"游戏或"比划传话"游戏，即要求该词汇可以用肢体语言表达；另外词语要积极向上、价值观正确。返回内容只包括这个词语本身即可，不要包含任何其他说明。'})
+                messages.append({'role':'user','content':'请为我生成一个词，用于我们班级元旦联欢会的“你比划我猜”游戏，即要求该词汇可以用肢体语言表达；另外词语要积极向上、价值观正确，可以结合2025年热点。返回内容只包括这个词语本身即可，不要包含任何其他说明。请【避免重复】或【相似类型词语过于频繁地出现】。'})
                 messages.append({'role':'assistant','content':word})
             else:
                 messages.append({'role':'user','content':'再生成一个。'})
                 messages.append({'role':'assistant','content':word})
         
         # 如果还没有生成过词语，添加初始示例
-        if True: #not NewYear.ai_words.generated_words:
-            messages.append({'role':'user','content':'请为我生成一个词，用于我们班级元旦联欢会的"你比划我猜"游戏或"比划传话"游戏，即要求该词汇可以用肢体语言表达；另外词语要积极向上、价值观正确。返回内容只包括这个词语本身即可，不要包含任何其他说明。请思考得快一些。'})
+        if not NewYear.ai_words.generated_words:
+            messages.append({'role':'user','content':'请为我生成一个词，用于我们班级元旦联欢会的“你比划我猜”游戏，即要求该词汇可以用肢体语言表达；另外词语要积极向上、价值观正确，可以结合2025年热点。返回内容只包括这个词语本身即可，不要包含任何其他说明。请【避免重复】或【相似类型词语过于频繁地出现】。'})
             messages.append({'role':'assistant','content':'小偷'})
-            messages.append({'role':'user','content':'再生成一个。'})
-            messages.append({'role':'assistant','content':'消防员'})
-            messages.append({'role':'user','content':'再生成一个。这一个（仅限这一个）可以有趣一些。'})
-            messages.append({'role':'assistant','content':'化学课'})
-            messages.append({'role':'user','content':'再生成一个。'})
-            messages.append({'role':'assistant','content':'哪吒'})
+        
+        messages.append({'role':'user','content':'再生成一个。'})
+        messages.append({'role':'assistant','content':'警察'})
+        messages.append({'role':'user','content':'再生成一个。这一个（仅限这一个）可以有趣一些，如结合班级、学校的有关信息出题。'})
+        messages.append({'role':'assistant','content':'化学课'})
+        messages.append({'role':'user','content':'再生成一个。'})
+        messages.append({'role':'assistant','content':'哪吒'})
+
+        if random.randint(1,10) > 8:
+            messages.append({'role':'user','content':'再生成一个。这一个（仅限这一个）可以有趣一些，如结合班级、学校的有关信息出题。'})
+        else:
             messages.append({'role':'user','content':'再生成一个。'})
         
         try:
@@ -2640,6 +2645,258 @@ class NewYear:
         NewYear.ai_words.generated_words.append(selected_words)
         print(f"新生成的猜词游戏词语: {selected_words}")
         return jsonify({"word": selected_words, "status":200}),200
+    
+    @app.route('/new-year/api/ai-sentences')
+    def ai_sentences():
+        """AI生成传话句子游戏接口"""
+        # 使用方法属性来存储历史生成的句子，避免使用未定义的全局名
+        if not hasattr(NewYear.ai_sentences, 'generated_sentence'):
+            NewYear.ai_sentences.generated_sentence = []
+        
+        system_prompt = AI.load_system_prompt(is_public=True)
+        # 构建消息列表
+        messages = [{'role': 'system', 'content': system_prompt}]
+        
+        # 添加问答式prompt
+        qa_prompt = AI.load_qa_prompt()
+        if qa_prompt:
+            for qa in qa_prompt:
+                if 'question' in qa and 'answer' in qa:
+                    messages.append({'role':'user','content':qa['question']})
+                    messages.append({'role':'assistant','content':qa['answer']})
+
+        # 添加历史生成的句子到上下文中
+        for i, sentence in enumerate(NewYear.ai_sentences.generated_sentence):
+            if i == 0:
+                # 第一个句子需要特殊处理
+                messages.append({'role':'user','content':'请为我生成一个句子，用于我们班级元旦联欢会的“无声传话”游戏，即要求该句子可以被传递给下一个人；另外句子要积极向上、价值观正确，可以结合2025年热点。返回内容只包括这个句子本身即可，不要包含任何其他说明。句子长度10字~20字（不含标点符号）。'})
+                messages.append({'role':'assistant','content':sentence})
+            else:
+                messages.append({'role':'user','content':'再生成一个。'})
+                messages.append({'role':'assistant','content':sentence})
+
+        # 如果还没有生成过句子，添加初始示例
+        if not NewYear.ai_sentences.generated_sentence:
+            messages.append({'role':'user','content':'请为我生成一个句子，用于我们班级元旦联欢会的“无声传话”游戏，即要求该句子可以被传递给下一个人；另外句子要积极向上、价值观正确，可以结合2025年热点。返回内容只包括这个句子本身即可，不要包含任何其他说明。句子长度10字~20字（不含标点符号）。'})
+            messages.append({'role':'assistant','content':'我喜欢吃麻辣烫。'})
+        
+        messages.append({'role':'user','content':'再生成一个。'})
+        messages.append({'role':'assistant','content':'兔子跳，狗儿叫，小猫追尾巴绕圈圈。'})
+        messages.append({'role':'user','content':'再生成一个。这一个（仅限这一个）可以有趣一些，如结合班级、学校的有关信息出题。'})
+        messages.append({'role':'assistant','content':'老杨的化学课真有趣。'})
+        messages.append({'role':'user','content':'再生成一个。'})
+        messages.append({'role':'assistant','content':'一屋不扫，何以扫天下。'})
+
+        if random.randint(1,10) > 7:
+            messages.append({'role':'user','content':'再生成一个。这一个（仅限这一个）可以有趣一些，如结合班级、学校的有关信息出题。'})
+        else:
+            messages.append({'role':'user','content':'再生成一个。'})
+        
+        try:
+            selected_sentence = AI.openai(model="deepseek-v3.2-exp", messages=messages, enable_thinking=False)
+        except Exception as e:
+            return jsonify({"error": f"AI服务报错: {str(e)}", "status":500}), 500
+
+        # 将新生成的句子添加到历史记录中
+        NewYear.ai_sentences.generated_sentence.append(selected_sentence)
+        print(f"新生成的传话游戏句子: {selected_sentence}")
+        return jsonify({"word": selected_sentence, "status":200}),200
+    
+    @app.route('/new-year/api/ai-check', methods=['POST'])
+    def ai_check():
+        """AI检查传话游戏结果准确度接口"""
+        try:
+            data = request.get_json()
+            original = data.get('original', '')
+            final = data.get('final', '')
+            
+            if not original or not final:
+                return jsonify({"error": "缺少原始信息或最终信息", "status": 400}), 400
+            
+            # 使用方法属性来存储历史评估记录，避免使用未定义的全局名
+            if not hasattr(NewYear.ai_check, 'evaluation_history'):
+                NewYear.ai_check.evaluation_history = []
+            
+            # 构建系统提示词，包含评估示例和上下文
+            system_prompt = AI.load_system_prompt(is_public=True)
+            
+            # 添加评估示例和任务说明
+            evaluation_instruction = f"""{system_prompt}
+
+任务：评估传话游戏中两个句子的相似度和完整性。
+
+评估示例：
+示例1：
+原始句子：今天天气真好，我们去公园玩吧。
+传话后句子：今天天气不错，我们去公园玩。
+评估结果：0.81
+
+示例2：
+原始句子：明天我们要去学校参加元旦联欢会。
+传话后句子：明天去学校参加活动。
+评估结果：0.62
+
+评估标准：
+- 1.00：完全一致，无信息丢失
+- 0.80~0.99：信息基本一致，有少量变化
+- 0.60~0.79：信息大部分保留，有明显变化
+- 0.40~0.59：信息部分保留，有较大变化
+- 0.20~0.39：信息严重失真，仅保留少量信息
+- 0.00：完全不一致，信息完全丢失
+历史评估记录（供参考）：
+"""
+            
+            # 添加历史评估记录到系统提示词
+            for i, record in enumerate(NewYear.ai_check.evaluation_history[-3:]):  # 只保留最近3条
+                evaluation_instruction += f"原始：{record['original']}, 传话：{record['final']}, 评分：{record['score']:.2f}\n"
+            
+            evaluation_instruction += f"\n当前评估：\n原始句子：{original}\n传话后句子：{final}\n\n请直接返回0到1之间的数字（两位小数），表示信息传递的准确度。"
+            
+            messages = [
+                {'role': 'system', 'content': evaluation_instruction}
+            ]
+            
+            try:
+                # 使用AI进行评估
+                ai_response = AI.openai(model="deepseek-v3.2-exp", messages=messages, enable_thinking=False)
+                
+                # 尝试解析AI返回的准确度
+                try:
+                    accuracy = float(ai_response.strip())
+                    # 确保准确度在0到1之间
+                    accuracy = max(0.0, min(1.0, accuracy))
+                    
+                    # 将当前评估结果添加到历史记录中
+                    NewYear.ai_check.evaluation_history.append({
+                        'original': original,
+                        'final': final,
+                        'score': accuracy,
+                        'timestamp': time.time()
+                    })
+                    
+                    # 限制历史记录数量，只保留最近20条
+                    if len(NewYear.ai_check.evaluation_history) > 10:
+                        NewYear.ai_check.evaluation_history = NewYear.ai_check.evaluation_history[-20:]
+                        
+                except ValueError:
+                    # 如果AI返回的不是数字，使用备用方法计算
+                    accuracy = calculate_text_similarity(original, final)
+                    
+                    # 即使AI返回格式不正确，也记录这次评估
+                    NewYear.ai_check.evaluation_history.append({
+                        'original': original,
+                        'final': final,
+                        'score': accuracy,
+                        'timestamp': time.time(),
+                        'ai_response': ai_response  # 记录AI的原始回复
+                    })
+                
+                return jsonify({
+                    "accuracy": accuracy,
+                    "status": "success"
+                }), 200
+                
+            except Exception as e:
+                print(f"AI评估传话结果失败: {str(e)}")
+                # AI评估失败时，使用文本相似度算法作为备选
+                accuracy = calculate_text_similarity(original, final)
+                
+                # 记录这次评估（使用备用方法的结果）
+                NewYear.ai_check.evaluation_history.append({
+                    'original': original,
+                    'final': final,
+                    'score': accuracy,
+                    'timestamp': time.time(),
+                    'method': 'fallback'
+                })
+                
+                return jsonify({
+                    "accuracy": accuracy,
+                    "status": "fallback"
+                }), 200
+                
+        except Exception as e:
+            print(f"AI检查传话结果失败: {str(e)}")
+            return jsonify({
+                "accuracy": 0.0,
+                "status": "error",
+                "error": str(e)
+            }), 500
+
+def calculate_text_similarity(original, final):
+    """
+    计算两个文本之间的相似度
+    使用编辑距离（Levenshtein距离）算法来计算相似度
+    """
+    def levenshtein_distance(s1, s1_len, s2, s2_len):
+        # 创建二维数组
+        dp = [[0 for _ in range(s2_len + 1)] for _ in range(s1_len + 1)]
+        
+        # 初始化边界条件
+        for i in range(s1_len + 1):
+            dp[i][0] = i
+        for j in range(s2_len + 1):
+            dp[0][j] = j
+        
+        # 动态规划填表
+        for i in range(1, s1_len + 1):
+            for j in range(1, s2_len + 1):
+                if s1[i - 1] == s2[j - 1]:
+                    dp[i][j] = dp[i - 1][j - 1]
+                else:
+                    dp[i][j] = min(
+                        dp[i - 1][j] + 1,      # 删除
+                        dp[i][j - 1] + 1,      # 插入
+                        dp[i - 1][j - 1] + 1   # 替换
+                    )
+        
+        return dp[s1_len][s2_len]
+    
+    # 计算编辑距离
+    distance = levenshtein_distance(original, len(original), final, len(final))
+    
+    # 计算最大可能距离（两个字符串长度的最大值）
+    max_len = max(len(original), len(final))
+    
+    if max_len == 0:
+        return 1.0  # 两个字符串都为空，相似度为1
+    
+    # 计算相似度（1 - 编辑距离比例）
+    similarity = 1 - (distance / max_len)
+    
+    # 确保相似度在0到1之间
+    similarity = max(0, min(1, similarity))
+    
+    return similarity
+
+def calculate_mock_accuracy(original, final):
+    """
+    计算模拟准确度 - 用于错误处理时的备用方案
+    """
+    # 简单的相似度计算（基于字符匹配和长度）
+    original_chars = list(original)
+    final_chars = list(final)
+    
+    match_count = 0
+    min_length = min(len(original_chars), len(final_chars))
+    
+    for i in range(min_length):
+        if original_chars[i] == final_chars[i]:
+            match_count += 1
+    
+    # 考虑长度差异
+    length_penalty = abs(len(original) - len(final)) * 0.05
+    similarity = (match_count / max(len(original), 1)) - length_penalty
+    
+    # 确保相似度在合理范围内
+    similarity = max(0, min(1, similarity))
+    
+    # 添加一些随机性使游戏更有趣
+    similarity += (random.random() * 0.2 - 0.1)  # -0.1 到 +0.1
+    similarity = max(0.1, min(0.95, similarity))
+    
+    return similarity
+
 homework = Homework()
 label = Label()
 subject = Subject()
