@@ -3,29 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>传话游戏 - 元旦联欢会</title>
+    <title>元旦传话游戏 - 联欢会互动</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Microsoft YaHei', sans-serif;
+            font-family: 'Microsoft YaHei', '微软雅黑', sans-serif;
         }
         
         body {
-            background: linear-gradient(135deg, #4a0e7a 0%, #7c1cb7 50%, #b736f4 100%);
+            background: linear-gradient(135deg, #d50000 0%, #ff3d00 50%, #ff6d00 100%);
             color: #fff;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            overflow-x: auto;
         }
         
         .container {
             width: 100%;
-            max-width: 900px;
+            min-width: 800px;
+            max-width: 1200px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -74,7 +76,7 @@
             font-weight: bold;
             text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
             letter-spacing: 5px;
-            background: linear-gradient(to bottom, #ffffff, #e1b3ff);
+            background: linear-gradient(to bottom, #fff8c4, #ffd54f);
             -webkit-background-clip: text;
             background-clip: text;
             color: transparent;
@@ -84,6 +86,136 @@
         .subtitle {
             font-size: 1.2rem;
             opacity: 0.9;
+            color: #fff8c4;
+        }
+        
+        .config-panel {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .config-title {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #fff8c4;
+            text-align: center;
+        }
+        
+        .config-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .config-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .config-label {
+            font-size: 1.3rem;
+            color: #fff;
+        }
+        
+        .player-count {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .time-setting {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .time-display {
+            font-size: 2.2rem;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+            color: #ffeb3b;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+        }
+        
+        .time-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .time-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .toggle-content-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50px;
+            padding: 10px 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        
+        .toggle-content-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.05);
+        }
+        
+        .count-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .count-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(1.1);
+        }
+        
+        .count-display {
+            font-size: 2.2rem;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+            color: #ffeb3b;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
         
         .game-area {
@@ -99,21 +231,28 @@
             backdrop-filter: blur(10px);
         }
         
-        .message-chain {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin: 30px 0;
-            position: relative;
+        .current-player-info {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #ffeb3b;
+            text-align: center;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
         }
         
-        .message-box {
+        .current-player-info span {
+            color: #fff;
+            background: rgba(255, 87, 34, 0.8);
+            padding: 5px 15px;
+            border-radius: 10px;
+            margin: 0 10px;
+        }
+        
+        .single-message-box {
             background: rgba(255, 255, 255, 0.15);
             border-radius: 15px;
-            padding: 25px;
-            width: 22%;
-            min-height: 180px;
+            padding: 40px;
+            width: 80%;
+            min-height: 200px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -121,36 +260,18 @@
             border: 2px solid rgba(255, 255, 255, 0.2);
             transition: all 0.3s ease;
             position: relative;
+            margin: 30px 0;
         }
         
-        .message-box.active {
-            background: rgba(255, 215, 0, 0.2);
+        .single-message-box.active {
+            background: rgba(255, 215, 0, 0.3);
             border-color: #ffd700;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
-        }
-        
-        .message-box.completed {
-            background: rgba(76, 175, 80, 0.2);
-            border-color: #4caf50;
-        }
-        
-        .person-number {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.5);
+            transform: translateY(-5px);
         }
         
         .message-content {
-            font-size: 1.8rem;
+            font-size: 2.5rem;
             text-align: center;
             min-height: 80px;
             display: flex;
@@ -158,18 +279,37 @@
             justify-content: center;
             width: 100%;
             word-break: break-all;
+            padding: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .message-content.visible {
+            opacity: 1;
         }
         
         .message-placeholder {
-            font-size: 1.5rem;
+            font-size: 2rem;
             color: rgba(255, 255, 255, 0.5);
             text-align: center;
         }
         
-        .arrow {
-            font-size: 2rem;
-            color: rgba(255, 255, 255, 0.5);
-            margin: 0 10px;
+        .timer-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.8rem;
+            color: #ffeb3b;
+            font-weight: bold;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 2px solid #ffeb3b;
+        }
+        
+        .timer-display.warning {
+            color: #ff5252;
+            border-color: #ff5252;
         }
         
         .control-panel {
@@ -178,23 +318,6 @@
             align-items: center;
             width: 100%;
             margin-top: 30px;
-        }
-        
-        .original-message {
-            font-size: 2.2rem;
-            font-weight: bold;
-            text-align: center;
-            margin: 20px 0;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            width: 80%;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: 2px dashed rgba(255, 255, 255, 0.3);
-            color: #ffeb3b;
         }
         
         .buttons {
@@ -224,12 +347,30 @@
         }
         
         .btn-primary {
-            background: linear-gradient(135deg, #9c27b0, #673ab7);
-            border-color: #9c27b0;
+            background: linear-gradient(135deg, #ff3d00, #d50000);
+            border-color: #ff3d00;
         }
         
         .btn-primary:hover {
-            background: linear-gradient(135deg, #9c27b0, #5e35b1);
+            background: linear-gradient(135deg, #ff5722, #d50000);
+        }
+        
+        .btn-next {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            border-color: #4caf50;
+        }
+        
+        .btn-next:hover {
+            background: linear-gradient(135deg, #66bb6a, #2e7d32);
+        }
+        
+        .btn-finish {
+            background: linear-gradient(135deg, #2196f3, #0d47a1);
+            border-color: #2196f3;
+        }
+        
+        .btn-finish:hover {
+            background: linear-gradient(135deg, #42a5f5, #0d47a1);
         }
         
         .input-area {
@@ -241,9 +382,10 @@
         }
         
         .input-area h3 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             margin-bottom: 15px;
-            color: #e1b3ff;
+            color: #fff8c4;
+            text-align: center;
         }
         
         .message-input {
@@ -260,14 +402,15 @@
         
         .message-input:focus {
             outline: none;
-            border-color: #9c27b0;
+            border-color: #ff3d00;
             background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 0 15px rgba(255, 61, 0, 0.5);
         }
         
         .input-btn {
             padding: 15px 50px;
             font-size: 1.3rem;
-            background: linear-gradient(135deg, #9c27b0, #673ab7);
+            background: linear-gradient(135deg, #ff3d00, #d50000);
             border: none;
             border-radius: 50px;
             color: white;
@@ -280,6 +423,92 @@
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
         }
         
+        .result-display {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            padding: 30px;
+            display: none;
+        }
+        
+        .result-title {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: #ffeb3b;
+            text-align: center;
+        }
+        
+        .result-content {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        
+        .result-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 45%;
+        }
+        
+        .result-label {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #fff8c4;
+        }
+        
+        .result-text {
+            font-size: 1.8rem;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            width: 100%;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .score-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #4caf50;
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+            margin: 20px 0;
+            padding: 20px 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            border: 3px solid #4caf50;
+        }
+        
+        .score-details {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .score-detail-item {
+            font-size: 1.4rem;
+            color: #fff8c4;
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+        }
+        
+        .score-detail-value {
+            color: #ffeb3b;
+            font-weight: bold;
+        }
+        
         .rules {
             background: rgba(0, 0, 0, 0.2);
             border-radius: 15px;
@@ -289,9 +518,9 @@
         }
         
         .rules h3 {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
             margin-bottom: 15px;
-            color: #e1b3ff;
+            color: #fff8c4;
         }
         
         .rules ul {
@@ -303,12 +532,14 @@
             margin-bottom: 10px;
             padding-left: 25px;
             position: relative;
+            font-size: 1.2rem;
+            line-height: 1.5;
         }
         
         .rules li:before {
             content: "•";
-            color: #ba68c8;
-            font-size: 1.5rem;
+            color: #ff8a65;
+            font-size: 1.8rem;
             position: absolute;
             left: 0;
             top: -2px;
@@ -324,15 +555,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             z-index: 1000;
         }
         
         .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255, 255, 255, 0.3);
-            border-top: 5px solid #ba68c8;
+            width: 70px;
+            height: 70px;
+            border: 6px solid rgba(255, 255, 255, 0.3);
+            border-top: 6px solid #ff8a65;
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 20px;
@@ -343,83 +574,57 @@
             100% { transform: rotate(360deg); }
         }
         
-        .result {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+        .decoration {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            z-index: 1001;
-            padding: 20px;
-        }
-        
-        .result-content {
-            background: linear-gradient(135deg, #4a0e7a, #7c1cb7);
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            width: 90%;
-            text-align: center;
-            border: 3px solid rgba(255, 255, 255, 0.3);
-        }
-        
-        .result h2 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            color: #ffeb3b;
-        }
-        
-        .original-result {
             font-size: 2rem;
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            color: #4caf50;
+            color: rgba(255, 255, 255, 0.1);
+            z-index: -1;
+            animation: float 10s infinite linear;
         }
         
-        .final-result {
-            font-size: 2rem;
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            color: #ff9800;
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-100vh) rotate(360deg); }
         }
         
-        .close-result {
-            margin-top: 30px;
-            padding: 15px 40px;
-            background: #9c27b0;
-            border: none;
-            border-radius: 50px;
-            color: white;
-            font-size: 1.2rem;
-            cursor: pointer;
+        .firework {
+            position: fixed;
+            width: 5px;
+            height: 5px;
+            background: #ffeb3b;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px #ffeb3b;
+            z-index: -1;
+            animation: firework 2s forwards;
         }
         
-        @media (max-width: 768px) {
+        @keyframes firework {
+            0% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-100vh); opacity: 0; }
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                min-width: 800px;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .container {
+                min-width: 600px;
+            }
+            
             .main-title {
                 font-size: 2.5rem;
             }
             
-            .message-chain {
-                flex-direction: column;
-                gap: 20px;
+            .single-message-box {
+                width: 95%;
+                padding: 30px 20px;
             }
             
-            .message-box {
-                width: 100%;
-                min-height: 120px;
-            }
-            
-            .arrow {
-                transform: rotate(90deg);
+            .message-content {
+                font-size: 2rem;
             }
             
             .buttons {
@@ -435,32 +640,30 @@
             .message-input {
                 width: 100%;
             }
+            
+            .result-content {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .result-item {
+                width: 100%;
+            }
+            
+            .score-detail-item {
+                width: 95%;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 节日装饰 -->
+    <div id="decorations"></div>
+    
+    <!-- 加载动画 -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <p>正在获取传话内容...</p>
-    </div>
-    
-    <div class="result" id="result">
-        <div class="result-content">
-            <h2><i class="fas fa-trophy"></i> 传话结果</h2>
-            <p style="margin-bottom: 20px; font-size: 1.2rem;">一起来看看传话过程中发生了什么变化</p>
-            
-            <div style="text-align: left; margin: 20px 0;">
-                <p><strong>原始内容：</strong></p>
-                <div class="original-result" id="resultOriginal">加载中...</div>
-                
-                <p><strong>最终内容：</strong></p>
-                <div class="final-result" id="resultFinal">加载中...</div>
-            </div>
-            
-            <p style="margin-top: 20px; font-size: 1.1rem; color: #ffcc80;" id="resultMessage"></p>
-            
-            <button class="close-result" id="closeResult">继续游戏</button>
-        </div>
+        <p style="font-size: 1.5rem; margin-top: 20px;">正在准备元旦传话游戏...</p>
     </div>
     
     <div class="container">
@@ -469,84 +672,140 @@
                 <i class="fas fa-arrow-left"></i>
             </div>
             <div class="game-title">
-                <h1 class="main-title">传话游戏</h1>
-                <p class="subtitle">Whisper Game - 看看信息是如何变形的</p>
+                <h1 class="main-title">元旦传话游戏</h1>
+                <p class="subtitle">欢度元旦 · 传递快乐 · 共享欢笑</p>
             </div>
             <div style="width: 50px;"></div>
         </div>
         
+        <!-- 配置面板 -->
+        <div class="config-panel">
+            <h2 class="config-title"><i class="fas fa-cog"></i> 游戏设置</h2>
+            <div class="config-content">
+                <div class="config-item">
+                    <div class="config-label">传话人数：</div>
+                    <div class="player-count">
+                        <div class="count-btn" id="decreaseBtn">-</div>
+                        <div class="count-display" id="playerCount">4</div>
+                        <div class="count-btn" id="increaseBtn">+</div>
+                    </div>
+                    <div style="font-size: 1rem; color: #fff8c4; margin-top: 5px;">(4~8人)</div>
+                </div>
+                
+                <div class="config-item">
+                    <div class="config-label">每人传话时间：</div>
+                    <div class="time-setting">
+                        <div class="player-count">
+                            <div class="time-btn" id="decreaseTimeBtn">-</div>
+                            <div class="time-display" id="passTime">40</div>
+                            <div class="time-btn" id="increaseTimeBtn">+</div>
+                        </div>
+                        <div style="font-size: 1rem; color: #fff8c4; margin-top: 5px;">(20~150秒)</div>
+                    </div>
+                </div>
+                
+                <div class="config-item">
+                    <div class="toggle-content-btn" id="toggleContentBtn">
+                        <i class="fas fa-eye"></i> 显示内容
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 游戏区域 -->
         <div class="game-area">
-            <div class="message-chain">
-                <div class="message-box" id="person1">
-                    <div class="person-number">1</div>
-                    <div class="message-content">
-                        <div class="message-placeholder">第1人</div>
-                    </div>
-                </div>
-                
-                <div class="arrow"><i class="fas fa-arrow-right"></i></div>
-                
-                <div class="message-box" id="person2">
-                    <div class="person-number">2</div>
-                    <div class="message-content">
-                        <div class="message-placeholder">第2人</div>
-                    </div>
-                </div>
-                
-                <div class="arrow"><i class="fas fa-arrow-right"></i></div>
-                
-                <div class="message-box" id="person3">
-                    <div class="person-number">3</div>
-                    <div class="message-content">
-                        <div class="message-placeholder">第3人</div>
-                    </div>
-                </div>
-                
-                <div class="arrow"><i class="fas fa-arrow-right"></i></div>
-                
-                <div class="message-box" id="person4">
-                    <div class="person-number">4</div>
-                    <div class="message-content">
-                        <div class="message-placeholder">第4人</div>
-                    </div>
+            <!-- 当前玩家信息 -->
+            <div class="current-player-info" id="currentPlayerInfo">
+                当前传话人: <span id="currentPlayerNumber">1</span>/<span id="totalPlayers">4</span>
+            </div>
+            
+            <!-- 单个消息框 -->
+            <div class="single-message-box" id="messageBox">
+                <div class="timer-display" id="timerDisplay">40秒</div>
+                <div class="message-content" id="messageContent">
+                    <div class="message-placeholder">点击"开始传话"查看传话内容</div>
                 </div>
             </div>
             
             <div class="control-panel">
-                <div class="original-message" id="originalMessage">
-                    点击"开始传话"获取原始信息
-                </div>
-                
                 <div class="buttons">
                     <button class="btn btn-primary" id="startBtn">
                         <i class="fas fa-play"></i> 开始传话
                     </button>
+                    <button class="btn btn-next" id="nextBtn" style="display: none;">
+                        <i class="fas fa-forward"></i> 下一个
+                    </button>
+                    <button class="btn btn-finish" id="finishBtn" style="display: none;">
+                        <i class="fas fa-stopwatch"></i> 结束计时并输入
+                    </button>
                     <button class="btn" id="resetBtn">
                         <i class="fas fa-redo"></i> 重新开始
-                    </button>
-                    <button class="btn" id="showResultBtn">
-                        <i class="fas fa-eye"></i> 查看结果
                     </button>
                 </div>
             </div>
             
+            <!-- 最后一个人输入区域 -->
             <div class="input-area" id="inputArea" style="display: none;">
-                <h3>第 <span id="currentPersonNumber">1</span> 人，请输入您听到的内容：</h3>
-                <input type="text" class="message-input" id="messageInput" placeholder="请输入您听到的内容...">
-                <button class="input-btn" id="submitBtn">提交并传给下一个人</button>
+                <h3>你是最后一个人，请输入你听到的内容：</h3>
+                <input type="text" class="message-input" id="messageInput" placeholder="请输入你听到的内容...">
+                <button class="input-btn" id="submitBtn">提交并查看结果</button>
+            </div>
+            
+            <!-- 结果显示区域 -->
+            <div class="result-display" id="resultDisplay">
+                <h2 class="result-title"><i class="fas fa-trophy"></i> 传话结果</h2>
+                
+                <div class="result-content">
+                    <div class="result-item">
+                        <div class="result-label">原始信息：</div>
+                        <div class="result-text" id="resultOriginal">加载中...</div>
+                    </div>
+                    
+                    <div class="result-item">
+                        <div class="result-label">最终信息：</div>
+                        <div class="result-text" id="resultFinal">加载中...</div>
+                    </div>
+                </div>
+                
+                <div class="score-display" id="scoreDisplay">0.0</div>
+                
+                <div class="score-details">
+                    <div class="score-detail-item">
+                        <span>信息传递完整度：</span>
+                        <span class="score-detail-value" id="accuracyDisplay">0%</span>
+                    </div>
+                    <div class="score-detail-item">
+                        <span>设定总时长：</span>
+                        <span class="score-detail-value" id="totalSetTimeDisplay">0秒</span>
+                    </div>
+                    <div class="score-detail-item">
+                        <span>实际所用总时长：</span>
+                        <span class="score-detail-value" id="totalActualTimeDisplay">0秒</span>
+                    </div>
+                    <div class="score-detail-item">
+                        <span>计算得分：</span>
+                        <span class="score-detail-value" id="scoreDetailDisplay">0.0</span>
+                    </div>
+                    <div class="score-detail-item">
+                        <span>加分公式：</span>
+                        <span class="score-detail-value">剩余时长（秒数）×0.2，最高加10分</span>
+                    </div>
+                </div>
             </div>
         </div>
         
+        <!-- 游戏规则 -->
         <div class="rules">
             <h3><i class="fas fa-info-circle"></i> 游戏规则</h3>
             <ul>
-                <li>游戏需要4个人参与，站成一列</li>
+                <li>设置传话人数（4~8人），默认4人，点击"开始传话"按钮开始游戏</li>
                 <li>第1个人会看到原始信息，然后悄悄告诉第2个人</li>
-                <li>第2个人将听到的内容传给第3个人，依此类推</li>
-                <li>最后一个人将自己听到的内容说出来</li>
-                <li>比较原始信息和最终信息，看看信息在传递过程中发生了什么变化</li>
-                <li>信息传递过程中只能说一遍，不能重复</li>
-                <li>游戏可以重复进行，看看每次传话结果有什么不同</li>
+                <li>每个人传话时都有独立计时，可以在时间内点击"下一个"按钮传递</li>
+                <li>如果计时结束，系统会自动开始下一个人的传话</li>
+                <li>最后一个人可以点击"结束计时并输入"提前结束计时并输入听到的内容</li>
+                <li>系统将计算信息传递完整度和最终得分（完整度+加分，加分为剩余时长（秒数）×0.2，最高加10分）</li>
+                <li>传递过程中只能说一遍，不能重复，确保游戏趣味性</li>
+                <li>得分越高，说明传话越准确且用时越短</li>
             </ul>
         </div>
     </div>
@@ -556,37 +815,140 @@
         const backBtn = document.getElementById('backBtn');
         const startBtn = document.getElementById('startBtn');
         const resetBtn = document.getElementById('resetBtn');
-        const showResultBtn = document.getElementById('showResultBtn');
-        const messageBoxes = [
-            document.getElementById('person1'),
-            document.getElementById('person2'),
-            document.getElementById('person3'),
-            document.getElementById('person4')
-        ];
-        const originalMessage = document.getElementById('originalMessage');
+        const nextBtn = document.getElementById('nextBtn');
+        const finishBtn = document.getElementById('finishBtn');
+        const decreaseBtn = document.getElementById('decreaseBtn');
+        const increaseBtn = document.getElementById('increaseBtn');
+        const decreaseTimeBtn = document.getElementById('decreaseTimeBtn');
+        const increaseTimeBtn = document.getElementById('increaseTimeBtn');
+        const playerCountDisplay = document.getElementById('playerCount');
+        const passTimeDisplay = document.getElementById('passTime');
+        const messageBox = document.getElementById('messageBox');
+        const messageContent = document.getElementById('messageContent');
+        const timerDisplay = document.getElementById('timerDisplay');
+        const currentPlayerNumber = document.getElementById('currentPlayerNumber');
+        const totalPlayers = document.getElementById('totalPlayers');
         const inputArea = document.getElementById('inputArea');
-        const currentPersonNumber = document.getElementById('currentPersonNumber');
         const messageInput = document.getElementById('messageInput');
         const submitBtn = document.getElementById('submitBtn');
         const loading = document.getElementById('loading');
-        const result = document.getElementById('result');
+        const resultDisplay = document.getElementById('resultDisplay');
         const resultOriginal = document.getElementById('resultOriginal');
         const resultFinal = document.getElementById('resultFinal');
-        const resultMessage = document.getElementById('resultMessage');
-        const closeResult = document.getElementById('closeResult');
+        const accuracyDisplay = document.getElementById('accuracyDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const totalSetTimeDisplay = document.getElementById('totalSetTimeDisplay');
+        const totalActualTimeDisplay = document.getElementById('totalActualTimeDisplay');
+        const scoreDetailDisplay = document.getElementById('scoreDetailDisplay');
+        const decorations = document.getElementById('decorations');
+        const toggleContentBtn = document.getElementById('toggleContentBtn');
         
         // 游戏状态变量
+        let playerCount = 4;
         let originalWord = '';
-        let messages = ['', '', '', ''];
+        let messages = [];
         let currentPerson = 0;
         let gameActive = false;
+        let currentTimer = null;
+        let timeLeft = 0;
+        let finalMessage = '';
+        let passTime = 40;
+        let contentVisible = false;
+        let playerTimes = []; // 记录每个人实际使用的时间
+        let startTimes = []; // 记录每个人开始的时间
         
-        // API端点
-        const API_URL = '/new-year/api/ai-words';
+        // 初始化节日装饰
+        function initDecorations() {
+            const symbols = ['❄', '✨', '🎉', '🎊', '🎁', '⭐', '❤', '🥳'];
+            for (let i = 0; i < 20; i++) {
+                const decoration = document.createElement('div');
+                decoration.className = 'decoration';
+                decoration.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                decoration.style.left = `${Math.random() * 100}vw`;
+                decoration.style.top = `${Math.random() * 100}vh`;
+                decoration.style.fontSize = `${Math.random() * 2 + 1.5}rem`;
+                decoration.style.animationDuration = `${Math.random() * 20 + 10}s`;
+                decorations.appendChild(decoration);
+            }
+        }
+        
+        // 创建烟花效果
+        function createFirework() {
+            const firework = document.createElement('div');
+            firework.className = 'firework';
+            firework.style.left = `${Math.random() * 100}vw`;
+            firework.style.bottom = '0';
+            document.body.appendChild(firework);
+            
+            setTimeout(() => {
+                firework.remove();
+            }, 2000);
+        }
+        
+        // 设置烟花定时器
+        function startFireworks() {
+            setInterval(createFirework, 3000);
+        }
+        
+        // 更新玩家人数显示
+        function updatePlayerCount() {
+            playerCountDisplay.textContent = playerCount;
+            totalPlayers.textContent = playerCount;
+        }
+        
+        // 更新传话时间显示
+        function updatePassTime() {
+            passTimeDisplay.textContent = passTime;
+        }
         
         // 返回首页
         backBtn.addEventListener('click', () => {
             window.location.href = '/new-year';
+        });
+        
+        // 减少玩家人数
+        decreaseBtn.addEventListener('click', () => {
+            if (playerCount > 4) {
+                playerCount--;
+                updatePlayerCount();
+            }
+        });
+        
+        // 增加玩家人数
+        increaseBtn.addEventListener('click', () => {
+            if (playerCount < 8) {
+                playerCount++;
+                updatePlayerCount();
+            }
+        });
+        
+        // 减少传话时间
+        decreaseTimeBtn.addEventListener('click', () => {
+            if (passTime > 20) {
+                passTime -= 5;
+                updatePassTime();
+            }
+        });
+        
+        // 增加传话时间
+        increaseTimeBtn.addEventListener('click', () => {
+            if (passTime < 150) {
+                passTime += 5;
+                updatePassTime();
+            }
+        });
+        
+        // 切换内容显示/隐藏
+        toggleContentBtn.addEventListener('click', () => {
+            contentVisible = !contentVisible;
+            
+            if (contentVisible) {
+                messageContent.classList.add('visible');
+                toggleContentBtn.innerHTML = '<i class="fas fa-eye-slash"></i> 隐藏内容';
+            } else {
+                messageContent.classList.remove('visible');
+                toggleContentBtn.innerHTML = '<i class="fas fa-eye"></i> 显示内容';
+            }
         });
         
         // 开始游戏
@@ -596,93 +958,255 @@
             showLoading(true);
             
             try {
-                const response = await fetch(API_URL);
+                // 从后端获取原始信息
+                const response = await fetch('/new-year/api/ai-sentences');
                 const data = await response.json();
                 
                 if (data.status === 200 || data.status === 'success') {
                     originalWord = data.word;
-                    
-                    // 重置游戏状态
-                    resetGameState();
-                    
-                    // 显示原始信息
-                    originalMessage.textContent = originalWord;
-                    
-                    // 设置第1个人的消息
-                    messages[0] = originalWord;
-                    updateMessageBox(0, originalWord);
-                    
-                    // 激活第1个人
-                    setActivePerson(0);
-                    
-                    // 显示输入区域
-                    inputArea.style.display = 'flex';
-                    currentPersonNumber.textContent = '2';
-                    messageInput.value = '';
-                    messageInput.focus();
-                    
-                    gameActive = true;
-                    startBtn.disabled = true;
+                    startGame();
                 } else {
-                    alert('获取词语失败，请重试');
+                    throw new Error('API请求失败');
                 }
             } catch (error) {
                 console.error('获取词语失败:', error);
                 
-                // 模拟一个词语作为备选
+                // 模拟元旦相关词语
                 const mockWords = [
                     '元旦联欢会真热闹',
                     '新年新气象万事如意',
                     '祝大家元旦快乐阖家幸福',
                     '我们一起欢度元旦佳节',
-                    '龙年大吉心想事成'
+                    '龙年大吉心想事成',
+                    '欢欢喜喜过元旦',
+                    '元旦快乐笑口常开',
+                    '新年到来好运连连'
                 ];
                 originalWord = mockWords[Math.floor(Math.random() * mockWords.length)];
                 
-                // 重置游戏状态
-                resetGameState();
-                
-                // 显示原始信息
-                originalMessage.textContent = originalWord + ' (模拟数据)';
-                
-                // 设置第1个人的消息
-                messages[0] = originalWord;
-                updateMessageBox(0, originalWord);
-                
-                // 激活第1个人
-                setActivePerson(0);
-                
-                // 显示输入区域
-                inputArea.style.display = 'flex';
-                currentPersonNumber.textContent = '2';
-                messageInput.value = '';
-                messageInput.focus();
-                
-                gameActive = true;
-                startBtn.disabled = true;
+                startGame();
             }
             
             showLoading(false);
         });
         
+        // 开始游戏逻辑
+        function startGame() {
+            // 重置游戏状态
+            resetGameState();
+            
+            // 初始化消息数组
+            messages = new Array(playerCount).fill('');
+            playerTimes = new Array(playerCount).fill(0);
+            startTimes = new Array(playerCount).fill(0);
+            
+            // 设置第1个人的消息
+            messages[0] = originalWord;
+            updateMessageContent(0, originalWord);
+            
+            // 更新当前玩家显示
+            currentPerson = 0;
+            currentPlayerNumber.textContent = currentPerson + 1;
+            
+            // 开始第1个人传话
+            startCurrentPlayerTurn();
+            
+            // 显示控制按钮
+            nextBtn.style.display = 'flex';
+            
+            // 如果是最后一个人，显示结束按钮
+            if (currentPerson === playerCount - 1) {
+                finishBtn.style.display = 'flex';
+                nextBtn.style.display = 'none';
+            }
+            
+            gameActive = true;
+            startBtn.disabled = true;
+        }
+        
+        // 更新消息内容
+        function updateMessageContent(index, message) {
+            messageContent.innerHTML = '';
+            messageContent.textContent = message;
+            
+            // 如果内容可见，则显示
+            if (contentVisible) {
+                messageContent.classList.add('visible');
+            } else {
+                messageContent.classList.remove('visible');
+            }
+        }
+        
+        // 开始当前玩家回合
+        function startCurrentPlayerTurn() {
+            // 清除之前的计时器
+            if (currentTimer) {
+                clearInterval(currentTimer);
+            }
+            
+            // 记录开始时间
+            startTimes[currentPerson] = Date.now();
+            
+            // 如果是第一个人，显示原始信息
+            if (currentPerson === 0) {
+                updateMessageContent(0, originalWord);
+            } else {
+                // 模拟传递消息（随机变化一些内容以增加趣味性）
+                messages[currentPerson] = simulateMessageChange(messages[currentPerson-1]);
+                updateMessageContent(currentPerson, messages[currentPerson]);
+            }
+            
+            // 激活消息框
+            messageBox.classList.add('active');
+            
+            // 设置计时器
+            timeLeft = passTime;
+            timerDisplay.textContent = `${timeLeft}秒`;
+            
+            // 更新计时器显示样式
+            timerDisplay.classList.remove('warning');
+            if (timeLeft <= 10) {
+                timerDisplay.classList.add('warning');
+            }
+            
+            // 启动计时器
+            currentTimer = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `${timeLeft}秒`;
+                
+                // 最后10秒改变颜色
+                if (timeLeft <= 10) {
+                    timerDisplay.classList.add('warning');
+                }
+                
+                // 时间到
+                if (timeLeft <= 0) {
+                    clearInterval(currentTimer);
+                    endCurrentPlayerTurn();
+                    
+                    // 如果不是最后一个人，自动进入下一个玩家
+                    if (currentPerson < playerCount - 1) {
+                        nextPlayer();
+                    } else {
+                        // 如果是最后一个人，时间到自动进入输入环节
+                        showInputArea();
+                    }
+                }
+            }, 1000);
+        }
+        
+        // 结束当前玩家回合
+        function endCurrentPlayerTurn() {
+            // 记录实际使用的时间
+            const endTime = Date.now();
+            const actualTime = Math.min(passTime - timeLeft, Math.round((endTime - startTimes[currentPerson]) / 1000));
+            playerTimes[currentPerson] = actualTime;
+            
+            // 更新消息框状态
+            messageBox.classList.remove('active');
+            
+            // 清除计时器
+            if (currentTimer) {
+                clearInterval(currentTimer);
+                currentTimer = null;
+            }
+        }
+        
+        // 下一个玩家
+        function nextPlayer() {
+            // 结束当前玩家回合
+            endCurrentPlayerTurn();
+            
+            // 移动到下一个玩家
+            currentPerson++;
+            
+            // 更新当前玩家显示
+            currentPlayerNumber.textContent = currentPerson + 1;
+            
+            // 更新按钮显示
+            if (currentPerson === playerCount - 1) {
+                // 最后一个人，显示结束按钮
+                finishBtn.style.display = 'flex';
+                nextBtn.style.display = 'none';
+            }
+            
+            // 开始下一个玩家回合
+            startCurrentPlayerTurn();
+        }
+        
+        // 显示输入区域
+        function showInputArea() {
+            // 结束当前玩家回合
+            endCurrentPlayerTurn();
+            
+            // 隐藏消息框
+            messageBox.style.display = 'none';
+            
+            // 隐藏控制按钮
+            nextBtn.style.display = 'none';
+            finishBtn.style.display = 'none';
+            
+            // 显示输入区域
+            inputArea.style.display = 'flex';
+            messageInput.value = '';
+            messageInput.focus();
+        }
+        
+        // 下一个按钮点击事件
+        nextBtn.addEventListener('click', () => {
+            if (!gameActive || currentPerson >= playerCount - 1) return;
+            
+            // 进入下一个玩家
+            nextPlayer();
+        });
+        
+        // 结束计时并输入按钮点击事件
+        finishBtn.addEventListener('click', () => {
+            if (!gameActive) return;
+            
+            // 显示输入区域
+            showInputArea();
+        });
+        
+        // 模拟消息变化（增加趣味性）
+        function simulateMessageChange(message) {
+            // 30%的几率改变消息
+            if (Math.random() < 0.3) {
+                const actions = [
+                    () => message.replace(/快乐/g, '开心'),
+                    () => message.replace(/元旦/g, '新年'),
+                    () => message.replace(/联欢会/g, '聚会'),
+                    () => message + '！',
+                    () => message.substring(0, message.length - 1),
+                    () => message.split('').reverse().join('').substring(0, Math.min(message.length, 6))
+                ];
+                
+                const action = actions[Math.floor(Math.random() * actions.length)];
+                return action();
+            }
+            return message;
+        }
+        
         // 重置游戏
         resetBtn.addEventListener('click', () => {
             resetGameState();
-            originalMessage.textContent = '点击"开始传话"获取原始信息';
             inputArea.style.display = 'none';
+            resultDisplay.style.display = 'none';
+            messageBox.style.display = 'flex';
+            nextBtn.style.display = 'none';
+            finishBtn.style.display = 'none';
             gameActive = false;
             startBtn.disabled = false;
-        });
-        
-        // 查看结果
-        showResultBtn.addEventListener('click', () => {
-            if (!gameActive || messages[3] === '') return;
             
-            showResult();
+            // 清除计时器
+            if (currentTimer) {
+                clearInterval(currentTimer);
+                currentTimer = null;
+            }
         });
         
-        // 提交消息
-        submitBtn.addEventListener('click', () => {
+        // 提交最后一个人的消息
+        submitBtn.addEventListener('click', async () => {
             if (!gameActive) return;
             
             const userMessage = messageInput.value.trim();
@@ -693,35 +1217,83 @@
                 return;
             }
             
-            // 保存当前用户输入
-            messages[currentPerson] = userMessage;
-            updateMessageBox(currentPerson, userMessage);
+            finalMessage = userMessage;
             
-            // 如果还有下一个人
-            if (currentPerson < 3) {
-                // 移动到下一个人
-                currentPerson++;
-                setActivePerson(currentPerson);
+            // 保存最后一个人的消息
+            messages[playerCount - 1] = userMessage;
+            
+            // 显示加载状态
+            showLoading(true);
+            
+            try {
+                // 将原始信息和最终信息发送到后端检查
+                const response = await fetch('/new-year/api/ai-check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        original: originalWord,
+                        final: userMessage
+                    })
+                });
                 
-                // 更新输入区域提示
-                currentPersonNumber.textContent = (currentPerson + 1).toString();
-                messageInput.value = '';
-                messageInput.focus();
+                const data = await response.json();
                 
-                // 如果是最后一个人，修改按钮文本
-                if (currentPerson === 3) {
-                    submitBtn.textContent = '提交并查看结果';
+                // 假设后端返回一个包含accuracy字段的对象
+                let accuracy = 0.85; // 默认值
+                
+                if (data.accuracy !== undefined) {
+                    accuracy = data.accuracy;
+                } else if (data.status === 'success' && data.score !== undefined) {
+                    accuracy = data.score;
                 }
-            } else {
-                // 最后一个人提交完成
-                gameActive = false;
-                inputArea.style.display = 'none';
-                startBtn.disabled = false;
                 
                 // 显示结果
-                showResult();
+                showResult(accuracy);
+                
+            } catch (error) {
+                console.error('检查传话结果失败:', error);
+                
+                // 模拟一个准确度
+                const mockAccuracy = calculateMockAccuracy(originalWord, userMessage);
+                showResult(mockAccuracy);
             }
+            
+            showLoading(false);
+            gameActive = false;
+            inputArea.style.display = 'none';
+            startBtn.disabled = false;
         });
+        
+        // 计算模拟准确度
+        function calculateMockAccuracy(original, final) {
+            // 简单的相似度计算（基于字符匹配和长度）
+            const originalChars = original.split('');
+            const finalChars = final.split('');
+            
+            let matchCount = 0;
+            const minLength = Math.min(originalChars.length, finalChars.length);
+            
+            for (let i = 0; i < minLength; i++) {
+                if (originalChars[i] === finalChars[i]) {
+                    matchCount++;
+                }
+            }
+            
+            // 考虑长度差异
+            const lengthPenalty = Math.abs(original.length - final.length) * 0.05;
+            let similarity = (matchCount / original.length) - lengthPenalty;
+            
+            // 确保相似度在合理范围内
+            similarity = Math.max(0, Math.min(1, similarity));
+            
+            // 添加一些随机性使游戏更有趣
+            similarity += (Math.random() * 0.2 - 0.1);
+            similarity = Math.max(0.1, Math.min(0.95, similarity));
+            
+            return similarity;
+        }
         
         // 回车键提交
         messageInput.addEventListener('keypress', (e) => {
@@ -730,92 +1302,80 @@
             }
         });
         
-        // 关闭结果
-        closeResult.addEventListener('click', () => {
-            result.style.display = 'none';
-        });
-        
-        // 更新消息框
-        function updateMessageBox(index, message) {
-            const messageBox = messageBoxes[index];
-            const contentElement = messageBox.querySelector('.message-content');
-            
-            contentElement.innerHTML = '';
-            contentElement.textContent = message;
-            
-            // 标记为已完成
-            messageBox.classList.remove('active');
-            messageBox.classList.add('completed');
-        }
-        
-        // 设置当前活动的人
-        function setActivePerson(index) {
-            // 移除所有活动状态
-            messageBoxes.forEach(box => {
-                box.classList.remove('active');
-            });
-            
-            // 设置当前活动的人
-            if (index < 4) {
-                messageBoxes[index].classList.add('active');
-            }
-        }
-        
         // 重置游戏状态
         function resetGameState() {
-            messages = ['', '', '', ''];
-            currentPerson = 1; // 从第2个人开始输入
+            messages = new Array(playerCount).fill('');
+            playerTimes = new Array(playerCount).fill(0);
+            startTimes = new Array(playerCount).fill(0);
+            currentPerson = 0;
+            finalMessage = '';
             
-            // 重置所有消息框
-            messageBoxes.forEach((box, index) => {
-                box.classList.remove('active', 'completed');
-                const contentElement = box.querySelector('.message-content');
-                contentElement.innerHTML = `<div class="message-placeholder">第${index + 1}人</div>`;
-            });
+            // 重置当前玩家显示
+            currentPlayerNumber.textContent = '1';
+            totalPlayers.textContent = playerCount;
+            
+            // 重置消息框
+            messageContent.innerHTML = '<div class="message-placeholder">点击"开始传话"查看传话内容</div>';
+            messageContent.classList.remove('visible');
+            messageBox.classList.remove('active');
+            
+            // 重置计时器显示
+            timerDisplay.textContent = `${passTime}秒`;
+            timerDisplay.classList.remove('warning');
             
             // 重置输入区域
             messageInput.value = '';
-            submitBtn.textContent = '提交并传给下一个人';
         }
         
         // 显示结果
-        function showResult() {
+        function showResult(accuracy) {
             resultOriginal.textContent = originalWord;
-            resultFinal.textContent = messages[3] || messages[2] || messages[1] || messages[0];
+            resultFinal.textContent = finalMessage;
             
-            // 计算相似度（简单版本）
-            const original = originalWord;
-            const final = messages[3] || messages[2] || messages[1] || messages[0];
-            
-            let similarity = 0;
-            if (final) {
-                // 简单的相似度计算（基于字符匹配）
-                const originalChars = original.split('');
-                const finalChars = final.split('');
-                
-                let matchCount = 0;
-                for (let i = 0; i < Math.min(originalChars.length, finalChars.length); i++) {
-                    if (originalChars[i] === finalChars[i]) {
-                        matchCount++;
-                    }
-                }
-                
-                similarity = Math.round((matchCount / original.length) * 100);
+            // 计算实际所用总时间
+            let totalActualTime = 0;
+            for (let i = 0; i < playerCount; i++) {
+                totalActualTime += playerTimes[i];
             }
             
-            // 显示结果消息
-            if (similarity >= 80) {
-                resultMessage.textContent = `传话成功！相似度高达 ${similarity}%，大家听力都很好！`;
-                resultMessage.style.color = '#4caf50';
-            } else if (similarity >= 50) {
-                resultMessage.textContent = `传话一般，相似度 ${similarity}%，信息有些失真了`;
-                resultMessage.style.color = '#ff9800';
+            // 设定总时间（每人最大时间 × 人数）
+            const totalSetTime = passTime * playerCount;
+            
+            const addScore = Math.min(Math.max((totalSetTime - Math.max(totalActualTime, 1)) * 0.2, 0), 10); // 添加的分数：减去实际时间，然后乘以0.2，最高加10分
+            
+            let score = accuracy + (addScore / 100);
+            score = Math.min(score, 1); // 最大为1
+            
+            // 转换为百分制，保留一位小数
+            const accuracyPercent = Math.round(accuracy * 100);
+            const scorePercent = (score * 100).toFixed(1);
+            
+            accuracyDisplay.textContent = `${accuracyPercent}%`;
+            totalSetTimeDisplay.textContent = `${totalSetTime}秒`;
+            totalActualTimeDisplay.textContent = `${totalActualTime}秒`;
+            scoreDisplay.textContent = `${scorePercent}`;
+            scoreDetailDisplay.textContent = `${scorePercent}`;
+            
+            // 根据得分显示不同颜色
+            if (score >= 0.8) {
+                scoreDisplay.style.color = '#4caf50';
+                scoreDisplay.style.borderColor = '#4caf50';
+            } else if (score >= 0.6) {
+                scoreDisplay.style.color = '#ff9800';
+                scoreDisplay.style.borderColor = '#ff9800';
             } else {
-                resultMessage.textContent = `传话失败！相似度只有 ${similarity}%，信息完全变样了！`;
-                resultMessage.style.color = '#f44336';
+                scoreDisplay.style.color = '#f44336';
+                scoreDisplay.style.borderColor = '#f44336';
             }
             
-            result.style.display = 'flex';
+            resultDisplay.style.display = 'flex';
+            
+            // 创建庆祝效果
+            if (score >= 0.7) {
+                for (let i = 0; i < 5; i++) {
+                    setTimeout(createFirework, i * 300);
+                }
+            }
         }
         
         // 显示/隐藏加载动画
@@ -837,8 +1397,27 @@
                 case 'S':
                     if (!gameActive) startBtn.click();
                     break;
+                case 'n': // N键下一个
+                case 'N':
+                    if (gameActive && nextBtn.style.display !== 'none') nextBtn.click();
+                    break;
+                case 'f': // F键结束计时
+                case 'F':
+                    if (gameActive && finishBtn.style.display !== 'none') finishBtn.click();
+                    break;
             }
         });
+        
+        // 初始化
+        function init() {
+            updatePlayerCount();
+            updatePassTime();
+            initDecorations();
+            startFireworks();
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
 </html>
