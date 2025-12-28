@@ -264,7 +264,6 @@
         </div>
         
         <!-- 按钮区域 -->
-        <!-- 按钮区域 -->
         <div class="buttons-container">
             <!-- 按钮1 - 节目单 -->
             <div class="button" data-url="#">
@@ -282,6 +281,12 @@
             <div class="button" data-url="/new-year/whisper-game">
                 <i class="fas fa-comments"></i>
                 <div class="button-text">无声传话游戏</div>
+            </div>
+            
+            <!-- 按钮4 - 清空AI缓存 -->
+            <div class="button" id="clearCacheBtn">
+                <i class="fas fa-broom"></i>
+                <div class="button-text">清空AI缓存</div>
             </div>
         </div>
         
@@ -307,6 +312,26 @@
             });
         });
         
+        // 清空AI缓存按钮点击事件
+        document.getElementById('clearCacheBtn').addEventListener('click', function() {
+            if (confirm('确定要清空AI生成的词语和句子缓存吗？这将重置AI的记忆，让它不再记住之前生成的内容。')) {
+                Promise.all([
+                    fetch('/new-year/api/clear-ai-words', { method: 'POST' }),
+                    fetch('/new-year/api/clear-ai-sentences', { method: 'POST' })
+                ])
+                .then(responses => Promise.all(responses.map(response => response.json())))
+                .then(data => {
+                    const wordsCleared = data[0].cleared_count || 0;
+                    const sentencesCleared = data[1].cleared_count || 0;
+                    alert(`AI缓存已清空！\n清空词语缓存: ${wordsCleared} 个\n清空句子缓存: ${sentencesCleared} 个`);
+                })
+                .catch(error => {
+                    console.error('清空AI缓存时出错:', error);
+                    alert('清空AI缓存失败，请稍后再试。');
+                });
+            }
+        });
+
         // 添加键盘快捷键支持
         document.addEventListener('keydown', function(event) {
             // ESC键返回主页
@@ -314,12 +339,16 @@
                 document.getElementById('homeBtn').click();
             }
             
-            // 数字键对应按钮（1-3）
-            if (event.key >= '1' && event.key <= '3') {
+            // 数字键对应按钮（1-4）
+            if (event.key >= '1' && event.key <= '4') {
                 const buttons = document.querySelectorAll('.button');
                 const index = parseInt(event.key) - 1;
                 if (buttons[index]) {
-                    buttons[index].click();
+                    if (index === 3) { // 第4个按钮是清空缓存按钮
+                        document.getElementById('clearCacheBtn').click();
+                    } else {
+                        buttons[index].click();
+                    }
                 }
             }
         });
