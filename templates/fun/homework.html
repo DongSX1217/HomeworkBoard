@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>题目解析助手 · 答案与易错答案</title>
+  <link rel="stylesheet" href="/static/css/fun_homework.css">
+</head>
+<body>
+  <main class="app">
+    <header class="hero">
+      <h1>题目解析助手</h1>
+      <p class="sub">上传试卷 / 题目图片，或直接输入题目文字，自动生成正确答案与常见错误答案。</p>
+    </header>
+
+    <form id="form" class="card" autocomplete="off">
+      <div class="field">
+        <label class="label" for="userText">附加要求 / 题目（可选）</label>
+        <textarea id="userText" rows="5"
+          placeholder="例如：只处理第 3~5 题，每道题都要标注错误概率；或直接在这里输入题目文字……"></textarea>
+      </div>
+
+      <div class="field">
+        <span class="label">题目图片（可选）</span>
+        <div id="drop" class="drop" tabindex="0" role="button" aria-label="上传题目图片">
+          <input type="file" id="imageInput" accept="image/*" hidden>
+          <div class="drop-inner">
+            <svg class="drop-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 16V4m0 0L8 8m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+                    fill="none" stroke="currentColor" stroke-width="1.8"
+                    stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div id="dropHint" class="drop-hint">点击、拖拽或粘贴图片到此处上传</div>
+          </div>
+          <img id="preview" class="preview" alt="图片预览">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" id="clearBtn" class="btn ghost">清空</button>
+        <button type="submit" id="submitBtn" class="btn primary">
+          <span class="btn-text">开始生成</span>
+        </button>
+      </div>
+    </form>
+
+    <section id="result" class="card result hidden">
+      <div class="result-head">
+        <h2>生成结果</h2>
+        <button type="button" id="copyBtn" class="btn tiny ghost">复制</button>
+      </div>
+      <pre id="resultText" class="result-text"></pre>
+
+      <details id="ocrBox" class="ocr hidden">
+        <summary>查看第一步识别出的题目文字</summary>
+        <pre id="ocrText" class="result-text ocr-text"></pre>
+      </details>
+    </section>
+  </main>
+
+  <!-- 加载遮罩：显示当前正在完成哪一步 -->
+  <div id="overlay" class="overlay hidden" role="alertdialog" aria-live="polite" aria-busy="true">
+    <div class="loader-card">
+      <div class="spinner" aria-hidden="true"></div>
+      <div id="stepText" class="step-text">正在准备…</div>
+      <ol class="steps">
+        <li id="step1" class="pending"><span class="dot"></span>第一步：识别图片中的题目</li>
+        <li id="step2" class="pending"><span class="dot"></span>第二步：思考并生成答案与易错答案</li>
+      </ol>
+    </div>
+  </div>
+
+  <script src="/static/js/fun_homework.js"></script>
+</body>
+</html>

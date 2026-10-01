@@ -1430,7 +1430,7 @@ class Fun:
             return redirect(url_for('fun_auth'))
         
         # 验证通过，显示主页
-        return render_template('fun_index.html', name=name, student_id=student_id)
+        return render_template('fun/index.html', name=name, student_id=student_id)
     
     @app.route('/902504/auth', methods=['GET', 'POST'])
     def fun_auth():
@@ -1448,7 +1448,7 @@ class Fun:
             if not isinstance(students_data, dict):
                 print(f"错误: students_data不是字典，而是{type(students_data)}")
                 flash('系统配置错误，请联系管理员', 'error')
-                return render_template('fun_auth.html', name=name, student_id=student_id)
+                return render_template('fun/auth.html', name=name, student_id=student_id)
             
             # 验证用户信息
             authenticated = False
@@ -1473,7 +1473,7 @@ class Fun:
                         else:
                             flash('密码不正确！', 'error')
                             print(f"调试信息 - 密码错误 预期密码='{password_data[student_id]}', 输入密码='{password}'")
-                            return render_template('fun_auth.html', name=name, student_id=student_id)
+                            return render_template('fun/auth.html', name=name, student_id=student_id)
                     else:
                         # 使用默认密码验证
                         if password == get_default_password():
@@ -1484,7 +1484,7 @@ class Fun:
                         else:
                             flash('密码不正确！', 'error')
                             print(f"调试信息 - 密码错误 预期密码（默认密码）='{get_default_password()}', 输入密码='{password}'")
-                            return render_template('fun_auth.html', name=name, student_id=student_id)
+                            return render_template('fun/auth.html', name=name, student_id=student_id)
             
             # 方法2: 如果直接匹配失败，尝试遍历所有项进行模糊匹配
             if not authenticated and students_data:
@@ -1511,7 +1511,7 @@ class Fun:
                                 break
                             else:
                                 flash('密码不正确！', 'error')
-                                return render_template('fun_auth.html', name=name, student_id=student_id)
+                                return render_template('fun/auth.html', name=name, student_id=student_id)
                         else:
                             # 使用默认密码验证
                             if password == get_default_password():
@@ -1522,7 +1522,7 @@ class Fun:
                                 break
                             else:
                                 flash('密码不正确！', 'error')
-                                return render_template('fun_auth.html', name=name, student_id=student_id)
+                                return render_template('fun/auth.html', name=name, student_id=student_id)
             
             if authenticated:
                 # 验证成功
@@ -1544,9 +1544,9 @@ class Fun:
                 print(f"调试信息 - 验证失败")
                 flash('姓名、学号或密码不正确，请重试！', 'error')
                 # 保留表单数据以便重新输入
-                return render_template('fun_auth.html', name=name, student_id=student_id)
+                return render_template('fun/auth.html', name=name, student_id=student_id)
         
-        return render_template('fun_auth.html')
+        return render_template('fun/auth.html')
     
     @app.route('/902504/password', methods=['GET', 'POST'])
     def fun_password():
@@ -1571,23 +1571,23 @@ class Fun:
                     # 使用自定义密码验证
                     if password_data[student_id] != current_password:
                         flash('当前密码不正确！', 'error')
-                        return render_template('fun_password.html', name=name, student_id=student_id)
+                        return render_template('fun/password.html', name=name, student_id=student_id)
                 else:
                     # 使用默认密码验证
                     if current_password != get_default_password():
                         flash('当前密码不正确！', 'error')
-                        return render_template('fun_password.html', name=name, student_id=student_id)
+                        return render_template('fun/password.html', name=name, student_id=student_id)
                 
                 # 验证新密码
                 is_valid, message = validate_password(new_password)
                 if not is_valid:
                     flash(message, 'error')
-                    return render_template('fun_password.html', name=name, student_id=student_id)
+                    return render_template('fun/password.html', name=name, student_id=student_id)
                 
                 # 确认密码匹配
                 if new_password != confirm_password:
                     flash('新密码和确认密码不匹配！', 'error')
-                    return render_template('fun_password.html', name=name, student_id=student_id)
+                    return render_template('fun/password.html', name=name, student_id=student_id)
                 
                 # 保存新密码
                 password_data[student_id] = new_password
@@ -1606,7 +1606,7 @@ class Fun:
                     flash('您当前使用的是默认密码，无需重置！', 'info')
                 return redirect(url_for('fun_index'))
         
-        return render_template('fun_password.html', name=name, student_id=student_id)
+        return render_template('fun/password.html', name=name, student_id=student_id)
     
     @app.route('/902504/logout')
     def fun_logout():
@@ -1651,7 +1651,7 @@ class Fun:
                 flash('提交成功！', 'success')
                 return redirect(url_for('fun_view'))
         
-        return render_template('fun_submit.html', name=name, student_id=student_id)
+        return render_template('fun/submit.html', name=name, student_id=student_id)
     
     @app.route('/902504/view')
     def fun_view():
@@ -1677,7 +1677,7 @@ class Fun:
         # 获取客户端IP地址
         client_ip = get_client_ip()
         
-        return render_template('fun_view.html', inputs=inputs, name=name, request=request, client_ip=client_ip)
+        return render_template('fun/view.html', inputs=inputs, name=name, request=request, client_ip=client_ip)
 
     @app.route('/902504/delete_input', methods=['POST'])
     def fun_delete_input():
@@ -2260,7 +2260,7 @@ class AI:
         is_public = chat_type == 'public'
         chat_history = AI.load_chat_history(user_identifier, max_history=50, is_public=is_public)
         
-        return render_template('ai_chat.html', 
+        return render_template('fun/ai_chat.html', 
                             chat_history=chat_history,
                             name=name,
                             student_id=student_id,
@@ -2573,7 +2573,7 @@ class AI:
         defaults.setdefault('public_prompt_visible', request.cookies.get('ai_public_prompt_see') == Config.AI_SYSTEM_SEE_PASSWORD)
         defaults.setdefault('qa_visible', request.cookies.get('ai_qa_see') == Config.AI_SYSTEM_SEE_PASSWORD)
         
-        return render_template('ai_settings.html', **defaults)
+        return render_template('fun/ai_settings.html', **defaults)
 
 class NewYear:
     @app.route('/new-year/')
@@ -2847,6 +2847,132 @@ class NewYear:
                 "error": str(e)
             }), 500
 
+class SolveService:
+    """题目解析：图片 -> 文字 -> 答案 + 易错答案。对外只暴露 handle_request()。"""
+
+    MODEL = "deepseek-v3.2-exp"
+
+    OCR_PROMPT = (
+        "请将图片中的所有题目转化为文字形式；对于其中的图表，也以文字形式描述。"
+        "不属于题目的文字等内容（如答题卡涂卡区、分值、试卷标题、学号填涂、页眉页脚等），不要输出。"
+    )
+
+    STEP2_PREFIX = (
+        "为以下每道题目输出1个正确答案和1个容易出现的错误答案，以及出现该错误答案的概率大概为多少"
+        "（要求：用中文输出，不要复述题目，不要输出解析；不必进行过于深入的思考；"
+        "对于不完整的题目，予以标注，并不再输出正确和错误答案以及出现错误答案概率）\n\n"
+        "附加要求/题目："
+    )
+
+    MAX_IMAGE_BYTES = 16 * 1024 * 1024   # 单张图片上限 16MB
+
+    def __init__(self, ai):
+        """ai: 你的 AI 类（提供 openai(model, messages, enable_thinking) 静态方法）"""
+        self.ai = ai
+
+    # ---------------- 对外入口 ----------------
+
+    def handle_request(self):
+        """处理 POST /api/solve，返回 text/event-stream 的 Flask Response。"""
+        # request 里的东西必须在进入生成器之前读完
+        user_text = (request.form.get("text") or "").strip()
+        file = request.files.get("image")
+
+        image_bytes = None
+        mime = "image/jpeg"
+        if file is not None and file.filename:
+            image_bytes = file.read(self.MAX_IMAGE_BYTES + 1)
+            if len(image_bytes) > self.MAX_IMAGE_BYTES:
+                image_bytes = None
+                mime = None
+            else:
+                mime = file.mimetype or "image/jpeg"
+
+        return Response(
+            self._stream(user_text, image_bytes, mime),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",   # 关掉 Nginx 缓冲，保证实时推送
+            },
+        )
+
+    # ---------------- 内部实现 ----------------
+
+    @staticmethod
+    def _sse(event, payload):
+        return "event: {}\ndata: {}\n\n".format(
+            event, json.dumps(payload, ensure_ascii=False)
+        )
+
+    def _stream(self, user_text, image_bytes, mime):
+        """生成器：按步骤产出 SSE 事件。"""
+        ocr_text = ""
+        try:
+            # ---- 第一步：图片 -> 文字（有图才做）----
+            if image_bytes:
+                yield self._sse("step", {"step": 1, "status": "running"})
+                ocr_text = self._ocr(image_bytes, mime)
+                yield self._sse("ocr", {"text": ocr_text})
+                yield self._sse("step", {"step": 1, "status": "done"})
+            else:
+                yield self._sse("step", {"step": 1, "status": "skipped"})
+
+            # ---- 第二步：生成答案 + 易错答案（总是执行）----
+            yield self._sse("step", {"step": 2, "status": "running"})
+            result = self._generate(user_text, ocr_text)
+            yield self._sse("step", {"step": 2, "status": "done"})
+
+            yield self._sse("done", {"result": result, "ocr": ocr_text})
+
+        except Exception as exc:                     # noqa: BLE001
+            yield self._sse("error", {"message": str(exc)})
+
+    def _ocr(self, image_bytes, mime):
+        """第一步：图片转文字，不用思考模式。"""
+        data_url = "data:{};base64,{}".format(
+            mime, base64.b64encode(image_bytes).decode("ascii")
+        )
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "image_url", "image_url": {"url": data_url}},
+                    {"type": "text", "text": self.OCR_PROMPT},
+                ],
+            }
+        ]
+        text = self.ai.openai(
+            model="qwen3.8-max",
+            messages=messages,
+            enable_thinking=False,
+        ) or ""
+        return text.strip()
+
+    def _generate(self, user_text, ocr_text):
+        """第二步：生成正确答案 + 易错答案 + 概率，启用思考模式。"""
+        content = self.STEP2_PREFIX + user_text
+        if ocr_text:
+            content += "\n\n" + ocr_text
+
+        messages = [{"role": "user", "content": content}]
+        text = self.ai.openai(
+            model=self.MODEL,
+            messages=messages,
+            enable_thinking=True,
+        ) or ""
+        return text.strip()
+
+    @app.route("/902504/solve")
+    def fun_homework_page():
+        """题目解析页面"""
+        return render_template("fun/homework.html")
+    
+    @app.route("/api/solve", methods=["POST"])
+    def api_solve():
+        return solver.handle_request()
+    
 def calculate_text_similarity(original, final):
     """
     计算两个文本之间的相似度
@@ -2926,6 +3052,7 @@ label = Label()
 subject = Subject()
 fun = Fun()
 newyear = NewYear()
+solver = SolveService(AI)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', debug=app.config.get('DEBUG', False), port=2025)
+    app.run(host='0.0.0.0', debug=app.config.get('DEBUG', False), port=2026)
